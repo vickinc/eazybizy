@@ -168,7 +168,7 @@ export class BusinessCardsBusinessService {
 
   static downloadBusinessCardImage(card: BusinessCard): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Create a new element specifically for download instead of cloning
+      // Create a new element specifically for download
       const downloadElement = document.createElement('div');
       const templateStyles = BusinessCardsBusinessService.getTemplateStyles(card.template);
       
@@ -195,46 +195,55 @@ export class BusinessCardsBusinessService {
       // Build the HTML structure
       downloadElement.innerHTML = `
         <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
-          <div style="width: 40px; height: 40px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div style="width: 48px; height: 48px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;">
             ${card.company.logo && (card.company.logo.startsWith('data:') || card.company.logo.includes('http')) 
-              ? `<img src="${card.company.logo}" alt="Logo" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">`
-              : `<span style="color: #2563eb; font-weight: bold; font-size: 12px;">${card.company.logo || card.company.tradingName.substring(0, 2).toUpperCase()}</span>`
+              ? `<img src="${card.company.logo}" alt="Logo" style="width: 100%; height: 100%; border-radius: 4px; object-fit: cover;">`
+              : `<span style="color: #2563eb; font-weight: bold; font-size: 14px;">${card.company.logo || card.company.tradingName.substring(0, 2).toUpperCase()}</span>`
             }
           </div>
           <div style="flex: 1; min-width: 0;">
-            <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: ${templateStyles.textColor}; line-height: 1.2;">${card.company.tradingName}</h3>
-            <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.75; color: ${templateStyles.textColor}; line-height: 1.2;">${card.company.industry}</p>
+            <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: ${templateStyles.textColor}; line-height: 1.2;">${card.company.tradingName}</h3>
+            <p style="margin: 2px 0 0 0; font-size: 14px; opacity: 0.75; color: ${templateStyles.textColor}; line-height: 1.2;">${card.company.industry}</p>
           </div>
         </div>
         
         ${card.personName ? `
-          <div style="margin-bottom: 16px;">
-            <p style="margin: 0; font-size: 18px; font-weight: bold; color: ${templateStyles.textColor}; line-height: 1.2;">${card.personName}</p>
-            ${card.position ? `<p style="margin: 2px 0 0 0; font-size: 14px; opacity: 0.85; color: ${templateStyles.textColor}; line-height: 1.2;">${card.position}</p>` : ''}
+          <div style="margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 20px; font-weight: bold; color: ${templateStyles.textColor}; line-height: 1.2;">${card.personName}</p>
+            ${card.position ? `<p style="margin: 4px 0 0 0; font-size: 16px; opacity: 0.85; color: ${templateStyles.textColor}; line-height: 1.2;">${card.position}</p>` : ''}
           </div>
         ` : ''}
         
-        <div style="position: absolute; bottom: 24px; left: 24px; right: 88px;">
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: ${templateStyles.textColor};">
-              <span style="opacity: 0.75;">✉</span>
+        <div style="position: absolute; bottom: 24px; left: 24px; right: 100px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: ${templateStyles.textColor};">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-10 5L2 7"></path>
+              </svg>
               <span>${card.company.email}</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: ${templateStyles.textColor};">
-              <span style="opacity: 0.75;">🌐</span>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: ${templateStyles.textColor};">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                <path d="M2 12h20"></path>
+              </svg>
               <span>${card.company.website}</span>
             </div>
             ${card.company.phone ? `
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: ${templateStyles.textColor};">
-                <span style="opacity: 0.75;">📞</span>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: ${templateStyles.textColor};">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
                 <span>${card.company.phone}</span>
               </div>
             ` : ''}
           </div>
         </div>
         
-        <div style="position: absolute; bottom: 24px; right: 24px; width: 64px; height: 64px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-          <img src="${BusinessCardsBusinessService.generateQRCodeUrl(card.qrValue)}" alt="QR Code" style="width: 56px; height: 56px;">
+        <div style="position: absolute; bottom: 24px; right: 24px; width: 70px; height: 70px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">
+          <img src="${BusinessCardsBusinessService.generateQRCodeUrl(card.qrValue)}" alt="QR Code" style="width: 100%; height: 100%;">
         </div>
       `;
       
@@ -253,7 +262,7 @@ export class BusinessCardsBusinessService {
           allowTaint: true,
           width: 400,
           height: 250
-        }).then(canvas => {
+        } as any).then(canvas => {
           // Remove from DOM
           document.body.removeChild(downloadElement);
           

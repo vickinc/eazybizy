@@ -515,7 +515,7 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
               logoPreview={logoPreview} 
             />
           </div>
-          <p className="text-xs text-gray-600 mt-2 text-center">This is how your company card will appear</p>
+          <p className="text-xs text-gray-600 mt-1 text-center">This is how your company card will appear</p>
         </div>
       </div>
 

@@ -393,7 +393,7 @@ export const BusinessDetailsStep: React.FC<BusinessDetailsStepProps> = ({
               formData={formData} 
               logoPreview={logoPreview} 
             />
-            <p className="text-xs text-gray-600 mt-2 text-center">This is how your company card will appear</p>
+            <p className="text-xs text-gray-600 mt-1 text-center">This is how your company card will appear</p>
           </div>
         </div>
       </div>

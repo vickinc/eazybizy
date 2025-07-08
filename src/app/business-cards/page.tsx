@@ -53,6 +53,7 @@ export default function BusinessCardsPage() {
     handleCreateCard,
     handlePreview,
     handleDelete,
+    handleDownloadCard,
     
     // Dialog Management
     openDialog,
@@ -162,11 +163,7 @@ export default function BusinessCardsPage() {
         visibleCards={businessCards}
         companies={companies}
         handlePreview={handlePreview}
-        handleDownloadCard={async (card) => {
-          // For now, this is a placeholder - the download functionality 
-          // will need to be implemented separately from the business logic
-          console.log('Download card:', card);
-        }}
+        handleDownloadCard={handleDownloadCard}
         handleDelete={handleDelete}
         getTemplateStyles={getTemplateStyles}
         setHoveredButton={setHoveredButton}
@@ -176,11 +173,7 @@ export default function BusinessCardsPage() {
         isPreviewOpen={isPreviewOpen}
         closePreview={closePreview}
         previewCard={previewCard}
-        handleDownloadCard={async (card) => {
-          // For now, this is a placeholder - the download functionality 
-          // will need to be implemented separately from the business logic
-          console.log('Download card:', card);
-        }}
+        handleDownloadCard={handleDownloadCard}
         getTemplateStyles={getTemplateStyles}
         setHoveredButton={setHoveredButton}
       />
@@ -190,11 +183,7 @@ export default function BusinessCardsPage() {
         toggleArchiveView={toggleArchiveView}
         visibleCards={businessCards}
         handlePreview={handlePreview}
-        handleDownloadCard={async (card) => {
-          // For now, this is a placeholder - the download functionality 
-          // will need to be implemented separately from the business logic
-          console.log('Download card:', card);
-        }}
+        handleDownloadCard={handleDownloadCard}
         handleDelete={handleDelete}
         getTemplateStyles={getTemplateStyles}
         setHoveredButton={setHoveredButton}

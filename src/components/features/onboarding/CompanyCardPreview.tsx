@@ -18,7 +18,7 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
   const displayLogo = logoPreview || formData.logo;
   
   return (
-    <Card className="hover:shadow-lg hover:shadow-lime-300/50 transition-shadow h-full flex flex-col bg-white border-lime-200">
+    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col bg-white border-lime-200 mt-2 mx-2 mb-6">
       <CardHeader className="pb-0">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">

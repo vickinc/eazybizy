@@ -13,11 +13,11 @@ export function GlobalCompanyFilter() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2">
-        <Label className="text-xs sm:text-sm font-bold text-gray-700 whitespace-nowrap">
+      <div className="flex items-center gap-2 min-w-0">
+        <Label className="text-xs sm:text-sm font-bold text-gray-700 whitespace-nowrap flex-shrink-0">
           Company:
         </Label>
-        <div className="w-[120px] sm:w-[160px] lg:w-[180px] h-8 bg-gray-100 animate-pulse rounded"></div>
+        <div className="min-w-[120px] w-auto max-w-[50vw] h-8 bg-gray-100 animate-pulse rounded"></div>
       </div>
     );
   }
@@ -28,16 +28,16 @@ export function GlobalCompanyFilter() {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Label className="text-xs sm:text-sm font-bold text-gray-700 whitespace-nowrap">
+    <div className="flex items-center gap-2 min-w-0">
+      <Label className="text-xs sm:text-sm font-bold text-gray-700 whitespace-nowrap flex-shrink-0">
         Company:
       </Label>
       <Select 
         value={selectedCompany === 'all' ? 'all' : String(selectedCompany)} 
         onValueChange={(value) => setSelectedCompany(value === 'all' ? 'all' : parseInt(value))}
       >
-        <SelectTrigger className="w-[120px] sm:w-[160px] lg:w-[180px] h-8 text-xs sm:text-sm border-2 border-blue-200 focus:border-blue-500 bg-blue-50/50">
-          <SelectValue placeholder="Select company" />
+        <SelectTrigger className="min-w-[120px] w-auto max-w-[50vw] h-8 text-xs sm:text-sm border-2 border-blue-200 focus:border-blue-500 bg-blue-50/50">
+          <SelectValue placeholder="Select company" className="truncate" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">

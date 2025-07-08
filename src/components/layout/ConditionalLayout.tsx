@@ -36,10 +36,12 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-14 sm:h-16 shrink-0 items-center gap-2 border-b px-2 sm:px-4 bg-lime-50">
-          <div className="flex items-center gap-1 sm:gap-2 w-full">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-1 sm:mr-2 h-4" />
-            <GlobalCompanyFilter />
+          <div className="flex items-center gap-1 sm:gap-2 w-full min-w-0">
+            <SidebarTrigger className="-ml-1 flex-shrink-0" />
+            <Separator orientation="vertical" className="mr-1 sm:mr-2 h-4 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <GlobalCompanyFilter />
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-auto bg-lime-50">

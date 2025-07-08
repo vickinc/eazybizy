@@ -52,6 +52,7 @@ export interface BusinessCardsManagementDBHook {
   handleCreateCard: () => void;
   handlePreview: (card: BusinessCard) => void;
   handleDelete: (cardId: string) => void;
+  handleDownloadCard: (card: BusinessCard) => Promise<void>;
   handleArchive: (cardId: string) => void;
   handleUnarchive: (cardId: string) => void;
   
@@ -264,6 +265,16 @@ export function useBusinessCardsManagementDB(
       deleteBusinessCardMutation.mutate(cardId);
     }
   }, [deleteBusinessCardMutation]);
+
+  const handleDownloadCard = useCallback(async (card: BusinessCard) => {
+    try {
+      await BusinessCardsBusinessService.downloadBusinessCardImage(card);
+      toast.success(`Business card image downloaded for ${card.company.tradingName}`);
+    } catch (error) {
+      toast.error('Failed to download business card image');
+      console.error('Business card download error:', error);
+    }
+  }, []);
   
   const handleArchive = useCallback((cardId: string) => {
     archiveBusinessCardMutation.mutate({ id: cardId, archive: true });
@@ -348,6 +359,7 @@ export function useBusinessCardsManagementDB(
     handleCreateCard,
     handlePreview,
     handleDelete,
+    handleDownloadCard,
     handleArchive,
     handleUnarchive,
     
