@@ -1,0 +1,24 @@
+Added isMutating prop to EventDialog - The dialog now accepts
+  a loading state prop
+  2. Updated button behavior - The submit button is now:
+    - Disabled during mutation (disabled={isMutating})
+    - Shows "Saving..." text while submitting
+    - Prevents multiple clicks during submission
+  3. Enhanced Calendar page - Now passes the isMutating state from
+  the hook to the EventDialog
+  4. Improved error handling - Added try/catch blocks to all
+  mutation handlers to prevent unhandled promise rejections
+  5. React Query mutation state - The isMutating combines all
+  mutation states:
+  const isMutating = createEventMutation.isPending ||
+                     updateEventMutation.isPending ||
+                     deleteEventMutation.isPending;
+
+  How it prevents duplicates:
+  - When user clicks "Add Event", the button immediately becomes
+  disabled
+  - The button text changes to "Saving..." to show progress
+  - No additional clicks can trigger the mutation while one is in
+  progress
+  - Only after the mutation completes (success or failure) does the
+   button become enabled again

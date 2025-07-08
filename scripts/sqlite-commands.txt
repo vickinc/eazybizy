@@ -1,0 +1,38 @@
+# SQLite Database Access Commands
+
+## Connect to the database:
+sqlite3 prisma/dev.db
+
+## Once connected, you can run these commands:
+
+# List all tables
+.tables
+
+# View table structure
+.schema notes
+.schema calendar_events
+.schema companies
+
+# Query data
+SELECT * FROM notes;
+SELECT * FROM calendar_events;
+SELECT * FROM companies;
+
+# Count records
+SELECT COUNT(*) as total_notes FROM notes;
+SELECT COUNT(*) as total_events FROM calendar_events;
+SELECT COUNT(*) as total_companies FROM companies;
+
+# More complex queries
+SELECT n.title, n.priority, c.tradingName as company_name
+FROM notes n
+LEFT JOIN companies c ON n.companyId = c.id
+ORDER BY n.createdAt DESC;
+
+SELECT e.title, e.date, e.type, c.tradingName as company_name
+FROM calendar_events e
+LEFT JOIN companies c ON e.companyId = c.id
+ORDER BY e.date DESC;
+
+# Exit SQLite
+.quit

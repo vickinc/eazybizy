@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Recovery Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #1e7e34;
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .status-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .status-card.warning {
+            border-left-color: #ffc107;
+        }
+        .status-card.danger {
+            border-left-color: #dc3545;
+        }
+        .status-card.success {
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Data Recovery Tool</h1>
+        <p>Use this tool to diagnose and recover localStorage data after the brand-neutral migration.</p>
+    </div>
+
+    <div class="status-grid">
+        <div class="status-card" id="migration-status">
+            <h3>Migration Status</h3>
+            <div id="migration-info">Checking...</div>
+        </div>
+        <div class="status-card" id="data-status">
+            <h3>Data Status</h3>
+            <div id="data-info">Checking...</div>
+        </div>
+        <div class="status-card" id="recovery-status">
+            <h3>Recovery Status</h3>
+            <div id="recovery-info">Ready</div>
+        </div>
+    </div>
+
+    <div>
+        <h2>🔍 Inspection Tools</h2>
+        <button class="button" onclick="runFullInspection()">Run Full Inspection</button>
+        <button class="button" onclick="showMigrationTable()">Show Migration Status Table</button>
+        <button class="button" onclick="analyzeData()">Analyze Data Integrity</button>
+        <button class="button success" onclick="createBackup()">Create Backup</button>
+    </div>
+
+    <div>
+        <h2>🔄 Recovery Actions</h2>
+        <button class="button" onclick="runMigration()">Force Run Migration</button>
+        <button class="button" onclick="restoreFromOldKeys()">Restore from Old Keys</button>
+        <button class="button" onclick="fixOrphanedData()">Fix Orphaned Bank Accounts</button>
+        <button class="button danger" onclick="cleanupOldKeys()">Cleanup Old Keys</button>
+        <button class="button danger" onclick="resetAllData()">Reset All Data (Dangerous!)</button>
+    </div>
+
+    <div>
+        <h2>📊 Console Output</h2>
+        <div class="console-output" id="console-output"></div>
+        <button class="button" onclick="clearConsole()">Clear Console</button>
+    </div>
+
+    <script>
+        // Override console.log to display in our custom console
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        const originalConsoleGroup = console.group;
+        const originalConsoleGroupEnd = console.groupEnd;
+        
+        let groupLevel = 0;
+        
+        function addToConsole(message, type = 'log') {
+            const consoleOutput = document.getElementById('console-output');
+            const indent = '  '.repeat(groupLevel);
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : type === 'group' ? '📁' : '';
+            consoleOutput.textContent += `[${timestamp}] ${indent}${prefix} ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            addToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            addToConsole(args.join(' '), 'warn');
+        };
+        
+        console.group = function(...args) {
+            originalConsoleGroup.apply(console, args);
+            addToConsole(args.join(' '), 'group');
+            groupLevel++;
+        };
+        
+        console.groupEnd = function() {
+            originalConsoleGroupEnd.apply(console);
+            groupLevel = Math.max(0, groupLevel - 1);
+        };
+
+        // Key mappings for migration
+        const keyMappings = {
+            'portalpro-bookkeeping-entries': 'app-bookkeeping-entries',
+            'portalpro-bookkeeping-accounts': 'app-bookkeeping-accounts',
+            'portalpro-invoices': 'app-invoices',
+            'portalpro-transactions': 'app-transactions',
+            'portalpro-manual-cashflow': 'app-manual-cashflow',
+            'portalpro-clients': 'app-clients',
+            'portalpro-vendors': 'app-vendors',
+            'portalpro-products': 'app-products',
+            'portalpro-product-groups': 'app-product-groups',
+            'portalpro-companies': 'app-companies',
+            'portalpro-business-cards': 'app-business-cards',
+            'portalpro-bank-accounts': 'app-bank-accounts',
+            'portalpro-digital-wallets': 'app-digital-wallets',
+            'portalpro-events': 'app-events',
+            'portalpro-notes': 'app-notes',
+            'portalpro-fiat-rates': 'app-fiat-rates',
+            'portalpro-crypto-rates': 'app-crypto-rates',
+            'portalpro-currency-rates-version': 'app-currency-rates-version',
+        };
+
+        // Update status cards
+        function updateStatus() {
+            const migrationVersion = localStorage.getItem('app-migration-version');
+            const migrationComplete = migrationVersion === '1.0.0';
+            
+            const migrationCard = document.getElementById('migration-status');
+            const migrationInfo = document.getElementById('migration-info');
+            
+            if (migrationComplete) {
+                migrationCard.className = 'status-card success';
+                migrationInfo.textContent = '✅ Migration completed';
+            } else {
+                migrationCard.className = 'status-card danger';
+                migrationInfo.textContent = '❌ Migration not completed';
+            }
+            
+            // Count old and new keys
+            const allKeys = Object.keys(localStorage);
+            const oldKeys = allKeys.filter(key => key.startsWith('portalpro-'));
+            const newKeys = allKeys.filter(key => key.startsWith('app-'));
+            
+            const dataCard = document.getElementById('data-status');
+            const dataInfo = document.getElementById('data-info');
+            
+            if (newKeys.length > 0 && oldKeys.length === 0) {
+                dataCard.className = 'status-card success';
+                dataInfo.textContent = `✅ ${newKeys.length} new keys found`;
+            } else if (oldKeys.length > 0 && newKeys.length === 0) {
+                dataCard.className = 'status-card warning';
+                dataInfo.textContent = `⚠️ ${oldKeys.length} old keys need migration`;
+            } else if (oldKeys.length > 0 && newKeys.length > 0) {
+                dataCard.className = 'status-card warning';
+                dataInfo.textContent = `⚠️ Both old (${oldKeys.length}) and new (${newKeys.length}) keys present`;
+            } else {
+                dataCard.className = 'status-card danger';
+                dataInfo.textContent = '❌ No data found';
+            }
+        }
+
+        // Recovery functions
+        function runFullInspection() {
+            console.log('🔍 Running full localStorage inspection...');
+            
+            // Load and execute the inspection script
+            const script = document.createElement('script');
+            script.src = 'inspect-localStorage-data.js';
+            document.head.appendChild(script);
+        }
+
+        function showMigrationTable() {
+            console.log('📊 Migration Status Table:');
+            console.table(
+                Object.entries(keyMappings).map(([oldKey, newKey]) => ({
+                    'Data Type': oldKey.replace('portalpro-', ''),
+                    'Old Key Exists': localStorage.getItem(oldKey) !== null,
+                    'New Key Exists': localStorage.getItem(newKey) !== null,
+                    'Old Size': localStorage.getItem(oldKey)?.length || 0,
+                    'New Size': localStorage.getItem(newKey)?.length || 0,
+                    'Status': localStorage.getItem(oldKey) !== null && localStorage.getItem(newKey) !== null 
+                        ? 'Both Present' 
+                        : localStorage.getItem(newKey) !== null 
+                        ? 'Migrated' 
+                        : localStorage.getItem(oldKey) !== null 
+                        ? 'Not Migrated' 
+                        : 'No Data'
+                }))
+            );
+        }
+
+        function analyzeData() {
+            console.log('🔍 Analyzing data integrity...');
+            
+            Object.entries(keyMappings).forEach(([oldKey, newKey]) => {
+                const oldData = localStorage.getItem(oldKey);
+                const newData = localStorage.getItem(newKey);
+                
+                if (oldData || newData) {
+                    console.group(`📂 ${oldKey.replace('portalpro-', '').toUpperCase()}`);
+                    
+                    if (oldData) {
+                        try {
+                            const parsed = JSON.parse(oldData);
+                            const count = Array.isArray(parsed) ? parsed.length : (typeof parsed === 'object' ? Object.keys(parsed).length : 1);
+                            console.log(`Old data: ${count} items (${oldData.length} chars)`);
+                        } catch {
+                            console.error(`Old data: Invalid JSON`);
+                        }
+                    }
+                    
+                    if (newData) {
+                        try {
+                            const parsed = JSON.parse(newData);
+                            const count = Array.isArray(parsed) ? parsed.length : (typeof parsed === 'object' ? Object.keys(parsed).length : 1);
+                            console.log(`New data: ${count} items (${newData.length} chars)`);
+                        } catch {
+                            console.error(`New data: Invalid JSON`);
+                        }
+                    }
+                    
+                    console.groupEnd();
+                }
+            });
+        }
+
+        function createBackup() {
+            console.log('💾 Creating backup of all localStorage data...');
+            const backup = {};
+            Object.keys(localStorage).forEach(key => {
+                backup[key] = localStorage.getItem(key);
+            });
+            const backupString = JSON.stringify(backup, null, 2);
+            
+            // Create download link
+            const blob = new Blob([backupString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `localStorage-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Backup created and downloaded');
+        }
+
+        function runMigration() {
+            console.log('🔄 Running manual migration...');
+            let migratedCount = 0;
+            
+            Object.entries(keyMappings).forEach(([oldKey, newKey]) => {
+                const oldData = localStorage.getItem(oldKey);
+                
+                if (oldData !== null) {
+                    const existingData = localStorage.getItem(newKey);
+                    
+                    if (existingData === null) {
+                        localStorage.setItem(newKey, oldData);
+                        console.log(`✅ Migrated ${oldKey} → ${newKey}`);
+                        migratedCount++;
+                    } else {
+                        console.warn(`⚠️ Skipping ${oldKey} - ${newKey} already exists`);
+                    }
+                }
+            });
+            
+            localStorage.setItem('app-migration-version', '1.0.0');
+            console.log(`✅ Migration completed. Migrated ${migratedCount} items.`);
+            updateStatus();
+        }
+
+        function restoreFromOldKeys() {
+            console.log('🔄 Restoring data from old keys...');
+            let restoredCount = 0;
+            
+            Object.entries(keyMappings).forEach(([oldKey, newKey]) => {
+                const oldData = localStorage.getItem(oldKey);
+                const newData = localStorage.getItem(newKey);
+                
+                if (oldData && !newData) {
+                    localStorage.setItem(newKey, oldData);
+                    console.log(`✅ Restored ${oldKey} → ${newKey}`);
+                    restoredCount++;
+                }
+            });
+            
+            if (restoredCount > 0) {
+                localStorage.setItem('app-migration-version', '1.0.0');
+                console.log(`✅ Restored ${restoredCount} data sets.`);
+                updateStatus();
+            } else {
+                console.log('❌ No data to restore from old keys.');
+            }
+        }
+
+        function cleanupOldKeys() {
+            if (!confirm('Are you sure you want to delete all old portalpro-* keys? This cannot be undone!')) {
+                return;
+            }
+            
+            console.log('🧹 Cleaning up old keys...');
+            let removedCount = 0;
+            
+            Object.keys(keyMappings).forEach(oldKey => {
+                if (localStorage.getItem(oldKey) !== null) {
+                    localStorage.removeItem(oldKey);
+                    console.log(`🗑️ Removed ${oldKey}`);
+                    removedCount++;
+                }
+            });
+            
+            console.log(`✅ Cleanup completed. Removed ${removedCount} old keys.`);
+            updateStatus();
+        }
+
+        function fixOrphanedData() {
+            console.log('🔧 Fixing orphaned bank accounts and digital wallets...');
+
+            // Get current data
+            const companies = JSON.parse(localStorage.getItem('app-companies') || '[]');
+            const bankAccounts = JSON.parse(localStorage.getItem('app-bank-accounts') || '[]');
+            const digitalWallets = JSON.parse(localStorage.getItem('app-digital-wallets') || '[]');
+
+            console.log('Current data:');
+            console.log(`Companies: ${companies.length}`);
+            console.log(`Bank accounts: ${bankAccounts.length}`);
+            console.log(`Digital wallets: ${digitalWallets.length}`);
+
+            // Get valid company IDs
+            const validCompanyIds = new Set(companies.map(c => c.id));
+            console.log('Valid company IDs:', Array.from(validCompanyIds));
+
+            // Filter out orphaned bank accounts
+            const validBankAccounts = bankAccounts.filter(account => {
+                const isValid = validCompanyIds.has(account.companyId);
+                if (!isValid) {
+                    console.warn(`🗑️ Removing orphaned bank account ${account.id} (references company ${account.companyId})`);
+                }
+                return isValid;
+            });
+
+            // Filter out orphaned digital wallets
+            const validDigitalWallets = digitalWallets.filter(wallet => {
+                const isValid = validCompanyIds.has(wallet.companyId);
+                if (!isValid) {
+                    console.warn(`🗑️ Removing orphaned digital wallet ${wallet.id} (references company ${wallet.companyId})`);
+                }
+                return isValid;
+            });
+
+            // Save cleaned data
+            localStorage.setItem('app-bank-accounts', JSON.stringify(validBankAccounts));
+            localStorage.setItem('app-digital-wallets', JSON.stringify(validDigitalWallets));
+
+            const removedBankAccounts = bankAccounts.length - validBankAccounts.length;
+            const removedDigitalWallets = digitalWallets.length - validDigitalWallets.length;
+
+            console.log('✅ Cleanup completed:');
+            console.log(`  Removed ${removedBankAccounts} orphaned bank accounts`);
+            console.log(`  Removed ${removedDigitalWallets} orphaned digital wallets`);
+            console.log(`  Remaining bank accounts: ${validBankAccounts.length}`);
+            console.log(`  Remaining digital wallets: ${validDigitalWallets.length}`);
+
+            if (removedBankAccounts > 0 || removedDigitalWallets > 0) {
+                console.log('🔄 Please refresh the page to see the changes.');
+                
+                // Update recovery status
+                const recoveryInfo = document.getElementById('recovery-info');
+                recoveryInfo.textContent = `Fixed: ${removedBankAccounts + removedDigitalWallets} orphaned items`;
+                document.getElementById('recovery-status').className = 'status-card success';
+            } else {
+                console.log('ℹ️ No orphaned data found.');
+            }
+        }
+
+        function resetAllData() {
+            if (!confirm('WARNING: This will delete ALL localStorage data! Are you absolutely sure?')) {
+                return;
+            }
+            
+            if (!confirm('This action cannot be undone. Type "DELETE" to confirm:') || 
+                prompt('Type "DELETE" to confirm:') !== 'DELETE') {
+                console.log('❌ Reset cancelled.');
+                return;
+            }
+            
+            console.log('🧹 Resetting all localStorage data...');
+            localStorage.clear();
+            console.log('✅ All data cleared.');
+            updateStatus();
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').textContent = '';
+        }
+
+        // Initialize
+        updateStatus();
+        console.log('🔧 Data Recovery Tool loaded. Use the buttons above to diagnose and recover your data.');
+    </script>
+</body>
+</html>

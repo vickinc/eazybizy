@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "migrate:execute": "tsx src/scripts/masterMigrationExecutor.ts",
+    "migrate:rollback": "tsx src/scripts/masterMigrationExecutor.ts rollback",
+    "migrate:status": "tsx src/scripts/migrationStatus.ts",
+    "migrate:validate": "tsx src/scripts/migrationValidator.ts"
+  }
+}

@@ -1,0 +1,45 @@
+### Performance Improvement Plan
+
+I propose a comprehensive refactoring strategy that moves the application from its current client-centric architecture to a robust, scalable client-server model. This will yield dramatic performance improvements without any changes to the user interface.
+
+Here is the step-by-step plan:
+
+__Phase 1: Backend & Data Layer Refactoring__
+
+1. __Introduce API Endpoints for Data:__
+
+   - Create a set of Next.js API routes (e.g., under `src/app/api/invoices/`) to handle all CRUD (Create, Read, Update, Delete) operations for invoices.
+   - These API routes will use the existing Prisma client to interact with the database, effectively replacing `InvoiceStorageService`.
+
+2. __Move Business Logic to the Server:__
+
+   - Modify the new API endpoints to handle all data processing. The `GET /api/invoices` endpoint, for example, will accept parameters for filtering, sorting, and pagination.
+   - All calculations (like statistics) will be performed on the server, using efficient database queries. This offloads all heavy lifting from the client to the server.
+
+__Phase 2: Frontend Data Fetching Refactoring__
+
+3. __Integrate a Server-State Library:__
+
+   - Add `TanStack Query` (`@tanstack/react-query`) to the project. This is the industry standard for managing server state in React applications and aligns with your architecture guide's recommendation.
+
+4. __Refactor Data Hooks:__
+
+   - Rewrite `useInvoicesManagement` (and other similar data hooks) to use TanStack Query's hooks:
+
+     - `useQuery` will replace the `useEffect`-based data fetching. It will call our new API endpoints and handle all caching, background updates, and loading/error states automatically.
+     - `useMutation` will be used for creating, updating, and deleting invoices. It will manage the API calls and intelligently update the cached data.
+
+### Expected Benefits
+
+- __Instantaneous Load Times:__ The application will only fetch the data required for the current view (e.g., the first 20 invoices), instead of all invoices at once.
+- __Blazing-Fast Interactions:__ Filtering, sorting, and searching will be nearly instant, as the work is done by the optimized database on the server.
+- __Scalability:__ The application will be able to handle millions of records without any performance degradation.
+- __Code Simplification:__ The data hooks will become significantly smaller and easier to maintain by offloading state management to TanStack Query.
+- __Robustness:__ Data will be more consistent and reliable.
+
+This plan directly addresses the root causes of the performance issues and aligns the application with modern, scalable web architecture best practices.
+
+I have analyzed the codebase and identified a critical architectural issue that is the primary cause of performance problems: the application is loading and processing all data on the client-side using `localStorage`.
+
+I've formulated a comprehensive plan to refactor the application to a scalable client-server architecture. This involves creating API endpoints to handle data operations on the server, moving all business logic (filtering, sorting, etc.) to the backend, and using TanStack Query on the frontend for efficient data fetching and caching.
+

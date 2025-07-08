@@ -1,0 +1,30 @@
+{
+  "bankAccounts": [
+    {
+      "originalId": "cmcot6mxh00039k4aca28331m",
+      "paymentMethodId": "cmcrez1so00019k6168gfd1k4",
+      "bankName": "LHV Bank",
+      "currency": "EUR"
+    },
+    {
+      "originalId": "cmcqgeox000019k8ggqop0wol",
+      "paymentMethodId": "cmcrez1st00039k617rgiqjet",
+      "bankName": "CBA Bank",
+      "currency": "USD"
+    }
+  ],
+  "digitalWallets": [
+    {
+      "originalId": "cmcqflppt00099k5684px5ikc",
+      "paymentMethodId": "cmcrez1sw00059k61e27cszow",
+      "walletName": "BNB-20",
+      "currency": "USDT"
+    },
+    {
+      "originalId": "cmcqflppt00099k5684px5ikc",
+      "paymentMethodId": "cmcrez1sy00079k61cr36ew59",
+      "walletName": "BNB-20",
+      "currency": "USDC"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Storage Migration Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .status { 
+      padding: 10px; 
+      margin: 10px 0; 
+      border-radius: 5px; 
+    }
+    .success { 
+      background-color: #d4edda; 
+      color: #155724; 
+    }
+    .warning { 
+      background-color: #fff3cd; 
+      color: #856404; 
+    }
+    .error { 
+      background-color: #f8d7da; 
+      color: #721c24; 
+    }
+    .key-list { 
+      margin: 10px 0; 
+      padding: 10px; 
+      background-color: #f8f9fa; 
+      border-radius: 5px; 
+    }
+    .key-item { 
+      margin: 5px 0; 
+      font-family: monospace; 
+    }
+    button { 
+      padding: 10px 20px; 
+      margin: 5px; 
+      cursor: pointer; 
+    }
+  </style>
+</head>
+<body>
+  <h1>Storage Migration Test</h1>
+  
+  <div id="status"></div>
+  
+  <h2>Old Keys (portalpro-*):</h2>
+  <div id="oldKeys" class="key-list"></div>
+  
+  <h2>New Keys (app-*):</h2>
+  <div id="newKeys" class="key-list"></div>
+  
+  <h2>Actions:</h2>
+  <button onclick="createTestData()">Create Test Data (Old Keys)</button>
+  <button onclick="runMigration()">Run Migration</button>
+  <button onclick="checkStatus()">Check Status</button>
+  <button onclick="cleanupOldKeys()">Cleanup Old Keys</button>
+  
+  <script>
+    // Define key mappings
+    const KEY_MAPPINGS = {
+      'portalpro-bookkeeping-entries': 'app-bookkeeping-entries',
+      'portalpro-bookkeeping-accounts': 'app-bookkeeping-accounts',
+      'portalpro-invoices': 'app-invoices',
+      'portalpro-transactions': 'app-transactions',
+      'portalpro-manual-cashflow': 'app-manual-cashflow',
+      'portalpro-clients': 'app-clients',
+      'portalpro-vendors': 'app-vendors',
+      'portalpro-products': 'app-products',
+      'portalpro-product-groups': 'app-product-groups',
+      'portalpro-companies': 'app-companies',
+      'portalpro-business-cards': 'app-business-cards',
+      'portalpro-bank-accounts': 'app-bank-accounts',
+      'portalpro-digital-wallets': 'app-digital-wallets',
+      'portalpro-events': 'app-events',
+      'portalpro-notes': 'app-notes',
+      'portalpro-fiat-rates': 'app-fiat-rates',
+      'portalpro-crypto-rates': 'app-crypto-rates',
+      'portalpro-currency-rates-version': 'app-currency-rates-version',
+    };
+    
+    function checkStatus() {
+      const oldKeysDiv = document.getElementById('oldKeys');
+      const newKeysDiv = document.getElementById('newKeys');
+      const statusDiv = document.getElementById('status');
+      
+      oldKeysDiv.innerHTML = '';
+      newKeysDiv.innerHTML = '';
+      
+      let oldCount = 0;
+      let newCount = 0;
+      
+      // Check for old keys
+      for (const oldKey in KEY_MAPPINGS) {
+        const value = localStorage.getItem(oldKey);
+        if (value !== null) {
+          oldCount++;
+          oldKeysDiv.innerHTML += `<div class="key-item">✓ ${oldKey} (${value.length} chars)</div>`;
+        }
+      }
+      
+      // Check for new keys
+      for (const newKey of Object.values(KEY_MAPPINGS)) {
+        const value = localStorage.getItem(newKey);
+        if (value !== null) {
+          newCount++;
+          newKeysDiv.innerHTML += `<div class="key-item">✓ ${newKey} (${value.length} chars)</div>`;
+        }
+      }
+      
+      // Update status
+      if (oldCount === 0 && newCount === 0) {
+        statusDiv.innerHTML = '<div class="status warning">No data found in localStorage</div>';
+      } else if (oldCount > 0 && newCount === 0) {
+        statusDiv.innerHTML = '<div class="status warning">Found ' + oldCount + ' old keys. Migration needed!</div>';
+      } else if (oldCount === 0 && newCount > 0) {
+        statusDiv.innerHTML = '<div class="status success">Migration complete! Found ' + newCount + ' new keys.</div>';
+      } else {
+        statusDiv.innerHTML = '<div class="status warning">Found ' + oldCount + ' old keys and ' + newCount + ' new keys. Partial migration state.</div>';
+      }
+    }
+    
+    function createTestData() {
+      // Create some test data with old keys
+      localStorage.setItem('portalpro-companies', JSON.stringify([
+        { id: 1, name: 'Test Company 1' },
+        { id: 2, name: 'Test Company 2' }
+      ]));
+      
+      localStorage.setItem('portalpro-products', JSON.stringify([
+        { id: '1', name: 'Test Product 1', price: 100 },
+        { id: '2', name: 'Test Product 2', price: 200 }
+      ]));
+      
+      localStorage.setItem('portalpro-clients', JSON.stringify([
+        { id: '1', name: 'Test Client 1', email: 'client1@test.com' },
+        { id: '2', name: 'Test Client 2', email: 'client2@test.com' }
+      ]));
+      
+      alert('Test data created with old keys!');
+      checkStatus();
+    }
+    
+    function runMigration() {
+      let migratedCount = 0;
+      
+      for (const [oldKey, newKey] of Object.entries(KEY_MAPPINGS)) {
+        const data = localStorage.getItem(oldKey);
+        
+        if (data !== null) {
+          const existingData = localStorage.getItem(newKey);
+          
+          if (existingData === null) {
+            localStorage.setItem(newKey, data);
+            console.log(`Migrated ${oldKey} → ${newKey}`);
+            migratedCount++;
+          } else {
+            console.warn(`Skipping ${oldKey} - ${newKey} already exists`);
+          }
+        }
+      }
+      
+      localStorage.setItem('app-migration-version', '1.0.0');
+      alert(`Migration completed! Migrated ${migratedCount} keys.`);
+      checkStatus();
+    }
+    
+    function cleanupOldKeys() {
+      if (!confirm('Are you sure you want to delete all old keys? This cannot be undone!')) {
+        return;
+      }
+      
+      let removedCount = 0;
+      
+      for (const oldKey of Object.keys(KEY_MAPPINGS)) {
+        if (localStorage.getItem(oldKey) !== null) {
+          localStorage.removeItem(oldKey);
+          removedCount++;
+        }
+      }
+      
+      alert(`Cleanup completed! Removed ${removedCount} old keys.`);
+      checkStatus();
+    }
+    
+    // Check status on load
+    checkStatus();
+  </script>
+</body>
+</html>

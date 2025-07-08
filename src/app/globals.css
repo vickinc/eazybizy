@@ -1,0 +1,692 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Force calendar to not be sticky */
+.calendar-no-sticky {
+  position: relative !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+.calendar-container-no-sticky {
+  position: static !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+/* Target the card specifically */
+[data-slot="card"].calendar-no-sticky {
+  position: relative !important;
+  top: 0 !important;
+  transform: none !important;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-cal-sans);
+  --font-mono: var(--font-cal-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: hsl(84, 81%, 97%);
+  --foreground: hsl(285.823, 2%, 14%);
+  --card: hsl(286.067, 1%, 99%);
+  --card-foreground: hsl(285.823, 2%, 14%);
+  --popover: hsl(286.067, 1%, 99%);
+  --popover-foreground: hsl(285.823, 2%, 14%);
+  --primary: hsl(285.885, 3%, 21%);
+  --primary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(286.067, 3%, 92%);
+  --secondary-foreground: hsl(285.885, 3%, 21%);
+  --muted: hsl(286.375, 1%, 97%);
+  --muted-foreground: hsl(285.938, 8%, 55%);
+  --accent: hsl(286.375, 1%, 97%);
+  --accent-foreground: hsl(285.885, 3%, 21%);
+  --destructive: hsl(27.325, 65%, 58%);
+  --border: hsl(286.32, 2%, 92%);
+  --input: hsl(286.32, 2%, 92%);
+  --ring: hsl(286.067, 7%, 71%);
+  --chart-1: hsl(41.116, 58%, 65%);
+  --chart-2: hsl(184.704, 31%, 60%);
+  --chart-3: hsl(227.392, 18%, 40%);
+  --chart-4: hsl(84.429, 49%, 83%);
+  --chart-5: hsl(70.08, 49%, 77%);
+  --sidebar: hsl(81, 88%, 80%);
+  --sidebar-foreground: hsl(285.823, 2%, 14%);
+  --sidebar-primary: hsl(285.885, 3%, 21%);
+  --sidebar-primary-foreground: hsl(0, 0%, 98%);
+  --sidebar-accent: hsl(120.76, 45%, 84%);
+  --sidebar-accent-foreground: hsl(285.885, 3%, 21%);
+  --sidebar-border: hsl(286.32, 2%, 92%);
+  --sidebar-ring: hsl(286.067, 7%, 71%);
+}
+
+.dark {
+  --background: hsl(285.823, 2%, 14%);
+  --foreground: hsl(0, 0%, 98%);
+  --card: hsl(286.067, 1%, 99%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --popover: hsl(286.067, 1%, 99%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --primary: hsl(286.32, 2%, 92%);
+  --primary-foreground: hsl(285.885, 3%, 21%);
+  --secondary: hsl(286.033, 3%, 27%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --muted: hsl(286.033, 3%, 27%);
+  --muted-foreground: hsl(286.067, 7%, 71%);
+  --accent: hsl(286.033, 3%, 27%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(22.216, 50%, 70%);
+  --border: hsla(0, 0%, 100%, 0.1);
+  --input: hsla(0, 0%, 100%, 0.15);
+  --ring: hsl(285.938, 8%, 55%);
+  --chart-1: hsl(264.376, 63%, 49%);
+  --chart-2: hsl(162.48, 44%, 70%);
+  --chart-3: hsl(70.08, 49%, 77%);
+  --chart-4: hsl(303.9, 69%, 63%);
+  --chart-5: hsl(16.439, 64%, 65%);
+  --sidebar: hsl(285.885, 3%, 21%);
+  --sidebar-foreground: hsl(0, 0%, 98%);
+  --sidebar-primary: hsl(264.376, 63%, 49%);
+  --sidebar-primary-foreground: hsl(0, 0%, 98%);
+  --sidebar-accent: hsl(286.033, 3%, 27%);
+  --sidebar-accent-foreground: hsl(0, 0%, 98%);
+  --sidebar-border: hsla(0, 0%, 100%, 0.1);
+  --sidebar-ring: hsl(285.938, 8%, 55%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Force header and main to use lime-50 background */
+  header {
+    background-color: rgb(247, 254, 231) !important;
+  }
+  
+  main {
+    background-color: rgb(247, 254, 231) !important;
+  }
+  
+  /* Force all dialog/modal backgrounds to zinc-50 */
+  [role="dialog"],
+  .dialog-content,
+  [data-radix-dialog-content],
+  .DialogContent {
+    background-color: hsl(286.067, 1%, 99%) !important;
+  }
+  main button:not(.variant-destructive):not(.variant-ghost):not([data-calendar]):not(.rdp-button):not(.rdp-nav_button):not([data-slot="button"]) {
+    @apply bg-zinc-200 hover:bg-zinc-300 text-black;
+  }
+  
+  /* Target specific Tailwind classes that cause gray backgrounds */
+  .hover\:bg-accent:hover,
+  .bg-accent,
+  button[data-slot="button"][class*="hover:bg-accent"]:hover {
+    background-color: transparent !important;
+  }
+  
+  /* Override ghost button backgrounds completely */
+  button[data-slot="button"] {
+    background-color: transparent !important;
+  }
+  
+  /* Add subtle hover for better UX */
+  button[data-slot="button"]:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  /* Override CSS variable for accent color on buttons */
+  button[data-slot="button"] {
+    --color-accent: transparent;
+    --accent: transparent;
+  }
+  
+  /* Fix button text visibility on light backgrounds */
+  button {
+    color: inherit;
+  }
+  
+  /* Default black text for all buttons in main content */
+  main button {
+    color: rgb(0, 0, 0);
+  }
+  
+  /* Ensure outline buttons have proper text color */
+  button[class*="outline"],
+  .variant-outline,
+  [data-slot="button"][class*="outline"] {
+    color: rgb(0, 0, 0) !important;
+  }
+  
+  /* Keep white text for dark buttons */
+  button[class*="bg-gray-900"],
+  button[class*="bg-black"],
+  button[class*="bg-blue-600"],
+  button[class*="bg-destructive"],
+  button[class*="text-white"] {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Standardize primary action buttons to black */
+  /* Target blue buttons that should be black */
+  main button[class*="bg-blue-600"],
+  main button[class*="bg-blue-700"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Ensure text is visible when converting blue buttons to black */
+  main button[class*="bg-blue-600"] *,
+  main button[class*="bg-blue-700"] * {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Force black buttons to stay black and have white text */
+  main button[class*="bg-black"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  main button[class*="bg-black"] *,
+  main button[class*="bg-black"] span,
+  main button[class*="bg-black"] div {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Target button text specifically */
+  button[class*="bg-black"] {
+    color: white !important;
+  }
+  
+  button[class*="bg-black"] > * {
+    color: white !important;
+  }
+  
+  /* Ultra-specific rule to force white text on all black buttons */
+  main button[class*="bg-black"][class*="text"],
+  main .bg-black button,
+  main [class*="bg-black"] {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Force all children of black buttons to be white */
+  main button[class*="bg-black"] > *,
+  main button[class*="bg-black"] span,
+  main button[class*="bg-black"] div,
+  main button[class*="bg-black"] p {
+    color: rgb(255, 255, 255) !important;
+    fill: rgb(255, 255, 255) !important;
+  }
+
+  /* Ultra-aggressive rules for black buttons */
+  main button[class*="bg-black"],
+  main button[class*="bg-black"]:focus,
+  main button[class*="bg-black"]:active {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Black button hover effects - white background with black text */
+  main button[class*="bg-black"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  main button[class*="bg-black"]:hover *,
+  main button[class*="bg-black"]:hover span,
+  main button[class*="bg-black"]:hover div,
+  main button[class*="bg-black"]:hover p {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Target all text content inside black buttons */
+  main button[class*="bg-black"] *:not(svg) {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Specific rule for buttons with Plus icons (Add buttons) */
+  main button:has(svg[data-lucide="plus"]),
+  main button:has(.lucide-plus) {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  main button:has(svg[data-lucide="plus"]) *,
+  main button:has(.lucide-plus) * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Specific targeting for Invoice page button */
+  button.bg-blue-600.hover\:bg-blue-700.py-3.px-4,
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"][class*="py-3"][class*="px-4"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  button.bg-blue-600.hover\:bg-blue-700.py-3.px-4 *,
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"][class*="py-3"][class*="px-4"] * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Specific targeting for Products page button */
+  button.w-full.sm\:w-auto.sm\:max-w-md.py-3.px-4,
+  button[class*="w-full"][class*="sm:w-auto"][class*="sm:max-w-md"][class*="py-3"][class*="px-4"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  button.w-full.sm\:w-auto.sm\:max-w-md.py-3.px-4 *,
+  button[class*="w-full"][class*="sm:w-auto"][class*="sm:max-w-md"][class*="py-3"][class*="px-4"] * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Only target primary action buttons with Plus icon that should be black */
+  main button:has(.lucide-plus):not([class*="variant-ghost"]):not([class*="variant-outline"]):not([class*="bg-gray"]):not([class*="bg-white"]) {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  main button:has(.lucide-plus):not([class*="variant-ghost"]):not([class*="variant-outline"]):not([class*="bg-gray"]):not([class*="bg-white"]) * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Specific rules for Add Product button */
+  button[class*="w-full"][class*="sm:w-auto"][class*="sm:max-w-md"][class*="py-3"][class*="px-4"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  button[class*="w-full"][class*="sm:w-auto"][class*="sm:max-w-md"][class*="py-3"][class*="px-4"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Specific rules for Add Wallet button - more specific targeting */
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"][class*="w-full"][class*="sm:max-w-md"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"][class*="w-full"][class*="sm:max-w-md"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Additional broad rule for any bg-blue-600 button with hover:bg-blue-700 */
+  button.bg-blue-600.hover\:bg-blue-700:hover,
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  button.bg-blue-600.hover\:bg-blue-700:hover *,
+  button[class*="bg-blue-600"][class*="hover:bg-blue-700"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Specific rules for Add Manual Cashflow (purple) button */
+  button[class*="bg-purple-600"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  button[class*="bg-purple-600"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* First, fix the black styling issue for outline buttons */
+  button[class*="text-green-600"][class*="border-green-200"],
+  button[class*="text-red-600"][class*="border-red-200"] {
+    background-color: rgb(255, 255, 255) !important;
+  }
+
+  button[class*="text-green-600"][class*="border-green-200"] *,
+  button[class*="text-red-600"][class*="border-red-200"] * {
+    color: inherit !important;
+  }
+
+  /* Specific rules for Add Income button (green) hover */
+  button[class*="text-green-600"][class*="border-green-200"]:hover {
+    background-color: rgba(34, 197, 94, 0.1) !important; /* transparent green */
+    color: rgb(0, 0, 0) !important;
+    border-color: rgb(34, 197, 94) !important;
+  }
+
+  button[class*="text-green-600"][class*="border-green-200"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Specific rules for Add Expense button (red) hover */
+  button[class*="text-red-600"][class*="border-red-200"]:hover {
+    background-color: rgba(239, 68, 68, 0.1) !important; /* transparent red */
+    color: rgb(0, 0, 0) !important;
+    border-color: rgb(239, 68, 68) !important;
+  }
+
+  button[class*="text-red-600"][class*="border-red-200"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Specific rule for Set Initial Balance button */
+  button[class*="bg-blue-600"][class*="text-white"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  button[class*="bg-blue-600"][class*="text-white"] * {
+    color: rgb(255, 255, 255) !important;
+    fill: rgb(255, 255, 255) !important;
+  }
+
+  button[class*="bg-blue-600"][class*="text-white"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  button[class*="bg-blue-600"][class*="text-white"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+  
+  main button[class*="bg-blue-600"]:hover,
+  main button[class*="bg-blue-700"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  main button[class*="bg-blue-600"]:hover *,
+  main button[class*="bg-blue-700"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+  
+  /* Ensure primary action buttons with Plus icon are black */
+  main button:has(svg[class*="Plus"]) {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  main button:has(svg[class*="Plus"]):hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  main button:has(svg[class*="Plus"]):hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+  
+  /* Standard style for primary action buttons */
+  .primary-action-button,
+  button[data-primary-action="true"] {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+    font-weight: bold !important;
+  }
+  
+  .primary-action-button:hover,
+  button[data-primary-action="true"]:hover {
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
+    border: 1px solid rgb(0, 0, 0) !important;
+  }
+
+  .primary-action-button:hover *,
+  button[data-primary-action="true"]:hover * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Filter button selected states - black background with white text */
+  /* Target buttons with bg-primary class (selected filter buttons) but exclude calendar buttons */
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]),
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]) {
+    background-color: rgb(0, 0, 0) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]) *,
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]) * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Make icons in selected filter buttons dark gray */
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]) svg,
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]) svg {
+    color: rgb(107, 114, 128) !important;
+    fill: rgb(107, 114, 128) !important;
+  }
+
+  /* Filter button selected states hover */
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]):hover,
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]):hover {
+    background-color: rgb(64, 64, 64) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]):hover *,
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]):hover * {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Keep icons dark gray even on hover */
+  button[class*="bg-primary"]:not([data-day]):not([class*="rdp"]):not([data-slot="calendar"]):hover svg,
+  button[data-slot="button"][class*="bg-primary"]:not([data-day]):not([class*="rdp"]):hover svg {
+    color: rgb(107, 114, 128) !important;
+    fill: rgb(107, 114, 128) !important;
+  }
+
+  /* Bookkeeping page tabs - non-selected (inactive) tabs styling */
+  [role="tablist"] button[data-state="inactive"],
+  .TabsTrigger[data-state="inactive"] {
+    background-color: transparent !important;
+    color: rgb(0, 0, 0) !important;
+  }
+
+  [role="tablist"] button[data-state="inactive"] *,
+  .TabsTrigger[data-state="inactive"] * {
+    color: rgb(0, 0, 0) !important;
+  }
+
+  /* Icons in inactive tabs should be dark gray */
+  [role="tablist"] button[data-state="inactive"] svg,
+  .TabsTrigger[data-state="inactive"] svg {
+    color: rgb(107, 114, 128) !important;
+    fill: rgb(107, 114, 128) !important;
+  }
+
+  /* Hover state for inactive tabs */
+  [role="tablist"] button[data-state="inactive"]:hover,
+  .TabsTrigger[data-state="inactive"]:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  /* Calendar specific styling - override global button styles */
+  [data-slot="calendar"] button,
+  .rdp button,
+  button[data-day] {
+    background-color: transparent !important;
+    color: rgb(0, 0, 0) !important;
+  }
+
+  [data-slot="calendar"] button:hover,
+  .rdp button:hover,
+  button[data-day]:hover {
+    background-color: rgba(156, 163, 175, 0.1) !important;
+    color: rgb(0, 0, 0) !important;
+  }
+
+  /* Today highlighting with lime-200 */
+  [data-slot="calendar"] button.bg-lime-200,
+  .rdp button.bg-lime-200,
+  button[data-day].bg-lime-200 {
+    background-color: rgb(217, 249, 157) !important;
+    color: rgb(0, 0, 0) !important;
+    font-weight: bold !important;
+    border: 2px solid rgb(163, 230, 53) !important;
+  }
+
+  [data-slot="calendar"] button.bg-lime-200:hover,
+  .rdp button.bg-lime-200:hover,
+  button[data-day].bg-lime-200:hover {
+    background-color: rgb(190, 242, 100) !important;
+  }
+
+  /* Selected day styling */
+  .rdp-button_selected {
+    background-color: rgb(17, 24, 39) !important;
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .rdp-button_selected:hover {
+    background-color: rgb(55, 65, 81) !important;
+  }
+  
+  /* Navigation buttons */
+  .rdp-nav_button {
+    background-color: rgb(243, 244, 246) !important;
+    color: rgb(0, 0, 0) !important;
+  }
+
+  .rdp-nav_button:hover {
+    background-color: rgb(229, 231, 235) !important;
+  }
+
+  /* FORCE ALL CALENDAR DAY BUTTONS TO BE TRANSPARENT - highest priority */
+  /* This overrides all other button styles for calendar components */
+  .CalendarDayButton,
+  [data-slot="calendar"] button[data-day],
+  [data-slot="calendar"] .rdp button,
+  [data-slot="calendar"] button:not(.rdp-nav_button),
+  button[data-day]:not([class*="bg-lime"]):not(.rdp-nav_button) {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: rgb(0, 0, 0) !important;
+  }
+
+  /* Ensure text and icons in calendar day buttons are black */
+  .CalendarDayButton *,
+  [data-slot="calendar"] button[data-day] *,
+  [data-slot="calendar"] .rdp button *,
+  [data-slot="calendar"] button:not(.rdp-nav_button) *,
+  button[data-day]:not([class*="bg-lime"]):not(.rdp-nav_button) * {
+    color: rgb(0, 0, 0) !important;
+    fill: rgb(0, 0, 0) !important;
+  }
+
+  /* Light hover for calendar day buttons */
+  .CalendarDayButton:hover,
+  [data-slot="calendar"] button[data-day]:hover,
+  [data-slot="calendar"] .rdp button:hover,
+  [data-slot="calendar"] button:not(.rdp-nav_button):hover,
+  button[data-day]:not([class*="bg-lime"]):not(.rdp-nav_button):hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  /* Calendar dates with events */
+  .rdp-day_has_events {
+    @apply bg-orange-100 border-2 border-orange-400 text-orange-800 hover:bg-orange-200;
+  }
+  
+  .rdp-day_has_events.rdp-day_today {
+    @apply bg-blue-600 border-2 border-blue-800 text-white hover:bg-blue-700 font-bold shadow-lg;
+  }
+  
+  .rdp-day_has_events.rdp-button_selected {
+    @apply bg-orange-700 border-orange-800 text-white hover:bg-orange-800;
+  }
+  
+  /* Event indicator dot */
+  .rdp-day_has_events::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: orange;
+    border-radius: 50%;
+  }
+  
+  .rdp-day_has_events.rdp-day_today::after,
+  .rdp-day_has_events.rdp-button_selected::after {
+    background-color: white;
+  }
+}
+
+@layer components {
+  /* Force mobile sidebar to have same background as desktop */
+  [data-sidebar="sidebar"],
+  [data-sidebar="sidebar"][data-mobile="true"],
+  [data-sidebar="sidebar"][data-state="open"],
+  [data-sidebar="sidebar"][data-state="closed"],
+  .sidebar-gradient[data-mobile="true"],
+  .sidebar-gradient[data-state="open"],
+  .sidebar-gradient[data-state="closed"] {
+    background: hsl(81, 88%, 80%) !important;
+  }
+  
+  /* Target the mobile sidebar overlay/backdrop */
+  [data-sidebar-mobile="true"],
+  [vaul-drawer],
+  [vaul-drawer-visible="true"],
+  [data-sidebar][data-mobile="true"] > div,
+  .sidebar-gradient > div[data-mobile="true"] {
+    background: hsl(81, 88%, 80%) !important;
+  }
+}

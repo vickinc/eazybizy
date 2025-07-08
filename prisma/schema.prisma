@@ -1,0 +1,858 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id                    Int             @id @default(autoincrement())
+  legalName             String
+  tradingName           String
+  registrationNo        String          @unique
+  registrationDate      DateTime
+  countryOfRegistration String
+  baseCurrency          String
+  businessLicenseNr     String?
+  vatNumber             String?
+  industry              String
+  address               String
+  phone                 String
+  email                 String
+  website               String
+  status                String          @default("Active")
+  logo                  String          @default("")
+  facebookUrl           String?
+  instagramUrl          String?
+  xUrl                  String?
+  youtubeUrl            String?
+  whatsappNumber        String?
+  telegramNumber        String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  // Relations
+  clients         Client[]
+  invoices        Invoice[]
+  paymentMethods  PaymentMethod[]
+  bankAccounts    BankAccount[]
+  digitalWallets  DigitalWallet[]
+  products        Product[]
+  vendors         Vendor[]
+  bookkeepingEntries BookkeepingEntry[]
+  companyAccounts CompanyAccount[]
+  transactions    Transaction[]
+  journalEntries  JournalEntry[]
+  calendarEvents  CalendarEvent[]
+  notes           Note[]
+  businessCards   BusinessCard[]
+  companyMemberships CompanyMembership[]
+
+  // Optimized indexes for cursor pagination
+  @@index([createdAt, id])           // Primary cursor: createdAt + id for stability
+  @@index([status, createdAt, id])   // Status filtering with cursor
+  @@index([industry, createdAt, id]) // Industry filtering with cursor
+  @@index([legalName, createdAt, id]) // Legal name sorting with cursor
+  @@index([tradingName, createdAt, id]) // Trading name sorting with cursor
+  @@index([status])                  // For statistics groupBy
+  @@index([industry])                // For statistics groupBy
+  
+  // Additional performance indexes for search and filtering
+  @@index([email])                   // Email search optimization
+  @@index([registrationNo])          // Registration number search
+  @@index([status, industry])        // Combined status + industry filtering
+  @@index([updatedAt])               // For recent updates queries
+  @@map("companies")
+}
+
+// User Management Models
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  fullName      String
+  role          UserRole  @default(VIEWER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  passwordHash  String?   // For email/password auth
+  emailVerified Boolean   @default(false)
+  
+  // Supabase Auth UUID (matches auth.users.id)
+  authId        String?   @unique
+  
+  // Multi-tenant relationships
+  companyMemberships CompanyMembership[]
+  auditLogs          AuditLog[]
+  createdTransactions Transaction[] @relation("CreatedByUser")
+  updatedTransactions Transaction[] @relation("UpdatedByUser")
+  
+  @@index([email])
+  @@index([authId])
+  @@index([role])
+  @@map("users")
+}
+
+model CompanyMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId Int
+  role      UserRole @default(VIEWER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("company_memberships")
+}
+
+model AuditLog {
+  id         String          @id @default(cuid())
+  userId     String
+  userName   String
+  action     AuditActionType
+  entityType String
+  entityId   String
+  details    String
+  timestamp  DateTime        @default(now())
+  ipAddress  String?
+  userAgent  String?
+  
+  // Relations
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// User Management Enums
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  BOOKKEEPER
+  VIEWER
+  
+  @@map("user_role")
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  POST
+  REVERSE
+  APPROVE
+  REJECT
+  LOGIN
+  LOGOUT
+  VIEW
+  EXPORT
+  
+  @@map("audit_action_type")
+}
+
+model Client {
+  id                    String    @id @default(cuid())
+  companyId             Int?
+  clientType            ClientType
+  name                  String
+  contactPersonName     String?
+  contactPersonPosition String?
+  email                 String
+  phone                 String
+  website               String    @default("")
+  address               String
+  city                  String
+  zipCode               String
+  country               String
+  industry              String
+  status                ClientStatus @default(ACTIVE)
+  notes                 String    @default("")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  lastInvoiceDate       DateTime?
+  totalInvoiced         Float     @default(0)
+  totalPaid             Float     @default(0)
+  registrationNumber    String?
+  vatNumber             String?
+  passportNumber        String?
+  dateOfBirth           DateTime?
+
+  // Relations
+  company               Company?  @relation(fields: [companyId], references: [id])
+  invoices              Invoice[]
+
+  // Optimized indexes for performance
+  @@index([companyId, createdAt])        // Company-scoped queries with date ordering
+  @@index([status, createdAt])           // Status filtering with date ordering  
+  @@index([email])                       // Email search and uniqueness
+  @@index([name])                        // Name search
+  @@index([industry])                    // Industry filtering
+  @@index([clientType])                  // Client type filtering
+  @@index([companyId, status])           // Combined company + status filtering
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@index([totalInvoiced])               // Sorting by invoice totals
+  @@index([lastInvoiceDate])             // Sorting by last invoice date
+  @@map("clients")
+}
+
+model Product {
+  id           String     @id @default(cuid())
+  name         String
+  description  String
+  price        Float
+  currency     String
+  cost         Float      @default(0)
+  costCurrency String
+  isActive     Boolean    @default(true)
+  companyId    Int?
+  vendorId     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  company      Company?   @relation(fields: [companyId], references: [id])
+  vendor       Vendor?    @relation(fields: [vendorId], references: [id])
+  invoiceItems InvoiceItem[]
+
+  // Optimized indexes for performance
+  @@index([companyId, createdAt])        // Company-scoped queries with date ordering
+  @@index([isActive, createdAt])         // Active status filtering with date ordering
+  @@index([name])                        // Name search
+  @@index([currency])                    // Currency filtering
+  @@index([vendorId])                    // Vendor-based queries
+  @@index([companyId, isActive])         // Combined company + active filtering
+  @@index([price])                       // Price-based sorting
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@map("products")
+}
+
+model Vendor {
+  id                     String   @id @default(cuid())
+  companyId              Int
+  companyName            String
+  contactPerson          String?
+  contactEmail           String
+  phone                  String?
+  website                String?
+  paymentTerms           String
+  currency               String   @default("USD")
+  paymentMethod          String
+  billingAddress         String?
+  itemsServicesSold      String?
+  notes                  String?
+  companyRegistrationNr  String?
+  vatNr                  String?
+  vendorCountry          String?
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  company                Company  @relation(fields: [companyId], references: [id])
+  products               Product[]
+
+  // Optimized indexes for performance
+  @@index([companyId, createdAt])        // Company-scoped queries with date ordering
+  @@index([isActive, createdAt])         // Active status filtering with date ordering
+  @@index([companyName])                 // Company name search
+  @@index([contactEmail])                // Email search
+  @@index([currency])                    // Currency filtering
+  @@index([paymentMethod])               // Payment method filtering
+  @@index([companyId, isActive])         // Combined company + active filtering
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@map("vendors")
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  invoiceNumber    String        @unique
+  clientName       String
+  clientEmail      String
+  clientAddress    String?
+  subtotal         Float
+  currency         String
+  status           InvoiceStatus @default(DRAFT)
+  dueDate          DateTime
+  issueDate        DateTime
+  paidDate         DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  template         String        @default("professional")
+  taxRate          Float         @default(0)
+  taxAmount        Float         @default(0)
+  totalAmount      Float
+  fromCompanyId    Int
+  notes            String?
+
+  // Relations
+  company          Company       @relation(fields: [fromCompanyId], references: [id])
+  clientId         String?
+  client           Client?       @relation(fields: [clientId], references: [id])
+  items            InvoiceItem[]
+  paymentMethodInvoices PaymentMethodInvoice[]
+
+  // Optimized indexes for performance
+  @@index([fromCompanyId, createdAt])    // Company-scoped queries with date ordering
+  @@index([status, createdAt])           // Status filtering with date ordering
+  @@index([clientId, createdAt])         // Client-scoped queries with date ordering
+  @@index([invoiceNumber])               // Invoice number search (already unique, but for search)
+  @@index([clientName])                  // Client name search
+  @@index([clientEmail])                 // Client email search
+  @@index([currency])                    // Currency filtering
+  @@index([dueDate])                     // Due date sorting and filtering
+  @@index([issueDate])                   // Issue date sorting and filtering
+  @@index([paidDate])                    // Paid date sorting and filtering
+  @@index([totalAmount])                 // Amount-based sorting
+  @@index([fromCompanyId, status])       // Combined company + status filtering
+  @@index([status, dueDate])             // Overdue invoice queries
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  productId   String?
+  productName String
+  description String
+  quantity    Float
+  unitPrice   Float
+  currency    String
+  total       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@map("invoice_items")
+}
+
+model PaymentMethod {
+  id            String    @id @default(cuid())
+  type          PaymentType
+  name          String
+  companyId     Int
+  accountName   String?
+  bankName      String?
+  bankAddress   String?
+  iban          String?
+  swiftCode     String?
+  accountNumber String?
+  walletAddress String?
+  currency      String
+  details       String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  company       Company   @relation(fields: [companyId], references: [id])
+  invoices      PaymentMethodInvoice[]
+
+  @@map("payment_methods")
+}
+
+model PaymentMethodInvoice {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  paymentMethodId String
+  createdAt       DateTime      @default(now())
+
+  // Relations
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@unique([invoiceId, paymentMethodId])
+  @@map("payment_method_invoices")
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  companyId     Int
+  bankName      String
+  bankAddress   String
+  currency      String
+  iban          String
+  swiftCode     String
+  accountNumber String?
+  accountName   String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  notes         String?
+
+  // Relations
+  company       Company  @relation(fields: [companyId], references: [id])
+  transactions  Transaction[] @relation("BankAccountTransactions")
+
+  // Optimized indexes for performance
+  @@index([companyId, createdAt])        // Company-scoped queries with date ordering
+  @@index([isActive, createdAt])         // Active status filtering with date ordering
+  @@index([bankName])                    // Bank name search
+  @@index([accountName])                 // Account name search
+  @@index([currency])                    // Currency filtering
+  @@index([iban])                        // IBAN search
+  @@index([accountNumber])               // Account number search
+  @@index([companyId, isActive])         // Combined company + active filtering
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@map("bank_accounts")
+}
+
+model DigitalWallet {
+  id            String     @id @default(cuid())
+  companyId     Int
+  walletType    WalletType
+  walletName    String
+  walletAddress String
+  currency      String
+  currencies    String     @default("")
+  description   String
+  blockchain    String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  notes         String?
+
+  // Relations
+  company       Company    @relation(fields: [companyId], references: [id])
+  transactions  Transaction[] @relation("DigitalWalletTransactions")
+
+  // Optimized indexes for performance
+  @@index([companyId, createdAt])        // Company-scoped queries with date ordering
+  @@index([isActive, createdAt])         // Active status filtering with date ordering
+  @@index([walletType, createdAt])       // Wallet type filtering with date ordering
+  @@index([walletName])                  // Wallet name search
+  @@index([walletAddress])               // Wallet address search
+  @@index([currency])                    // Currency filtering
+  @@index([blockchain])                  // Blockchain filtering
+  @@index([companyId, isActive])         // Combined company + active filtering
+  @@index([companyId, walletType])       // Combined company + wallet type filtering
+  @@index([createdAt])                   // Date-based sorting and pagination
+  @@index([updatedAt])                   // Recent updates queries
+  @@map("digital_wallets")
+}
+
+// Enums
+enum ClientType {
+  INDIVIDUAL
+  LEGAL_ENTITY
+
+  @@map("client_type")
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  LEAD
+  ARCHIVED
+
+  @@map("client_status")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  ARCHIVED
+
+  @@map("invoice_status")
+}
+
+enum PaymentType {
+  BANK
+  WALLET
+
+  @@map("payment_type")
+}
+
+enum WalletType {
+  PAYPAL
+  STRIPE
+  WISE
+  CRYPTO
+  OTHER
+
+  @@map("wallet_type")
+}
+
+// Bookkeeping Models
+model BookkeepingEntry {
+  id              String      @id @default(cuid())
+  companyId       Int
+  type            EntryType
+  category        String
+  subcategory     String?
+  description     String
+  amount          Float
+  currency        String
+  date            DateTime
+  reference       String?
+  notes           String?
+  accountId       String?
+  accountType     AccountType?
+  cogs            Float       @default(0)
+  cogsPaid        Float       @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  company         Company     @relation(fields: [companyId], references: [id])
+  account         CompanyAccount? @relation(fields: [accountId], references: [id])
+  transaction     Transaction?
+
+  @@index([companyId, date])
+  @@index([companyId, type, category])
+  @@map("bookkeeping_entries")
+}
+
+model CompanyAccount {
+  id              String      @id @default(cuid())
+  companyId       Int
+  type            AccountType
+  name            String
+  accountNumber   String?
+  currency        String
+  startingBalance Float       @default(0)
+  currentBalance  Float       @default(0)
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  company         Company     @relation(fields: [companyId], references: [id])
+  entries         BookkeepingEntry[]
+  transactions    Transaction[]
+
+  @@unique([companyId, type, name])
+  @@map("company_accounts")
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  companyId         Int
+  date              DateTime
+  paidBy            String
+  paidTo            String
+  netAmount         Float
+  incomingAmount    Float?
+  outgoingAmount    Float?
+  currency          String
+  baseCurrency      String
+  baseCurrencyAmount Float
+  exchangeRate      Float?
+  accountId         String
+  accountType       AccountType
+  reference         String?
+  category          String?
+  subcategory       String?
+  description       String?
+  notes             String?
+  tags              String            @default("")
+  linkedEntryId     String?           @unique
+  linkedEntryType   EntryType?
+  
+  // Enhanced transaction features
+  status            TransactionStatus @default(CLEARED)
+  reconciliationStatus ReconciliationStatus @default(UNRECONCILED)
+  statementDate     DateTime?
+  statementReference String?
+  isRecurring       Boolean           @default(false)
+  recurringPattern  String?
+  parentTransactionId String?
+  
+  // Approval workflow
+  approvalStatus    ApprovalStatus    @default(APPROVED)
+  approvedBy        String?
+  approvedAt        DateTime?
+  
+  // Soft delete
+  isDeleted         Boolean           @default(false)
+  deletedAt         DateTime?
+  deletedBy         String?
+  
+  // Audit trail
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  company           Company           @relation(fields: [companyId], references: [id])
+  companyAccount    CompanyAccount?   @relation(fields: [accountId], references: [id])
+  bankAccount       BankAccount?      @relation("BankAccountTransactions", fields: [accountId], references: [id])
+  digitalWallet     DigitalWallet?    @relation("DigitalWalletTransactions", fields: [accountId], references: [id])
+  linkedEntry       BookkeepingEntry? @relation(fields: [linkedEntryId], references: [id])
+  parentTransaction Transaction?      @relation("TransactionHierarchy", fields: [parentTransactionId], references: [id])
+  childTransactions Transaction[]     @relation("TransactionHierarchy")
+  attachments       TransactionAttachment[]
+  createdByUser     User?             @relation("CreatedByUser", fields: [createdBy], references: [id])
+  updatedByUser     User?             @relation("UpdatedByUser", fields: [updatedBy], references: [id])
+
+  // Optimized indexes for complex queries
+  @@index([companyId, date])
+  @@index([companyId, accountId])
+  @@index([companyId, status, reconciliationStatus])
+  @@index([companyId, category, subcategory])
+  @@index([date, currency])
+  @@index([accountId, status])
+  @@index([linkedEntryId])
+  @@index([isDeleted, deletedAt])
+  @@map("transactions")
+}
+
+model TransactionAttachment {
+  id              String      @id @default(cuid())
+  transactionId   String
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  uploadedBy      String?
+  createdAt       DateTime    @default(now())
+
+  // Relations
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@map("transaction_attachments")
+}
+
+model JournalEntry {
+  id              String           @id @default(cuid())
+  companyId       Int
+  entryNumber     String
+  date            DateTime
+  description     String
+  reference       String?
+  status          JournalStatus    @default(POSTED)
+  reversedFromId  String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  company         Company          @relation(fields: [companyId], references: [id])
+  lines           JournalEntryLine[]
+  reversedFrom    JournalEntry?    @relation("ReversalRelation", fields: [reversedFromId], references: [id])
+  reversals       JournalEntry[]   @relation("ReversalRelation")
+
+  @@unique([companyId, entryNumber])
+  @@index([companyId, date])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id              String        @id @default(cuid())
+  journalEntryId  String
+  accountCode     String
+  accountName     String
+  description     String?
+  debit           Float         @default(0)
+  credit          Float         @default(0)
+  reference       String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  journalEntry    JournalEntry  @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  @@map("journal_entry_lines")
+}
+
+// Bookkeeping Enums
+enum EntryType {
+  INCOME
+  EXPENSE
+
+  @@map("entry_type")
+}
+
+enum AccountType {
+  BANK
+  WALLET
+  CASH
+  CREDIT_CARD
+
+  @@map("account_type")
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  REVERSED
+
+  @@map("journal_status")
+}
+
+enum TransactionStatus {
+  PENDING
+  CLEARED
+  FAILED
+  CANCELLED
+
+  @@map("transaction_status")
+}
+
+enum ReconciliationStatus {
+  UNRECONCILED
+  RECONCILED
+  DISPUTED
+
+  @@map("reconciliation_status")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+
+  @@map("approval_status")
+}
+
+// Calendar Models
+model CalendarEvent {
+  id              String            @id @default(cuid())
+  title           String
+  description     String            @default("")
+  date            DateTime
+  time            String
+  type            CalendarEventType @default(OTHER)
+  priority        EventPriority     @default(MEDIUM)
+  company         String?
+  participants    String            @default("")  // JSON string of participants array
+  companyId       Int?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  companyRecord   Company?          @relation(fields: [companyId], references: [id])
+  notes           Note[]
+
+  // Optimized indexes for cursor pagination
+  @@index([createdAt, id])                    // Primary cursor: createdAt + id for stability
+  @@index([date, createdAt, id])              // Date filtering with cursor
+  @@index([type, createdAt, id])              // Type filtering with cursor
+  @@index([priority, createdAt, id])          // Priority filtering with cursor
+  @@index([companyId, createdAt, id])         // Company filtering with cursor
+  @@index([date, type, createdAt, id])        // Combined date + type filtering
+  @@index([companyId, date, createdAt, id])   // Combined company + date filtering
+  @@index([type])                             // For statistics groupBy
+  @@index([priority])                         // For statistics groupBy
+  @@index([date])                             // For date-based queries
+  @@map("calendar_events")
+}
+
+model Note {
+  id              String        @id @default(cuid())
+  title           String
+  content         String
+  eventId         String?
+  companyId       Int?
+  tags            String        @default("")  // JSON string of tags array
+  priority        EventPriority @default(MEDIUM)
+  isStandalone    Boolean       @default(true)
+  isCompleted     Boolean       @default(false)
+  completedAt     DateTime?
+  isAutoArchived  Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  event           CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  company         Company?       @relation(fields: [companyId], references: [id])
+
+  // Optimized indexes for cursor pagination
+  @@index([createdAt, id])                    // Primary cursor: createdAt + id for stability
+  @@index([eventId, createdAt, id])           // Event filtering with cursor
+  @@index([companyId, createdAt, id])         // Company filtering with cursor
+  @@index([priority, createdAt, id])          // Priority filtering with cursor
+  @@index([isCompleted, createdAt, id])       // Completion status filtering with cursor
+  @@index([isStandalone, createdAt, id])      // Standalone filtering with cursor
+  @@index([companyId, isCompleted, createdAt, id]) // Combined company + completion filtering
+  @@index([eventId, isCompleted, createdAt, id])   // Combined event + completion filtering
+  @@index([priority])                         // For statistics groupBy
+  @@index([isCompleted])                      // For statistics groupBy
+  @@index([isStandalone])                     // For statistics groupBy
+  @@map("notes")
+}
+
+// Business Card Model
+model BusinessCard {
+  id           String              @id @default(cuid())
+  companyId    Int
+  personName   String              @default("")
+  position     String              @default("")
+  qrType       BusinessCardQRType  @default(WEBSITE)
+  qrValue      String              @default("")
+  template     BusinessCardTemplate @default(MODERN)
+  isArchived   Boolean             @default(false)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  // Relations
+  company      Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Optimized indexes for queries
+  @@index([companyId, createdAt, id])
+  @@index([isArchived, createdAt, id])
+  @@index([template, createdAt, id])
+  @@index([createdAt, id])
+  @@map("business_cards")
+}
+
+// Calendar Enums
+enum CalendarEventType {
+  MEETING
+  DEADLINE
+  RENEWAL
+  OTHER
+
+  @@map("calendar_event_type")
+}
+
+enum EventPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("event_priority")
+}
+
+// Business Card Enums
+enum BusinessCardQRType {
+  WEBSITE
+  EMAIL
+
+  @@map("business_card_qr_type")
+}
+
+enum BusinessCardTemplate {
+  MODERN
+  CLASSIC
+  MINIMAL
+  EAZY
+
+  @@map("business_card_template")
+}
