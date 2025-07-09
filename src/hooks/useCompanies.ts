@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { companyApiService } from '@/services/api'
 import { Company } from '@/types/company.types'
 import { companiesCache } from '@/services/cache/companiesCache'
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 
 const COMPANIES_SIMPLE_QUERY_KEY = 'companies-simple'
 
@@ -24,6 +24,21 @@ export function useCompanies() {
     retry: 3,
   })
 
+  const queryClient = useQueryClient()
+  
+  // Cache-busted refetch for post-mutation updates
+  const refetchFresh = useCallback(async () => {
+    try {
+      const freshData = await companyApiService.getCompaniesFresh({ take: 1000 })
+      // Manually update the query cache with fresh data
+      queryClient.setQueryData([COMPANIES_SIMPLE_QUERY_KEY], freshData)
+      return freshData
+    } catch (error) {
+      console.error('Failed to fetch fresh companies:', error)
+      throw error
+    }
+  }, [queryClient])
+
   const companies: Company[] = companiesResponse?.data || []
   const activeCompanies = companies.filter(company => company.status === 'Active')
   const statistics = companiesResponse?.statistics
@@ -42,7 +57,8 @@ export function useCompanies() {
     isLoading,
     isError,
     error,
-    refetch
+    refetch,
+    refetchFresh
   }
 }
 

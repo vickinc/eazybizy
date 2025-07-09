@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { CompanyBusinessService } from '@/services/business/companyBusinessService'
 import { invalidateCompanyStatistics } from '@/services/cache/companyStatisticsCache'
+import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
 
 export async function GET(
   request: NextRequest,
@@ -145,6 +146,9 @@ export async function PUT(
     // Invalidate statistics cache after updating company
     await invalidateCompanyStatistics()
     
+    // Invalidate all company-related caches for immediate UI updates
+    await CacheInvalidationService.invalidateOnCompanyMutation(id)
+    
     return NextResponse.json(company)
   } catch (error) {
     console.error('Error updating company:', error)
@@ -221,6 +225,9 @@ export async function DELETE(
     
     // Invalidate statistics cache after deleting company
     await invalidateCompanyStatistics()
+    
+    // Invalidate all company-related caches for immediate UI updates
+    await CacheInvalidationService.invalidateOnCompanyMutation(id)
     
     return NextResponse.json(
       { message: 'Company deleted successfully' },

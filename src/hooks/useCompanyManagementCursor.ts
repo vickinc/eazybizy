@@ -199,9 +199,11 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
   const createMutation = useMutation({
     mutationFn: (data: CompanyFormData & { logo?: string }) => companyApiService.createCompany(data),
     onSuccess: () => {
-      // Invalidate both the cursor queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY] })
+      // Invalidate ALL queries that start with the keys regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      queryClient.refetchQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       toast.success('Company created successfully')
       setIsDialogOpen(false)
       resetForm()
@@ -216,9 +218,11 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
     mutationFn: ({ id, data }: { id: string; data: Partial<CompanyFormData> & { logo?: string } }) => 
       companyApiService.updateCompany(id, data),
     onSuccess: () => {
-      // Invalidate both the cursor queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY] })
+      // Invalidate ALL queries that start with the keys regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      queryClient.refetchQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       toast.success('Company updated successfully')
       setEditingCompany(null)
       resetForm()
@@ -232,9 +236,11 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => companyApiService.deleteCompany(id),
     onSuccess: () => {
-      // Invalidate both the cursor queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY] })
+      // Invalidate ALL queries that start with the keys regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      queryClient.refetchQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       toast.success('Company deleted successfully')
     },
     onError: (error: Error) => {
@@ -438,7 +444,10 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
     }
     try {
       await companyApiService.bulkUpdateStatus(selectedCompanies, status)
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+      queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      queryClient.refetchQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       setSelectedCompanies([])
       toast.success(`Updated ${selectedCompanies.length} company status(es)`)
     } catch (error) {
@@ -454,7 +463,10 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
     if (confirm(`Are you sure you want to delete ${selectedCompanies.length} company(ies)?`)) {
       try {
         await companyApiService.bulkDelete(selectedCompanies)
-        queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY] })
+        queryClient.invalidateQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+        queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+        queryClient.refetchQueries({ queryKey: [COMPANIES_CURSOR_QUERY_KEY], exact: false })
+        queryClient.refetchQueries({ queryKey: ['companies-simple'] })
         setSelectedCompanies([])
         toast.success(`Deleted ${selectedCompanies.length} company(ies)`)
       } catch (error) {

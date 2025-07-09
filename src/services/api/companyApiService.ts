@@ -86,7 +86,7 @@ export class CompanyApiService {
   }
 
   // Legacy offset-based pagination (deprecated for large datasets)
-  async getCompanies(params: CompanyQueryParams = {}): Promise<CompaniesResponse> {
+  async getCompanies(params: CompanyQueryParams & { bustCache?: boolean } = {}): Promise<CompaniesResponse> {
     const searchParams = new URLSearchParams()
     
     // Add pagination
@@ -103,6 +103,9 @@ export class CompanyApiService {
     // Add sorting
     if (params.sortField) searchParams.set('sortField', params.sortField)
     if (params.sortDirection) searchParams.set('sortDirection', params.sortDirection)
+    
+    // Add cache busting
+    if (params.bustCache) searchParams.set('bustCache', 'true')
 
     const response = await fetch(`${this.baseUrl}/fast?${searchParams.toString()}`)
     
@@ -111,6 +114,11 @@ export class CompanyApiService {
     }
     
     return response.json()
+  }
+
+  // Cache-busted version for post-mutation refreshes
+  async getCompaniesFresh(params: CompanyQueryParams = {}): Promise<CompaniesResponse> {
+    return this.getCompanies({ ...params, bustCache: true })
   }
 
   async getCompany(id: string): Promise<Company> {

@@ -197,6 +197,12 @@ export function useCompanyManagement(): CompanyManagementHook {
   // Use accumulated companies instead of current page
   const companies = accumulatedCompanies
   
+  // Log when companies data changes
+  useEffect(() => {
+    console.log('📊 [useCompanyManagement] Companies data updated:', companies.length, 'companies')
+    companies.forEach(c => console.log(`  - ${c.tradingName}: ${c.status}`))
+  }, [companies])
+  
   // Compute derived data using business services
   const availableIndustries = useMemo(() => {
     return [...new Set(companies.map(comp => comp.industry))].sort()
@@ -208,22 +214,31 @@ export function useCompanyManagement(): CompanyManagementHook {
   }, [companies])
   
   const activeCompanies = useMemo(() => {
-    return CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Active')
+    const active = CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Active')
+    console.log('🔢 [useCompanyManagement] Active companies recalculated:', active.length, active.map(c => `${c.tradingName}(${c.status})`))
+    return active
   }, [formattedCompanies])
   
   const passiveCompanies = useMemo(() => {
-    return CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Passive')
+    const passive = CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Passive')
+    console.log('🔢 [useCompanyManagement] Passive companies recalculated:', passive.length, passive.map(c => `${c.tradingName}(${c.status})`))
+    return passive
   }, [formattedCompanies])
   
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: CompanyFormData & { logo?: string }) => companyApiService.createCompany(data),
     onSuccess: () => {
-      // Invalidate both the management queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY] })
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      // Invalidate ALL queries that start with COMPANIES_QUERY_KEY regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
       
       // Force refetch of companies data
+      queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
       queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       
       toast.success('Company created successfully')
@@ -237,15 +252,40 @@ export function useCompanyManagement(): CompanyManagementHook {
   })
   
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CompanyFormData> & { logo?: string } }) => 
-      companyApiService.updateCompany(id, data),
-    onSuccess: () => {
-      // Invalidate both the management queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY] })
+    mutationFn: ({ id, data }: { id: string; data: Partial<CompanyFormData> & { logo?: string } }) => {
+      console.log('🔄 [useCompanyManagement] updateMutation called with:', { id, data })
+      return companyApiService.updateCompany(id, data)
+    },
+    onSuccess: async (result, variables) => {
+      console.log('✅ [useCompanyManagement] updateMutation succeeded:', { result, variables })
+      
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      // Invalidate ALL queries that start with COMPANIES_QUERY_KEY regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
       
-      // Force refetch of companies data
-      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
+      // Manually fetch fresh data bypassing all caches
+      try {
+        const freshData = await companyApiService.getCompaniesFresh(queryParams)
+        queryClient.setQueryData([COMPANIES_QUERY_KEY, queryParams], freshData)
+        console.log('🔄 [useCompanyManagement] Fresh data fetched and set:', freshData.data?.length, 'companies')
+      } catch (error) {
+        console.error('Failed to fetch fresh data:', error)
+      }
+      
+      // Also fetch fresh simple companies data
+      try {
+        const freshSimpleData = await companyApiService.getCompaniesFresh({ take: 1000 })
+        queryClient.setQueryData(['companies-simple'], freshSimpleData)
+        console.log('🔄 [useCompanyManagement] Fresh simple companies data set:', freshSimpleData.data?.length, 'companies')
+      } catch (error) {
+        console.error('Failed to fetch fresh simple companies:', error)
+      }
+      
+      console.log('🔄 [useCompanyManagement] Cache invalidation and fresh fetch completed')
       
       toast.success('Company updated successfully')
       setEditingCompany(null)
@@ -260,11 +300,16 @@ export function useCompanyManagement(): CompanyManagementHook {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => companyApiService.deleteCompany(id),
     onSuccess: () => {
-      // Invalidate both the management queries and the simple companies query used by dropdowns
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY] })
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      // Invalidate ALL queries that start with COMPANIES_QUERY_KEY regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
       
       // Force refetch of companies data
+      queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
       queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       
       toast.success('Company deleted successfully')
@@ -490,7 +535,15 @@ export function useCompanyManagement(): CompanyManagementHook {
     }
     try {
       await companyApiService.bulkUpdateStatus(selectedCompanies, status)
-      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY] })
+      
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
       setSelectedCompanies([])
       toast.success(`Updated ${selectedCompanies.length} company status(es)`)
     } catch (error) {
@@ -506,7 +559,15 @@ export function useCompanyManagement(): CompanyManagementHook {
     if (confirm(`Are you sure you want to delete ${selectedCompanies.length} company(ies)?`)) {
       try {
         await companyApiService.bulkDelete(selectedCompanies)
-        queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY] })
+        
+        // Reset accumulated companies to force fresh data
+        setAccumulatedCompanies([])
+        setPagination({ skip: 0, take: 20 })
+        
+        queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+        queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+        queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+        queryClient.refetchQueries({ queryKey: ['companies-simple'] })
         setSelectedCompanies([])
         toast.success(`Deleted ${selectedCompanies.length} company(ies)`)
       } catch (error) {

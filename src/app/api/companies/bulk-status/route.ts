@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { invalidateCompanyStatistics } from '@/services/cache/companyStatisticsCache'
+import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
 
 export async function PUT(request: NextRequest) {
   try {
@@ -80,6 +81,9 @@ export async function PUT(request: NextRequest) {
     
     // Invalidate statistics cache after bulk status update
     await invalidateCompanyStatistics()
+    
+    // Invalidate all company-related caches for immediate UI updates
+    await CacheInvalidationService.invalidateOnCompanyMutation()
     
     return NextResponse.json({
       message: `Successfully updated ${updateResult.count} company status(es) to ${status}`,

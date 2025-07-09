@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
+    // Check if this is a cache-busting request (after mutation)
+    const bustCache = searchParams.get('bustCache') === 'true'
+    
     // Parse parameters
     const skip = parseInt(searchParams.get('skip') || '0')
     const take = parseInt(searchParams.get('take') || '20')
@@ -45,13 +48,16 @@ export async function GET(request: NextRequest) {
     const cacheKeyData = CacheKeys.companies.list({ ...filters, skip, take })
     const cacheKeyCount = CacheKeys.companies.count(filters)
 
-    // Try to get from cache first (L2 - Redis)
-    const [cachedData, cachedCount] = await Promise.all([
-      CacheService.get<any[]>(cacheKeyData),
-      CacheService.get<number>(cacheKeyCount)
-    ])
+    // Try to get from cache first (L2 - Redis) - unless cache busting
+    let cachedData, cachedCount
+    if (!bustCache) {
+      [cachedData, cachedCount] = await Promise.all([
+        CacheService.get<any[]>(cacheKeyData),
+        CacheService.get<number>(cacheKeyCount)
+      ])
+    }
 
-    if (cachedData && cachedCount !== null) {
+    if (cachedData && cachedCount !== null && !bustCache) {
       // Cache hit - return immediately with compression
       console.log(`Cache HIT for companies list - ${Date.now() - startTime}ms`)
       
@@ -206,18 +212,27 @@ export async function GET(request: NextRequest) {
     // Generate ETag for fresh data
     const etag = generateETag(responseData)
 
-    // Return compressed response with shorter cache for fresh data
+    // Return compressed response with different cache settings based on cache busting
+    const cacheSettings = bustCache ? {
+      // No cache for busted requests - force fresh data
+      maxAge: 0,
+      sMaxAge: 0,
+      staleWhileRevalidate: 0,
+      noCache: true
+    } : {
+      // Normal cache for regular requests
+      maxAge: 60,         // 1min browser cache for fresh data
+      sMaxAge: 300,       // 5min CDN cache
+      staleWhileRevalidate: 180 // 3min stale-while-revalidate
+    }
+    
     return await ResponseCompression.createOptimizedResponse(
       responseData,
       request,
       {
         compression: { threshold: 512, level: 6 },
-        cache: { 
-          maxAge: 60,         // 1min browser cache for fresh data
-          sMaxAge: 300,       // 5min CDN cache
-          staleWhileRevalidate: 180 // 3min stale-while-revalidate
-        },
-        etag
+        cache: cacheSettings,
+        etag: bustCache ? undefined : etag // No ETag for busted cache
       }
     )
 
