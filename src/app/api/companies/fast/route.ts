@@ -88,9 +88,9 @@ export async function GET(request: NextRequest) {
         {
           compression: { threshold: 512, level: 6 },
           cache: { 
-            maxAge: 300,        // 5min browser cache
-            sMaxAge: 600,       // 10min CDN cache
-            staleWhileRevalidate: 300 // 5min stale-while-revalidate
+            maxAge: 1,          // 1 second browser cache for immediate updates
+            sMaxAge: 2,         // 2 seconds CDN cache for immediate updates
+            staleWhileRevalidate: 1 // 1 second stale-while-revalidate for immediate updates
           },
           etag
         }
@@ -216,10 +216,10 @@ export async function GET(request: NextRequest) {
       staleWhileRevalidate: 0,
       noCache: true
     } : {
-      // Normal cache for regular requests
-      maxAge: 60,         // 1min browser cache for fresh data
-      sMaxAge: 300,       // 5min CDN cache
-      staleWhileRevalidate: 180 // 3min stale-while-revalidate
+      // Very short cache for regular requests to ensure immediate updates
+      maxAge: 1,          // 1 second browser cache for immediate updates
+      sMaxAge: 2,         // 2 seconds CDN cache for immediate updates
+      staleWhileRevalidate: 1 // 1 second stale-while-revalidate for immediate updates
     }
     
     return await ResponseCompression.createOptimizedResponse(

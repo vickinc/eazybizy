@@ -16,10 +16,10 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Stale time: Data is considered fresh for 5 minutes
-            staleTime: 5 * 60 * 1000,
-            // Cache time: Data stays in cache for 30 minutes after becoming stale
-            gcTime: 30 * 60 * 1000,
+            // No default stale time - let individual queries decide
+            staleTime: 0,
+            // Cache time: Data stays in cache for 5 minutes after becoming stale (reduced from 30)
+            gcTime: 5 * 60 * 1000,
             // Retry failed requests 3 times with exponential backoff
             retry: 3,
             // Don't refetch on window focus for better performance

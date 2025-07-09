@@ -7,7 +7,7 @@ import { Company } from '@/types/company.types'
 class CompaniesCacheService {
   private companies: Company[] = []
   private lastFetch: number = 0
-  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  private readonly CACHE_DURATION = 500 // 0.5 seconds for near-immediate updates
 
   /**
    * Set companies in cache (called by the useCompanies hook)

@@ -10,6 +10,7 @@ import { CompanyFormData, CompanyValidationService } from '@/services/business/c
 import { CompanyApiService } from '@/services/api/companyApiService';
 import { CompanyBusinessService } from '@/services/business/companyBusinessService';
 import { Company } from '@/types/company.types';
+import { companiesCache } from '@/services/cache/companiesCache';
 
 type OnboardingStep = 'company' | 'business' | 'review' | 'complete';
 
@@ -163,9 +164,47 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
       queryClient.invalidateQueries({ queryKey: ['companies-simple'] });
       queryClient.invalidateQueries({ queryKey: ['company-statistics'] });
       
-      // Force refetch of companies data
+      // Force refetch of companies data to ensure immediate updates
       queryClient.refetchQueries({ queryKey: ['companies'], exact: false });
       queryClient.refetchQueries({ queryKey: ['companies-simple'] });
+      
+      // Also invalidate company-specific cache for the current company
+      if (editingCompanyId) {
+        queryClient.invalidateQueries({ queryKey: ['company', editingCompanyId] });
+      }
+      
+      // Force a fresh fetch to bypass any caching layers
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] }).then(() => {
+        // Additional cache busting for any remaining stale data
+        queryClient.invalidateQueries({ queryKey: ['companies'] });
+      });
+      
+      // Clear in-memory cache to ensure fresh data
+      companiesCache.clear();
+      
+      // Use cache-busted fresh fetch to bypass ALL caching layers
+      setTimeout(async () => {
+        try {
+          // Force fresh data fetch that bypasses Redis, HTTP cache, and React Query cache
+          const freshData = await companyApiService.getCompaniesFresh({ take: 1000 });
+          
+          // Manually update the cache with fresh data
+          queryClient.setQueryData(['companies-simple'], freshData);
+          
+          // Remove stale queries and force refetch
+          queryClient.removeQueries({ queryKey: ['companies-simple'] });
+          queryClient.removeQueries({ queryKey: ['companies'] });
+          
+          // Force immediate refetch with fresh data
+          queryClient.refetchQueries({ queryKey: ['companies-simple'] });
+          queryClient.refetchQueries({ queryKey: ['companies'] });
+        } catch (error) {
+          console.error('Failed to fetch fresh company data:', error);
+          // Fallback to regular refetch
+          queryClient.refetchQueries({ queryKey: ['companies-simple'] });
+          queryClient.refetchQueries({ queryKey: ['companies'] });
+        }
+      }, 100);
       
       
       const action = isEditing ? 'updated' : 'created';

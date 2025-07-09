@@ -20,7 +20,7 @@ export function useCompanies() {
   } = useQuery({
     queryKey: [COMPANIES_SIMPLE_QUERY_KEY],
     queryFn: () => companyApiService.getCompanies({ take: 1000 }), // Get all companies
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 500, // 0.5 seconds for near-immediate updates
     retry: 3,
   })
 

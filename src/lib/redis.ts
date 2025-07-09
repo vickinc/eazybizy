@@ -96,11 +96,11 @@ export const CacheKeys = {
 // Cache TTL constants (in seconds)
 export const CacheTTL = {
   companies: {
-    list: 15 * 60,      // 15 minutes
-    item: 30 * 60,      // 30 minutes  
-    stats: 30 * 60,     // 30 minutes
-    search: 5 * 60,     // 5 minutes
-    count: 10 * 60,     // 10 minutes
+    list: 2,            // 2 seconds for immediate updates
+    item: 5,            // 5 seconds for immediate updates  
+    stats: 10,          // 10 seconds for immediate updates
+    search: 2,          // 2 seconds for immediate updates
+    count: 2,           // 2 seconds for immediate updates
   },
   calendar: {
     events: 5 * 60,     // 5 minutes
@@ -192,7 +192,7 @@ export class CacheService {
         }
       } else {
         // Fallback to memory cache
-        const expires = ttl ? Date.now() + (ttl * 1000) : Date.now() + (60 * 60 * 1000) // 1 hour default
+        const expires = ttl ? Date.now() + (ttl * 1000) : Date.now() + (5 * 1000) // 5 seconds default (reduced from 1 hour)
         memoryCache.set(key, { value, expires })
       }
       return true
