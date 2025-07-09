@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Build date filter
-    let dateFilter: any = {}
+    let dateFilter: unknown = {}
     const now = new Date()
     
     if (period && !dateFrom && !dateTo) {

@@ -200,7 +200,7 @@ export function AppSidebar() {
     setExpandedSubSubItems([]);
   };
 
-  const handleMenuItemClick = (item: any) => {
+  const handleMenuItemClick = (item: unknown) => {
     // Navigate to the page
     router.push(item.href);
     
@@ -228,7 +228,7 @@ export function AppSidebar() {
     );
   };
 
-  const handleSubMenuItemClick = (subItem: any) => {
+  const handleSubMenuItemClick = (subItem: unknown) => {
     // Navigate to the page
     router.push(subItem.href);
     
@@ -238,7 +238,7 @@ export function AppSidebar() {
     }
   };
 
-  const handleSubSubMenuItemClick = (subSubItem: any) => {
+  const handleSubSubMenuItemClick = (subSubItem: unknown) => {
     // Navigate to the page
     router.push(subSubItem.href);
     

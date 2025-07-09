@@ -142,7 +142,6 @@ export class UserManagementService {
       // Save updated log
       localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(existingLog));
       
-      console.log(`📋 Audit: ${action} ${entityType} ${entityId} by ${currentUser.fullName}`);
     } catch (error) {
       console.error('Error logging audit action:', error);
     }

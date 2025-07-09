@@ -219,7 +219,6 @@ export class VirtualHoldingBusinessService {
     // 3. Update the holding structure
     // 4. Trigger recalculation of consolidated financials
     
-    console.log(`Adding company ${companyId} to holding ${holdingId} with weight ${weight}%`);
   }
   
   /**
@@ -235,11 +234,11 @@ export class VirtualHoldingBusinessService {
     const exchangeRates = await this.getExchangeRates(holding.baseCurrency, period);
     
     // Initialize consolidated amounts
-    let totalRevenue = 0;
-    let totalExpenses = 0;
-    let totalAssets = 0;
-    let totalLiabilities = 0;
-    let operatingCashFlow = 0;
+    const totalRevenue = 0;
+    const totalExpenses = 0;
+    const totalAssets = 0;
+    const totalLiabilities = 0;
+    const operatingCashFlow = 0;
     
     const companyBreakdown: CompanyFinancialSummary[] = [];
     const originalAmounts: { [key: string]: { [companyId: string]: { amount: number; currency: string } } } = {
@@ -460,9 +459,9 @@ export class VirtualHoldingBusinessService {
   ): HoldingPerformanceMetrics {
     
     // Calculate weighted averages
-    let weightedROA = 0;
-    let weightedROE = 0;
-    let totalWeight = 0;
+    const weightedROA = 0;
+    const weightedROE = 0;
+    const totalWeight = 0;
     
     companies.forEach(company => {
       const weight = company.weight / 100;
@@ -571,7 +570,7 @@ export class VirtualHoldingBusinessService {
     }
     
     // Calculate overall risk score (1-10)
-    let riskScore = 1;
+    const riskScore = 1;
     riskFactors.forEach(factor => {
       switch (factor.severity) {
         case 'High': riskScore += 2; break;

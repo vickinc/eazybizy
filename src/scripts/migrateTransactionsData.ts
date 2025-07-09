@@ -13,7 +13,6 @@ export class TransactionDataMigration {
   }
 
   async migrateAll(): Promise<typeof this.migrationStats> {
-    console.log('🚀 Starting transaction data migration...')
     
     try {
       // Step 1: Migrate bank accounts first (needed for transactions)
@@ -25,8 +24,6 @@ export class TransactionDataMigration {
       // Step 3: Migrate transactions
       await this.migrateTransactions()
       
-      console.log('✅ Migration completed successfully!')
-      console.log(`📊 Stats:`, this.migrationStats)
       
     } catch (error) {
       console.error('❌ Migration failed:', error)
@@ -38,7 +35,6 @@ export class TransactionDataMigration {
   }
 
   private async migrateBankAccounts(): Promise<void> {
-    console.log('🏦 Migrating bank accounts...')
     
     try {
       const localBankAccounts = this.getLocalStorageBankAccounts()
@@ -74,9 +70,7 @@ export class TransactionDataMigration {
             })
             
             this.migrationStats.bankAccountsMigrated++
-            console.log(`✅ Migrated bank account: ${account.accountName}`)
           } else {
-            console.log(`⏭️  Bank account already exists: ${account.accountName}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate bank account ${account.accountName}: ${error}`
@@ -85,7 +79,6 @@ export class TransactionDataMigration {
         }
       }
       
-      console.log(`🏦 Bank accounts migration complete: ${this.migrationStats.bankAccountsMigrated} accounts migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage bank accounts:', error)
       throw error
@@ -93,7 +86,6 @@ export class TransactionDataMigration {
   }
 
   private async migrateDigitalWallets(): Promise<void> {
-    console.log('💳 Migrating digital wallets...')
     
     try {
       const localWallets = this.getLocalStorageDigitalWallets()
@@ -128,9 +120,7 @@ export class TransactionDataMigration {
             })
             
             this.migrationStats.digitalWalletsMigrated++
-            console.log(`✅ Migrated digital wallet: ${wallet.walletName}`)
           } else {
-            console.log(`⏭️  Digital wallet already exists: ${wallet.walletName}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate digital wallet ${wallet.walletName}: ${error}`
@@ -139,7 +129,6 @@ export class TransactionDataMigration {
         }
       }
       
-      console.log(`💳 Digital wallets migration complete: ${this.migrationStats.digitalWalletsMigrated} wallets migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage digital wallets:', error)
       throw error
@@ -147,7 +136,6 @@ export class TransactionDataMigration {
   }
 
   private async migrateTransactions(): Promise<void> {
-    console.log('💰 Migrating transactions...')
     
     try {
       const localTransactions = this.getLocalStorageTransactions()
@@ -168,9 +156,7 @@ export class TransactionDataMigration {
             })
             
             this.migrationStats.transactionsMigrated++
-            console.log(`✅ Migrated transaction: ${transaction.paidBy} → ${transaction.paidTo} (${transaction.netAmount} ${transaction.currency})`)
           } else {
-            console.log(`⏭️  Transaction already exists: ${transaction.paidBy} → ${transaction.paidTo}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate transaction ${transaction.id}: ${error}`
@@ -179,14 +165,13 @@ export class TransactionDataMigration {
         }
       }
       
-      console.log(`💰 Transactions migration complete: ${this.migrationStats.transactionsMigrated} transactions migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage transactions:', error)
       throw error
     }
   }
 
-  private async mapTransactionData(localTransaction: any): Promise<any> {
+  private async mapTransactionData(localTransaction: unknown): Promise<any> {
     // Convert localStorage transaction format to Prisma format
     const mappedData = {
       id: localTransaction.id,
@@ -302,7 +287,7 @@ export class TransactionDataMigration {
     return mappings[status?.toLowerCase()] || 'APPROVED'
   }
 
-  private getLocalStorageTransactions(): any[] {
+  private getLocalStorageTransactions(): unknown[] {
     try {
       if (typeof window === 'undefined') return []
       
@@ -314,7 +299,7 @@ export class TransactionDataMigration {
     }
   }
 
-  private getLocalStorageBankAccounts(): any[] {
+  private getLocalStorageBankAccounts(): unknown[] {
     try {
       if (typeof window === 'undefined') return []
       
@@ -326,7 +311,7 @@ export class TransactionDataMigration {
     }
   }
 
-  private getLocalStorageDigitalWallets(): any[] {
+  private getLocalStorageDigitalWallets(): unknown[] {
     try {
       if (typeof window === 'undefined') return []
       
@@ -339,7 +324,6 @@ export class TransactionDataMigration {
   }
 
   async validateMigration(): Promise<boolean> {
-    console.log('🔍 Validating transaction migration...')
     
     try {
       // Count records in database
@@ -349,16 +333,11 @@ export class TransactionDataMigration {
         prisma.digitalWallet.count(),
       ])
       
-      console.log(`📊 Database counts:`)
-      console.log(`  - Transactions: ${transactionsCount}`)
-      console.log(`  - Bank Accounts: ${bankAccountsCount}`)
-      console.log(`  - Digital Wallets: ${digitalWalletsCount}`)
       
       // Check if migration was successful
       const hasData = transactionsCount > 0 || bankAccountsCount > 0 || digitalWalletsCount > 0
       
       if (hasData) {
-        console.log('✅ Migration validation successful - data found in database')
         return true
       } else {
         console.log('⚠️  Migration validation warning - no data found in database')
@@ -371,11 +350,9 @@ export class TransactionDataMigration {
   }
 
   async clearLocalStorageData(): Promise<void> {
-    console.log('🧹 Clearing localStorage transaction data...')
     
     try {
       if (typeof window === 'undefined') {
-        console.log('⏭️  Not in browser environment, skipping localStorage cleanup')
         return
       }
       
@@ -388,10 +365,8 @@ export class TransactionDataMigration {
       
       keysToRemove.forEach(key => {
         localStorage.removeItem(key)
-        console.log(`🗑️  Cleared: ${key}`)
       })
       
-      console.log('✅ localStorage cleanup complete')
     } catch (error) {
       console.error('❌ Error cleaning localStorage:', error)
       throw error
@@ -416,18 +391,12 @@ export class TransactionDataMigration {
 export async function runTransactionMigration(): Promise<void> {
   const migration = new TransactionDataMigration()
   
-  console.log('🔄 Starting manual transaction migration...')
   
   try {
     // Show what will be migrated
     const localStats = await migration.getLocalStorageStats()
-    console.log('📊 Found in localStorage:')
-    console.log(`  - Transactions: ${localStats.transactions}`)
-    console.log(`  - Bank Accounts: ${localStats.bankAccounts}`)
-    console.log(`  - Digital Wallets: ${localStats.digitalWallets}`)
     
     if (localStats.transactions === 0 && localStats.bankAccounts === 0 && localStats.digitalWallets === 0) {
-      console.log('ℹ️  No data found in localStorage to migrate')
       return
     }
     
@@ -442,7 +411,6 @@ export async function runTransactionMigration(): Promise<void> {
     const isValid = await migration.validateMigration()
     
     if (isValid) {
-      console.log('🎉 Migration completed successfully!')
       
       // Ask user if they want to clear localStorage
       const shouldClear = confirm(
@@ -451,7 +419,6 @@ export async function runTransactionMigration(): Promise<void> {
       
       if (shouldClear) {
         await migration.clearLocalStorageData()
-        console.log('🧹 Old data cleared!')
       }
     } else {
       console.error('❌ Migration validation failed')

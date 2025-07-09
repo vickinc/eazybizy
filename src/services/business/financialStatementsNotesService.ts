@@ -207,7 +207,7 @@ export class FinancialStatementsNotesService {
    * Generate critical estimates and judgments notes
    */
   private static async generateCriticalEstimatesNotes(
-    statements: any,
+    statements: unknown,
     ifrsSettings?: IFRSSettings
   ): Promise<FinancialStatementNote[]> {
     const criticalEstimatesNote: FinancialStatementNote = {
@@ -525,7 +525,7 @@ export class FinancialStatementsNotesService {
    * Generate risk management notes
    */
   private static async generateRiskManagementNotes(
-    statements: any,
+    statements: unknown,
     ifrsSettings?: IFRSSettings
   ): Promise<FinancialStatementNote[]> {
     const riskNote: FinancialStatementNote = {
@@ -796,7 +796,7 @@ export class FinancialStatementsNotesService {
    */
   static async generateIFRSDisclosureNotes(
     disclosures: IFRSDisclosure[],
-    statements: any
+    statements: unknown
   ): Promise<FinancialStatementNote[]> {
     
     const notes: FinancialStatementNote[] = [];
@@ -810,7 +810,7 @@ export class FinancialStatementsNotesService {
       return groups;
     }, {} as Record<string, IFRSDisclosure[]>);
     
-    let noteNumber = 1;
+    const noteNumber = 1;
     
     // Generate notes for each category
     for (const [category, categoryDisclosures] of Object.entries(groupedDisclosures)) {
@@ -844,7 +844,7 @@ export class FinancialStatementsNotesService {
    * Generate materiality-based disclosures
    */
   static async generateMaterialityBasedDisclosures(
-    statements: any,
+    statements: unknown,
     materialityThreshold: number,
     ifrsSettings?: IFRSSettings
   ): Promise<FinancialStatementNote[]> {
@@ -902,7 +902,7 @@ export class FinancialStatementsNotesService {
     return `This note contains disclosures required by various IFRS standards. The following sections provide detailed information as required by the applicable standards.`;
   }
   
-  private static async identifyMaterialItems(statements: any, threshold: number): Promise<any[]> {
+  private static async identifyMaterialItems(statements: unknown, threshold: number): Promise<any[]> {
     // Implementation to identify material items based on threshold
     // This would analyze the statements and identify items exceeding the materiality threshold
     return [];
@@ -1001,9 +1001,9 @@ export class FinancialStatementsNotesService {
       ]
     });
 
-    let totalCost = 0;
-    let totalAccumulated = 0;
-    let totalNet = 0;
+    const totalCost = 0;
+    const totalAccumulated = 0;
+    const totalNet = 0;
 
     categories.forEach(category => {
       const categoryAssets = assets.filter(asset => asset.category === category && asset.status === 'active');

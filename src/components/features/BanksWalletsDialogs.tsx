@@ -208,7 +208,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="wallet-type">Wallet Type *</Label>
-                <Select value={newDigitalWallet.walletType} onValueChange={(value: any) => {
+                <Select value={newDigitalWallet.walletType} onValueChange={(value: unknown) => {
                   updateNewDigitalWallet('walletType', value);
                   updateNewDigitalWallet('currency', value === 'crypto' ? 'USDT' : 'USD');
                   updateNewDigitalWallet('currencies', []);
@@ -477,7 +477,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                 
                 <div>
                   <Label htmlFor="edit-wallet-type">Wallet Type *</Label>
-                  <Select value={editingWallet.walletType} onValueChange={(value: any) => setEditingWallet({
+                  <Select value={editingWallet.walletType} onValueChange={(value: unknown) => setEditingWallet({
                     ...editingWallet,
                     walletType: value,
                     currency: value === 'crypto' ? 'USDT' : 'USD',

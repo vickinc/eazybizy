@@ -18,7 +18,7 @@ interface InvoiceFilters {
 }
 
 interface CachedInvoiceResponse {
-  data: any[]
+  data: unknown[]
   pagination: {
     total: number
     skip: number
@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null) {
       // Cache hit - return immediately with compression
-      console.log(`Invoices cache HIT - ${Date.now() - startTime}ms`)
       
       const responseData = {
         data: cachedData,
@@ -103,7 +102,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Invoices cache MISS - querying database`)
     const dbStartTime = Date.now()
 
     // Build optimized where clause
@@ -251,7 +249,6 @@ export async function GET(request: NextRequest) {
     ])
 
     const dbTime = Date.now() - dbStartTime
-    console.log(`Invoices database query completed - ${dbTime}ms`)
 
     // Cache the results asynchronously (don't wait for it)
     const cachePromises = [
@@ -264,7 +261,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Invoices total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       data: invoices,

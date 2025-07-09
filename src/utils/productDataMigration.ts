@@ -77,12 +77,10 @@ export async function migrateProducts() {
   const hasLocalProducts = await ProductDataMigration.checkForLocalProducts();
   
   if (!hasLocalProducts) {
-    console.log('No local products to migrate');
     return;
   }
 
   if (confirm('This will migrate all local products to the database. Continue?')) {
     const results = await ProductDataMigration.migrateProductsToDatabase();
-    console.log('Migration results:', results);
   }
 }

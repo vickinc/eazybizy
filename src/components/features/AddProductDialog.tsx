@@ -35,7 +35,7 @@ interface AddProductDialogProps {
   selectedCompanyName: string;
   availableCurrencies: string[];
   availableVendors: Vendor[];
-  onProductFormChange: (field: keyof NewProduct, value: any) => void;
+  onProductFormChange: (field: keyof NewProduct, value: unknown) => void;
   onCreateProduct: () => void;
   onResetForm: () => void;
 }

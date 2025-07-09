@@ -45,7 +45,7 @@ export class ServerAuthService {
   async updateUser(userId: string, updates: Partial<User>): Promise<{ user: User | null; error: AuthError | null }> {
     try {
       // Convert lowercase TypeScript enum to uppercase Prisma enum if role is provided
-      const updateData: any = {
+      const updateData: unknown = {
         username: updates.username,
         fullName: updates.fullName,
         isActive: updates.isActive,
@@ -317,7 +317,7 @@ export class ServerAuthService {
     }
   }
 
-  private mapDatabaseUserToUser(dbUser: any): User {
+  private mapDatabaseUserToUser(dbUser: unknown): User {
     return {
       id: dbUser.id,
       username: dbUser.username,

@@ -7,7 +7,6 @@
 import { prisma } from '@/lib/prisma'
 
 async function testLogoUpdate() {
-  console.log('🔍 Testing company logo update...')
   
   try {
     // Find a test company
@@ -18,7 +17,6 @@ async function testLogoUpdate() {
     })
     
     if (!company) {
-      console.log('TestCorp not found. Creating it...')
       const newCompany = await prisma.company.create({
         data: {
           legalName: 'Test Corporation Ltd',
@@ -33,7 +31,6 @@ async function testLogoUpdate() {
           logo: 'TC'
         }
       })
-      console.log('Created TestCorp with ID:', newCompany.id)
     }
     
     // Simulate an uploaded logo path
@@ -49,11 +46,6 @@ async function testLogoUpdate() {
       }
     })
     
-    console.log('\n✅ Updated TestCorp with uploaded logo:')
-    console.log('  ID:', updated.id)
-    console.log('  Name:', updated.tradingName)
-    console.log('  Logo:', updated.logo)
-    console.log('  Logo type:', updated.logo.startsWith('/uploads/') ? 'Uploaded file' : 'Other')
 
   } catch (error) {
     console.error('❌ Error testing logo update:', error)
@@ -67,7 +59,6 @@ async function testLogoUpdate() {
 if (require.main === module) {
   testLogoUpdate()
     .then(() => {
-      console.log('\n✅ Script completed successfully')
       process.exit(0)
     })
     .catch((error) => {

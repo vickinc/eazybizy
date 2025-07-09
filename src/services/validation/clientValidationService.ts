@@ -286,7 +286,7 @@ export class ClientValidationService {
   }
 
   // Field-level validation for real-time feedback
-  static validateField(fieldName: string, value: any, clientType?: string): string | null {
+  static validateField(fieldName: string, value: unknown, clientType?: string): string | null {
     switch (fieldName) {
       case 'name':
         return !value?.trim() ? 'Client name is required' : null;

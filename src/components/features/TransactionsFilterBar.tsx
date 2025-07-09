@@ -118,7 +118,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             {/* Period and Date Range Selection */}
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
+              <Select value={selectedPeriod} onValueChange={(value: unknown) => setSelectedPeriod(value)}>
                 <SelectTrigger className="w-auto sm:w-40 h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -136,7 +136,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             {/* Account Type Filter */}
             <div className="flex items-center space-x-2">
               <Building className="h-4 w-4 text-gray-500" />
-              <Select value={filterBy} onValueChange={(value: any) => setFilterBy(value)}>
+              <Select value={filterBy} onValueChange={(value: unknown) => setFilterBy(value)}>
                 <SelectTrigger className="w-auto sm:w-40 h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -152,7 +152,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             {groupedView && (
               <div className="flex items-center space-x-2">
                 <Folder className="h-4 w-4 text-gray-500" />
-                <Select value={groupBy} onValueChange={(value: any) => setGroupBy(value)}>
+                <Select value={groupBy} onValueChange={(value: unknown) => setGroupBy(value)}>
                   <SelectTrigger className="w-auto sm:w-40 h-9">
                     <SelectValue />
                   </SelectTrigger>

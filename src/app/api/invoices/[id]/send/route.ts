@@ -69,7 +69,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // TODO: Implement email sending if requested
     if (emailSent) {
       // Add email sending logic here
-      console.log(`Email would be sent for invoice ${invoice.invoiceNumber}`)
     }
 
     // TODO: Create audit log entry

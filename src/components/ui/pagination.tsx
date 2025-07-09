@@ -40,7 +40,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is less than max
-      for (let i = 1; i <= totalPages; i++) {
+      for (const i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
@@ -50,7 +50,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       
       if (currentPage <= leftSide + 1) {
         // Near the beginning
-        for (let i = 1; i <= maxVisiblePages - 2; i++) {
+        for (const i = 1; i <= maxVisiblePages - 2; i++) {
           pages.push(i);
         }
         pages.push('...');
@@ -59,14 +59,14 @@ export const Pagination: React.FC<PaginationProps> = ({
         // Near the end
         pages.push(1);
         pages.push('...');
-        for (let i = totalPages - maxVisiblePages + 3; i <= totalPages; i++) {
+        for (const i = totalPages - maxVisiblePages + 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         // In the middle
         pages.push(1);
         pages.push('...');
-        for (let i = currentPage - leftSide + 1; i <= currentPage + rightSide - 1; i++) {
+        for (const i = currentPage - leftSide + 1; i <= currentPage + rightSide - 1; i++) {
           pages.push(i);
         }
         pages.push('...');

@@ -15,7 +15,6 @@ export class ProfitLossStorageService {
       const savedData = localStorage.getItem(this.STORAGE_KEY);
       
       if (!savedData) {
-        console.log('No bookkeeping entries found in localStorage');
         return [];
       }
 
@@ -56,7 +55,6 @@ export class ProfitLossStorageService {
         storageArea: localStorage,
       }));
       
-      console.log(`✅ Saved ${validatedEntries.length} bookkeeping entries to localStorage (array format)`);
     } catch (error) {
       console.error('Error saving bookkeeping entries:', error);
       throw new Error('Failed to save financial data to storage');
@@ -148,7 +146,6 @@ export class ProfitLossStorageService {
   static async clearAllData(): Promise<void> {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
-      console.log('Cleared all bookkeeping entries from localStorage');
     } catch (error) {
       console.error('Error clearing bookkeeping data:', error);
       throw new Error('Failed to clear financial data');
@@ -177,7 +174,6 @@ export class ProfitLossStorageService {
 
       const validatedEntries = this.validateEntries(data.entries);
       await this.saveBookkeepingEntries(validatedEntries);
-      console.log(`Imported ${validatedEntries.length} bookkeeping entries`);
       return validatedEntries;
     } catch (error) {
       console.error('Error importing bookkeeping data:', error);
@@ -185,19 +181,21 @@ export class ProfitLossStorageService {
     }
   }
 
-  private static validateEntries(entries: any[]): BookkeepingEntry[] {
+  private static validateEntries(entries: unknown[]): BookkeepingEntry[] {
     if (!Array.isArray(entries)) {
       throw new Error('Entries must be an array');
     }
 
-    return entries.filter(entry => {
+    return entries.filter((entry): entry is BookkeepingEntry => {
       if (!entry || typeof entry !== 'object') {
         console.warn('Invalid entry format, skipping:', entry);
         return false;
       }
 
+      const entryObj = entry as Record<string, unknown>;
+
       const requiredFields = ['id', 'type', 'category', 'amount', 'currency', 'description', 'date', 'companyId'];
-      const hasRequiredFields = requiredFields.every(field => entry.hasOwnProperty(field));
+      const hasRequiredFields = requiredFields.every(field => entryObj.hasOwnProperty(field));
 
       if (!hasRequiredFields) {
         console.warn('Entry missing required fields, skipping:', entry);
@@ -205,19 +203,19 @@ export class ProfitLossStorageService {
       }
 
       // Validate entry type (allow income, expense, and cogs)
-      if (!['income', 'expense', 'cogs'].includes(entry.type)) {
+      if (!['income', 'expense', 'cogs'].includes(entryObj.type as string)) {
         console.warn('Invalid entry type, skipping:', entry);
         return false;
       }
 
       // Validate amount is a number
-      if (typeof entry.amount !== 'number' || isNaN(entry.amount)) {
+      if (typeof entryObj.amount !== 'number' || isNaN(entryObj.amount)) {
         console.warn('Invalid amount, skipping:', entry);
         return false;
       }
 
       // Validate date format
-      if (!entry.date || isNaN(new Date(entry.date).getTime())) {
+      if (!entryObj.date || isNaN(new Date(entryObj.date as string).getTime())) {
         console.warn('Invalid date, skipping:', entry);
         return false;
       }
@@ -264,7 +262,6 @@ export class ProfitLossStorageService {
       const savedData = localStorage.getItem(this.STORAGE_KEY);
       
       if (!savedData) {
-        console.log('No data to migrate');
         return;
       }
 
@@ -272,16 +269,13 @@ export class ProfitLossStorageService {
       
       // If already in new format, no migration needed
       if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData) && parsedData.version) {
-        console.log('Data already in new format');
         return;
       }
 
       // If it's an array (old format), migrate to new format
       if (Array.isArray(parsedData)) {
-        console.log('Migrating data from old format to new format');
         const validatedEntries = this.validateEntries(parsedData);
         await this.saveBookkeepingEntries(validatedEntries);
-        console.log('Data migration completed successfully');
       }
     } catch (error) {
       console.error('Error during data migration:', error);

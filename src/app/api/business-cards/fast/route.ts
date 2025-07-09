@@ -13,7 +13,7 @@ interface BusinessCardsFilters {
 }
 
 interface CachedBusinessCardsResponse {
-  businessCards: any[]
+  businessCards: unknown[]
   pagination: {
     page: number
     limit: number
@@ -58,7 +58,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null) {
       // Cache hit - return immediately with compression
-      console.log(`Business Cards cache HIT - ${Date.now() - startTime}ms`)
       
       const responseData = {
         businessCards: cachedData,
@@ -100,11 +99,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Business Cards cache MISS - querying database`)
     const dbStartTime = Date.now()
 
     // Build where clause
-    const where: any = {}
+    const where: unknown = {}
     
     if (filters.companyId && filters.companyId !== 'all') {
       where.companyId = parseInt(filters.companyId)
@@ -162,7 +160,6 @@ export async function GET(request: NextRequest) {
     ])
 
     const dbTime = Date.now() - dbStartTime
-    console.log(`Business Cards database query completed - ${dbTime}ms`)
 
     // Process business cards data
     const processedBusinessCards = businessCards.map(card => ({
@@ -181,7 +178,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Business Cards total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       businessCards: processedBusinessCards,

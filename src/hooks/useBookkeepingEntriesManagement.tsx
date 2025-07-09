@@ -162,7 +162,7 @@ export interface BookkeepingEntriesManagementHook {
   handleBulkDelete: () => void;
   
   // Form Actions
-  updateEntryFormData: (field: string, value: any) => void;
+  updateEntryFormData: (field: string, value: unknown) => void;
   resetEntryForm: () => void;
   updateBulkEntries: (entries: BulkEntryFormData[]) => void;
   addBulkEntry: () => void;
@@ -217,7 +217,7 @@ export interface BookkeepingEntriesManagementHook {
   handleShowAddDialog: () => void;
   handleShowBulkDialog: () => void;
   handleCancelEdit: () => void;
-  handleFilterChange: (filters: any) => void;
+  handleFilterChange: (filters: unknown) => void;
   setEditingEntry: (entry: BookkeepingEntry | null) => void;
   handleCancelBulkAdd: () => void;
   toggleSelectAll: () => void;
@@ -926,7 +926,7 @@ export const useBookkeepingEntriesManagement = (
   }, [selectedEntries]);
 
   // Form Actions
-  const updateEntryFormData = useCallback((field: string, value: any) => {
+  const updateEntryFormData = useCallback((field: string, value: unknown) => {
     setEntryFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
@@ -1263,7 +1263,7 @@ export const useBookkeepingEntriesManagement = (
     setShowBulkAddDialog(true);
   }, []);
 
-  const handleFilterChange = useCallback((newFilters: any) => {
+  const handleFilterChange = useCallback((newFilters: unknown) => {
     if (newFilters.selectedPeriod) setSelectedPeriod(newFilters.selectedPeriod);
     if (newFilters.customDateRange) setCustomDateRange(newFilters.customDateRange);
     if (newFilters.viewFilter) setViewFilter(newFilters.viewFilter);

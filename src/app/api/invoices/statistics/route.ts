@@ -342,13 +342,13 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper functions
-function generateWhereClause(where: any): string {
+function generateWhereClause(where: unknown): string {
   // This would need to be implemented based on the where clause structure
   // For now, returning a simple clause
   return '1=1'
 }
 
-function calculateHealthScore(statusStats: any, collectionRate: number, overdueCount: number, totalInvoices: number): number {
+function calculateHealthScore(statusStats: unknown, collectionRate: number, overdueCount: number, totalInvoices: number): number {
   const paidPercentage = statusStats.paid?.percentage || 0
   const overduePercentage = overdueCount > 0 ? (overdueCount / totalInvoices) * 100 : 0
   
@@ -360,7 +360,7 @@ function calculateHealthScore(statusStats: any, collectionRate: number, overdueC
   return Math.max(0, Math.min(100, score))
 }
 
-function generateRecommendations(statusStats: any, collectionRate: number, paymentMetrics: any): string[] {
+function generateRecommendations(statusStats: unknown, collectionRate: number, paymentMetrics: unknown): string[] {
   const recommendations = []
   
   if (collectionRate < 80) {

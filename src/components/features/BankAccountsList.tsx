@@ -20,7 +20,7 @@ interface BankAccountsListProps {
   toggleBankExpansion: (bankId: string) => void;
   handleToggleBankStatus: (accountId: string) => void;
   handleDeleteBankAccount: (accountId: string) => void;
-  setEditingBank: (bank: any) => void;
+  setEditingBank: (bank: unknown) => void;
   isAllBanksExpanded: boolean;
   toggleAllBanksExpansion: () => void;
 }

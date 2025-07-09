@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     
     // Date filters
     if (dateFrom || dateTo || period) {
-      const dateFilter: any = {}
+      const dateFilter: unknown = {}
       
       if (period) {
         const now = new Date()

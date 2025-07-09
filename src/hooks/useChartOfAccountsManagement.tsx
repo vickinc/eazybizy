@@ -87,16 +87,12 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
   useEffect(() => {
     try {
       const savedAccounts = ChartOfAccountsStorageService.getAccounts();
-      console.log('Loading Chart of Accounts:', { savedAccountsCount: savedAccounts.length });
       
       // If no accounts exist, initialize with default data
       if (savedAccounts.length === 0) {
-        console.log('No saved accounts found, initializing default accounts...');
         const defaultAccounts = ChartOfAccountsBusinessService.initializeDefaultAccounts();
-        console.log('Default accounts initialized:', { count: defaultAccounts.length });
         setAccounts(defaultAccounts);
       } else {
-        console.log('Using saved accounts:', { count: savedAccounts.length });
         setAccounts(savedAccounts);
       }
       

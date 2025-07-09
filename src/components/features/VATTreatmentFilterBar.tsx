@@ -17,7 +17,7 @@ import { cn } from '@/utils/cn';
 
 interface VATTreatmentFilterBarProps {
   filter: VATTreatmentFilter;
-  onFilterChange: (field: keyof VATTreatmentFilter, value: any) => void;
+  onFilterChange: (field: keyof VATTreatmentFilter, value: unknown) => void;
   onClearFilters: () => void;
   className?: string;
   treatmentCount?: number;
@@ -44,7 +44,7 @@ export const VATTreatmentFilterBar: React.FC<VATTreatmentFilterBarProps> = ({
   };
 
   const getActiveFilterCount = () => {
-    let count = 0;
+    const count = 0;
     if (filter.search.trim() !== '') count++;
     if (filter.category !== 'all') count++;
     if (filter.isActive !== 'all') count++;

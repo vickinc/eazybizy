@@ -39,7 +39,7 @@ async function testConnection(connectionUrl: string, name: string) {
       responseTime,
       error: null
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     const responseTime = Date.now() - startTime
     
     return {
@@ -57,15 +57,12 @@ async function testConnection(connectionUrl: string, name: string) {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('Testing database connections...')
     
     const results = []
     
     for (const connection of testConnections) {
-      console.log(`Testing ${connection.name}...`)
       const result = await testConnection(connection.url, connection.name)
       results.push(result)
-      console.log(`${connection.name}: ${result.status} (${result.responseTime}ms)`)
       
       // If we found a working connection, stop testing
       if (result.status === 'success') {
@@ -82,7 +79,7 @@ export async function GET(request: NextRequest) {
       allResults: results
     })
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       summary: 'Test failed',

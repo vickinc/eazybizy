@@ -21,7 +21,7 @@ interface ProductFilterBarProps {
   onSortFieldChange?: (value: string) => void;
   onSortDirectionChange?: (value: 'asc' | 'desc') => void;
   availableCurrencies?: string[];
-  activeCompanies?: any[];
+  activeCompanies?: unknown[];
 }
 
 export const ProductFilterBar: React.FC<ProductFilterBarProps> = ({

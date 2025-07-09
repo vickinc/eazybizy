@@ -241,7 +241,7 @@ export class BookkeepingBusinessService {
   }
 
   static calculateInvoiceCOGS(invoice: Invoice, products: Product[]): COGSCalculation {
-    let totalCOGS = 0;
+    const totalCOGS = 0;
     let cogsCurrency = 'USD';
     
     invoice.items.forEach(item => {
@@ -381,14 +381,14 @@ export class BookkeepingBusinessService {
   }
 
   // COGS calculation function
-  static calculateInvoiceCOGS(invoice: any, products: Product[]): { amount: number; currency: string } {
+  static calculateInvoiceCOGS(invoice: unknown, products: Product[]): { amount: number; currency: string } {
     const invoiceProducts = products.filter(p => 
-      invoice.items.some((item: any) => item.productId === p.id)
+      invoice.items.some((item: unknown) => item.productId === p.id)
     );
-    let totalCOGS = 0;
+    const totalCOGS = 0;
     let cogsCurrency = 'USD';
     
-    invoice.items.forEach((item: any) => {
+    invoice.items.forEach((item: unknown) => {
       const product = invoiceProducts.find(p => p.id === item.productId);
       if (product) {
         totalCOGS += product.cost * item.quantity;
@@ -499,7 +499,7 @@ export class BookkeepingBusinessService {
   }
 
   // Validation functions for bulk operations
-  static validateBulkEntries(bulkEntries: any[]): { isValid: boolean; errors: string[] } {
+  static validateBulkEntries(bulkEntries: unknown[]): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
     
     bulkEntries.forEach((entry, index) => {
@@ -695,8 +695,8 @@ export class BookkeepingBusinessService {
     });
 
     // Calculate net balances and totals
-    let totalDebits = 0;
-    let totalCredits = 0;
+    const totalDebits = 0;
+    const totalCredits = 0;
 
     const accounts = Object.values(accountBalances).map(account => {
       account.netBalance = account.debitBalance - account.creditBalance;

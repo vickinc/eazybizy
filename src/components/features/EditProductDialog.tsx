@@ -37,7 +37,7 @@ interface EditProductDialogProps {
   activeCompanies: Company[];
   availableCurrencies: string[];
   availableVendors: Vendor[];
-  onEditProductFormChange: (field: keyof EditingProduct, value: any) => void;
+  onEditProductFormChange: (field: keyof EditingProduct, value: unknown) => void;
   onUpdateProduct: () => void;
 }
 

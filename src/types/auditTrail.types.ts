@@ -32,8 +32,8 @@ export interface AuditTrailEntry {
   entityName?: string;
   
   // Change tracking
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: unknown;
+  newValue?: unknown;
   changedFields?: string[];
   
   // Business context

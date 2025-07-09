@@ -210,7 +210,7 @@ export function useProductsManagement(
   }, [expandedProducts, filteredProducts]);
 
   // Form Handlers
-  const handleProductFormChange = useCallback((field: string, value: any) => {
+  const handleProductFormChange = useCallback((field: string, value: unknown) => {
     setNewProduct(prev => ({
       ...prev,
       [field]: value

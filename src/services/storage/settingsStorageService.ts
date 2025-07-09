@@ -1,4 +1,5 @@
 import { AppSettings, IFRSSettings, CompanySettings, UserPreferences, DEFAULT_IFRS_SETTINGS, DEFAULT_COMPANY_SETTINGS, DEFAULT_USER_PREFERENCES } from '../../types/settings.types';
+import { CurrencyRate } from '../../types/currency.types';
 
 const FIAT_RATES_STORAGE_KEY = 'app-fiat-rates';
 const CRYPTO_RATES_STORAGE_KEY = 'app-crypto-rates';
@@ -20,7 +21,7 @@ const DEFAULT_EXCHANGE_RATES = {
 export class SettingsStorageService {
   static getExchangeRates(): { [key: string]: number } {
     let rates: { [key: string]: number } = { 'USD': 1 };
-    let loadedFromStorage = false;
+    const loadedFromStorage = false;
 
     try {
       // SSR guard: Check if we're in browser environment
@@ -31,7 +32,7 @@ export class SettingsStorageService {
       const fiatRatesRaw = localStorage.getItem(FIAT_RATES_STORAGE_KEY);
       if (fiatRatesRaw) {
         const fiatData = JSON.parse(fiatRatesRaw);
-        fiatData.forEach((currency: any) => {
+        fiatData.forEach((currency: CurrencyRate) => {
           rates[currency.code] = currency.rate;
         });
         loadedFromStorage = true;
@@ -40,7 +41,7 @@ export class SettingsStorageService {
       const cryptoRatesRaw = localStorage.getItem(CRYPTO_RATES_STORAGE_KEY);
       if (cryptoRatesRaw) {
         const cryptoData = JSON.parse(cryptoRatesRaw);
-        cryptoData.forEach((currency: any) => {
+        cryptoData.forEach((currency: CurrencyRate) => {
           rates[currency.code] = currency.rate;
         });
         loadedFromStorage = true;
@@ -63,7 +64,7 @@ export class SettingsStorageService {
   // For now, this service only reads them. Saving would imply a source for these rates.
   // If these rates are meant to be user-configurable within this app, then save methods would be needed.
   // For example:
-  static saveFiatRates(rates: any[]): void {
+  static saveFiatRates(rates: CurrencyRate[]): void {
     try {
       localStorage.setItem(FIAT_RATES_STORAGE_KEY, JSON.stringify(rates));
     } catch (error) {
@@ -71,7 +72,7 @@ export class SettingsStorageService {
     }
   }
 
-  static saveCryptoRates(rates: any[]): void {
+  static saveCryptoRates(rates: CurrencyRate[]): void {
     try {
       localStorage.setItem(CRYPTO_RATES_STORAGE_KEY, JSON.stringify(rates));
     } catch (error) {
@@ -276,14 +277,20 @@ export class SettingsStorageService {
     }
   }
 
-  static importSettings(data: any): void {
+  static importSettings(data: SettingsImportData): void {
     try {
       if (data.appSettings) {
         this.saveAppSettings(data.appSettings);
       }
       if (data.exchangeRates) {
         // Convert exchangeRates object to array format if needed
-        const ratesArray = Object.entries(data.exchangeRates).map(([code, rate]) => ({ code, rate }));
+        const ratesArray = Object.entries(data.exchangeRates).map(([code, rate]) => ({ 
+          code, 
+          rate: rate as number,
+          name: '',
+          type: 'fiat' as const,
+          lastUpdated: new Date().toISOString()
+        }));
         this.saveFiatRates(ratesArray);
       }
     } catch (error) {
@@ -291,4 +298,11 @@ export class SettingsStorageService {
       throw error;
     }
   }
+}
+
+// Interface for import data structure
+interface SettingsImportData {
+  appSettings?: AppSettings;
+  exchangeRates?: Record<string, number>;
+  exportedAt?: string;
 }

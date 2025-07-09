@@ -199,8 +199,6 @@ export function useCompanyManagement(): CompanyManagementHook {
   
   // Log when companies data changes
   useEffect(() => {
-    console.log('📊 [useCompanyManagement] Companies data updated:', companies.length, 'companies')
-    companies.forEach(c => console.log(`  - ${c.tradingName}: ${c.status}`))
   }, [companies])
   
   // Compute derived data using business services
@@ -215,13 +213,11 @@ export function useCompanyManagement(): CompanyManagementHook {
   
   const activeCompanies = useMemo(() => {
     const active = CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Active')
-    console.log('🔢 [useCompanyManagement] Active companies recalculated:', active.length, active.map(c => `${c.tradingName}(${c.status})`))
     return active
   }, [formattedCompanies])
   
   const passiveCompanies = useMemo(() => {
     const passive = CompanyBusinessService.filterCompaniesByStatus(formattedCompanies, 'Passive')
-    console.log('🔢 [useCompanyManagement] Passive companies recalculated:', passive.length, passive.map(c => `${c.tradingName}(${c.status})`))
     return passive
   }, [formattedCompanies])
   
@@ -253,11 +249,9 @@ export function useCompanyManagement(): CompanyManagementHook {
   
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CompanyFormData> & { logo?: string } }) => {
-      console.log('🔄 [useCompanyManagement] updateMutation called with:', { id, data })
       return companyApiService.updateCompany(id, data)
     },
     onSuccess: async (result, variables) => {
-      console.log('✅ [useCompanyManagement] updateMutation succeeded:', { result, variables })
       
       // Reset accumulated companies to force fresh data
       setAccumulatedCompanies([])
@@ -271,7 +265,6 @@ export function useCompanyManagement(): CompanyManagementHook {
       try {
         const freshData = await companyApiService.getCompaniesFresh(queryParams)
         queryClient.setQueryData([COMPANIES_QUERY_KEY, queryParams], freshData)
-        console.log('🔄 [useCompanyManagement] Fresh data fetched and set:', freshData.data?.length, 'companies')
       } catch (error) {
         console.error('Failed to fetch fresh data:', error)
       }
@@ -280,12 +273,10 @@ export function useCompanyManagement(): CompanyManagementHook {
       try {
         const freshSimpleData = await companyApiService.getCompaniesFresh({ take: 1000 })
         queryClient.setQueryData(['companies-simple'], freshSimpleData)
-        console.log('🔄 [useCompanyManagement] Fresh simple companies data set:', freshSimpleData.data?.length, 'companies')
       } catch (error) {
         console.error('Failed to fetch fresh simple companies:', error)
       }
       
-      console.log('🔄 [useCompanyManagement] Cache invalidation and fresh fetch completed')
       
       toast.success('Company updated successfully')
       setEditingCompany(null)
@@ -510,7 +501,6 @@ export function useCompanyManagement(): CompanyManagementHook {
         setCopiedFields(prev => ({ ...prev, [fieldKey]: false }))
       }, 2000)
       
-      console.log(`${fieldName} copied to clipboard`)
     } catch (err) {
       console.error(`Failed to copy ${fieldName}:`, err)
       toast.error(`Failed to copy ${fieldName}`)

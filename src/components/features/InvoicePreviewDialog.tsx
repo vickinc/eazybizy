@@ -22,7 +22,7 @@ interface PaymentMethod {
 }
 
 interface InvoicePreviewDialogProps {
-  invoice: any | null;
+  invoice: unknown | null;
   companies: Company[];
   paymentMethods: PaymentMethod[];
   onClose: () => void;
@@ -55,7 +55,7 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
       
       // Transform to payment method format
       const allMethods = [
-        ...(bankAccounts.data || []).filter((bank: any) => bank.isActive).map((bank: any) => ({
+        ...(bankAccounts.data || []).filter((bank: unknown) => bank.isActive).map((bank: unknown) => ({
           id: bank.id,
           type: 'BANK',
           name: bank.bankName,
@@ -68,7 +68,7 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
           currency: bank.currency,
           details: bank.notes || ''
         })),
-        ...(digitalWallets.data || []).filter((wallet: any) => wallet.isActive).map((wallet: any) => ({
+        ...(digitalWallets.data || []).filter((wallet: unknown) => wallet.isActive).map((wallet: unknown) => ({
           id: wallet.id,
           type: 'WALLET',
           name: wallet.walletName,
@@ -100,12 +100,12 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
     // If invoice has paymentMethodInvoices relation with valid data, use that
     if (invoice.paymentMethodInvoices && invoice.paymentMethodInvoices.length > 0) {
       // Check if the payment method data is complete
-      const validMethods = invoice.paymentMethodInvoices.filter((pmi: any) => 
+      const validMethods = invoice.paymentMethodInvoices.filter((pmi: unknown) => 
         pmi.paymentMethod && (pmi.paymentMethod.name || pmi.paymentMethod.bankName)
       );
       
       if (validMethods.length > 0) {
-        const methods = validMethods.map((pmi: any) => ({
+        const methods = validMethods.map((pmi: unknown) => ({
           id: pmi.paymentMethod.id,
           type: pmi.paymentMethod.type,
           name: pmi.paymentMethod.name,
@@ -123,12 +123,12 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
         setInvoicePaymentMethods(methods);
       } else {
         // If payment method data is incomplete, get the selected IDs and use fallback
-        const selectedIds = invoice.paymentMethodInvoices?.map((pmi: any) => pmi.paymentMethodId) || [];
+        const selectedIds = invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [];
         fetchPaymentMethodsFallback(selectedIds);
       }
     } else {
       // Use PaymentMethodInvoice relationship
-      const selectedIds = invoice.paymentMethodInvoices?.map((pmi: any) => pmi.paymentMethodId) || [];
+      const selectedIds = invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [];
       fetchPaymentMethodsFallback(selectedIds);
     }
   }, [invoice, fetchPaymentMethodsFallback]);
@@ -141,7 +141,7 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
       const rates = InvoiceBusinessService.getExchangeRates();
       
       // Calculate conversions for all available payment methods with different currencies
-      const currencyGroups = new Map<string, { methods: any[]; names: string[] }>();
+      const currencyGroups = new Map<string, { methods: unknown[]; names: string[] }>();
       
       invoicePaymentMethods.forEach(method => {
         const currency = method.currency;
@@ -293,7 +293,7 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {(invoice.items || []).map((item: any, index: number) => (
+                  {(invoice.items || []).map((item: unknown, index: number) => (
                     <tr key={index} className="border-b border-gray-100">
                       <td className="py-2">
                         <div>

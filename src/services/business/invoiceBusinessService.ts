@@ -30,14 +30,14 @@ export class InvoiceBusinessService {
       
       if (fiatRates) {
         const fiatData = JSON.parse(fiatRates);
-        fiatData.forEach((currency: any) => {
+        fiatData.forEach((currency: unknown) => {
           rates[currency.code] = currency.rate;
         });
       }
       
       if (cryptoRates) {
         const cryptoData = JSON.parse(cryptoRates);
-        cryptoData.forEach((currency: any) => {
+        cryptoData.forEach((currency: unknown) => {
           rates[currency.code] = currency.rate;
         });
       }
@@ -106,7 +106,7 @@ export class InvoiceBusinessService {
     taxRate: number,
     rates: ExchangeRates
   ): InvoiceCalculation {
-    let subtotal = 0;
+    const subtotal = 0;
     let currency = 'USD'; // Default currency
     
     // Determine the primary currency first (from the first item)
@@ -301,7 +301,7 @@ export class InvoiceBusinessService {
     invoice: Invoice,
     companies: Company[],
     clients: Client[],
-    paymentMethods: any[]
+    paymentMethods: unknown[]
   ): FormattedInvoice {
     const company = companies.find(c => c.id === invoice.fromCompanyId);
     const client = clients.find(c => c.clientName === invoice.clientName || c.name === invoice.clientName);
@@ -538,7 +538,7 @@ export class InvoiceBusinessService {
    */
   static updateOverdueInvoices(invoices: Invoice[]): { updatedInvoices: Invoice[]; updatedCount: number } {
     const today = new Date();
-    let updatedCount = 0;
+    const updatedCount = 0;
     
     const updatedInvoices = invoices.map(invoice => {
       // Only check sent invoices
@@ -672,8 +672,8 @@ export class InvoiceBusinessService {
     sortDirection: SortDirection
   ): FormattedInvoice[] {
     const sorted = [...invoices].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: unknown;
+      let bValue: unknown;
 
       switch (sortField) {
         case 'createdAt':
@@ -721,7 +721,7 @@ export class InvoiceBusinessService {
    */
   static calculatePaymentCurrencyConversions(
     invoice: Invoice,
-    paymentMethods: any[],
+    paymentMethods: unknown[],
     rates: ExchangeRates
   ): Array<{
     currency: string;
@@ -736,7 +736,7 @@ export class InvoiceBusinessService {
     );
     
     // Group payment methods by currency
-    const currencyGroups = new Map<string, { methods: any[]; names: string[] }>();
+    const currencyGroups = new Map<string, { methods: unknown[]; names: string[] }>();
     
     invoicePaymentMethods.forEach(method => {
       const currency = method.currency;

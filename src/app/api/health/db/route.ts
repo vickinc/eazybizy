@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString(),
       }, { status: 503 })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       status: 'error',
       database: 'unknown',

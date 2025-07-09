@@ -236,7 +236,6 @@ export class ProfitLossExportService {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      console.log('P&L statement exported as PDF successfully');
     } catch (error) {
       console.error('PDF export error:', error);
       throw new Error('Failed to export PDF');
@@ -328,7 +327,7 @@ export class ProfitLossExportService {
       
       // Add some basic formatting (bold headers)
       const range = XLSX.utils.decode_range(ws['!ref'] || '');
-      for (let row = range.s.r; row <= range.e.r; row++) {
+      for (const row = range.s.r; row <= range.e.r; row++) {
         const cellRef = XLSX.utils.encode_cell({ r: row, c: 0 });
         if (ws[cellRef] && (
           ws[cellRef].v === 'REVENUE' ||
@@ -355,7 +354,6 @@ export class ProfitLossExportService {
       const fileName = `profit-loss-${companyName.replace(/[^a-zA-Z0-9]/g, '-')}-${periodName.replace(/[^a-zA-Z0-9]/g, '-')}.xlsx`;
       saveAs(blob, fileName);
       
-      console.log('P&L statement exported as Excel successfully');
     } catch (error) {
       console.error('Excel export error:', error);
       throw new Error('Failed to export Excel file');
@@ -388,7 +386,6 @@ export class ProfitLossExportService {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      console.log('P&L statement exported as JSON successfully');
     } catch (error) {
       console.error('JSON export error:', error);
       throw new Error('Failed to export JSON file');
@@ -476,7 +473,6 @@ export class ProfitLossExportService {
       const fileName = `profit-loss-${companyName.replace(/[^a-zA-Z0-9]/g, '-')}-${periodName.replace(/[^a-zA-Z0-9]/g, '-')}.csv`;
       saveAs(blob, fileName);
       
-      console.log('P&L statement exported as CSV successfully');
     } catch (error) {
       console.error('CSV export error:', error);
       throw new Error('Failed to export CSV file');
@@ -541,7 +537,6 @@ export class ProfitLossExportService {
 
     try {
       await Promise.all(exportPromises);
-      console.log(`Successfully exported P&L in ${formats.length} formats`);
     } catch (error) {
       console.error('Error exporting multiple formats:', error);
       throw new Error('Failed to export in one or more formats');

@@ -9,7 +9,7 @@ interface InvoiceActionsProps {
   onToggleAllExpansion: () => void;
   viewMode: string;
   onViewModeChange: (mode: string) => void;
-  allInvoices: any[];
+  allInvoices: unknown[];
   canAddInvoice: boolean;
 }
 

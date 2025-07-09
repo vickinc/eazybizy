@@ -269,7 +269,7 @@ export class FinancialPeriodsStorageService {
     }
   }
 
-  static importData(data: any): void {
+  static importData(data: unknown): void {
     try {
       if (data.periods) {
         this.savePeriods(data.periods);

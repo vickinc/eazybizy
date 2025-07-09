@@ -74,7 +74,7 @@ export const VirtualEventList: React.FC<VirtualEventListProps> = ({
   // Calculate variable heights for events with notes
   const getItemHeight = useCallback((index: number) => {
     const event = eventsWithNotes[index];
-    let height = itemHeight; // Base height
+    const height = itemHeight; // Base height
     
     // Add height for notes
     if (event.eventNotes.length > 0) {

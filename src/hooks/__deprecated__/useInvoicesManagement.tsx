@@ -27,7 +27,7 @@ export interface InvoicesManagementHook {
   invoices: Invoice[];
   filteredInvoices: FormattedInvoice[];
   statistics: InvoiceStatistics;
-  paymentMethods: any[];
+  paymentMethods: unknown[];
   clients: Client[];
   products: Product[];
   
@@ -38,7 +38,7 @@ export interface InvoicesManagementHook {
   
   // Computed Filtered Data
   activeProducts: Product[];
-  formPaymentMethods: any[];
+  formPaymentMethods: unknown[];
   
   // Page Header Data
   pageTitle: string;
@@ -212,7 +212,6 @@ export function useInvoicesManagement(
   useEffect(() => {
     const handleCurrencyRatesUpdate = () => {
       setExchangeRates(InvoiceBusinessService.getExchangeRates());
-      console.log('Exchange rates updated in invoices page');
     };
 
     window.addEventListener('currencyRatesUpdated', handleCurrencyRatesUpdate);

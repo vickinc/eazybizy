@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, MapPin, Phone, Mail, Globe, Copy, ExternalLink, Check, Settings } from "lucide-react";
 import { Company } from '@/types';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
+import { calculateCompanyAge } from '@/utils/companyUtils';
 
 interface CompanyCardProps {
   company: Company;
@@ -188,7 +189,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     copyToClipboard(formattedDate, 'Registration Date', company.id);
                   }}
                 >
-                  Registered: {new Date(company.registrationDate).toLocaleDateString('en-GB')}
+                  Registered: {new Date(company.registrationDate).toLocaleDateString('en-GB')} {calculateCompanyAge(company.registrationDate).ageString}
                 </p>
                 <Button
                   variant="ghost"

@@ -14,7 +14,7 @@ interface EventDialogProps {
   editingEvent: CalendarEvent | null;
   formData: CalendarEventFormData;
   companies: Company[];
-  updateFormField: (field: keyof CalendarEventFormData, value: any) => void;
+  updateFormField: (field: keyof CalendarEventFormData, value: unknown) => void;
   handleAddEvent: () => void;
   handleUpdateEvent: () => void;
   openDialog: () => void;

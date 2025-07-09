@@ -4,6 +4,7 @@ import { CalendarEvent, Note } from '@/types/calendar.types';
 import { companyApiService } from '@/services/api';
 import { CalendarService } from '@/services/api/calendarService';
 import { NotesService } from '@/services/api/notesService';
+import { CompanyAnniversaryService } from '@/services/business/companyAnniversaryService';
 
 interface BusinessCard {
   id: string;
@@ -116,11 +117,29 @@ export function useHomeDashboard(
   const recentActiveCompanies = activeCompanies.slice(-3).reverse();
   
   // Process events
-  const events = eventsData?.events || [];
+  const databaseEvents = eventsData?.events || [];
+  
+  // Generate anniversary events for the next year
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const next30Days = new Date(today);
   next30Days.setDate(today.getDate() + 30);
+  const nextYear = new Date(today);
+  nextYear.setFullYear(today.getFullYear() + 1);
+  
+  // Filter companies based on selected company for anniversary events
+  const filteredCompanies = selectedCompany === 'all' 
+    ? companies 
+    : companies.filter(c => c.id === selectedCompany);
+  
+  const anniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
+    filteredCompanies,
+    today,
+    nextYear
+  ).map(anniversaryEvent => CompanyAnniversaryService.convertToCalendarEvent(anniversaryEvent));
+  
+  // Combine database events with anniversary events
+  const events = [...databaseEvents, ...anniversaryEvents];
   
   const upcomingEventsNext30Days = events.filter(event => {
     const eventDate = new Date(event.date);

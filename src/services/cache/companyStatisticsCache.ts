@@ -87,7 +87,6 @@ export async function invalidateCompanyStatistics(): Promise<void> {
   
   // Optionally trigger background refresh here
   // This could be enhanced with a queue system for high-throughput scenarios
-  console.log('Company statistics cache invalidated')
 }
 
 /**
@@ -97,7 +96,6 @@ export async function invalidateCompanyStatistics(): Promise<void> {
 export async function refreshCompanyStatistics(): Promise<CompanyStatistics | null> {
   // Prevent duplicate refreshes
   if (companyStatisticsCache.isCurrentlyRefreshing()) {
-    console.log('Statistics refresh already in progress')
     return companyStatisticsCache.get()
   }
 
@@ -113,7 +111,6 @@ export async function refreshCompanyStatistics(): Promise<CompanyStatistics | nu
     const statistics = await response.json()
     companyStatisticsCache.set(statistics)
     
-    console.log('Company statistics cache refreshed')
     return companyStatisticsCache.get()
   } catch (error) {
     console.error('Failed to refresh company statistics:', error)

@@ -12,8 +12,8 @@ import {
 
 interface IncomeEntryCardProps {
   // Core data
-  entry: any;
-  company: any;
+  entry: unknown;
+  company: unknown;
   isExpanded: boolean;
   linkedExpenses: number;
   remainingAmount: number;
@@ -24,11 +24,11 @@ interface IncomeEntryCardProps {
   
   // Functions
   formatCurrency: (amount: number, currency?: string) => string;
-  getCOGSCurrency: (entry: any) => string;
+  getCOGSCurrency: (entry: unknown) => string;
   toggleEntryExpansion: (entryId: string) => void;
   toggleEntrySelection: (entryId: string) => void;
-  handleEditEntry: (entry: any) => void;
-  handleDeleteEntry: (entry: any) => void;
+  handleEditEntry: (entry: unknown) => void;
+  handleDeleteEntry: (entry: unknown) => void;
 }
 
 export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     // Build where clause
-    const where: any = {};
+    const where: unknown = {};
     
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId);

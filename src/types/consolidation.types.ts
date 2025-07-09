@@ -450,11 +450,11 @@ export type ReportingFrequency =
 
 // Additional interfaces for supporting structures
 export interface EntityFinancialStatements {
-  balanceSheet: any;
-  incomeStatement: any;
-  cashFlowStatement: any;
-  equityStatement: any;
-  notes: any[];
+  balanceSheet: unknown;
+  incomeStatement: unknown;
+  cashFlowStatement: unknown;
+  equityStatement: unknown;
+  notes: unknown[];
 }
 
 export interface EntityAdjustment {
@@ -525,15 +525,15 @@ export interface ConsolidationDisclosure {
 }
 
 export interface ConsolidatedBalanceSheet {
-  assets: any;
-  liabilities: any;
-  equity: any;
+  assets: unknown;
+  liabilities: unknown;
+  equity: unknown;
   nonControllingInterests: number;
 }
 
 export interface ConsolidatedIncomeStatement {
-  revenue: any;
-  expenses: any;
+  revenue: unknown;
+  expenses: unknown;
   profitBeforeTax: number;
   profitAfterTax: number;
   profitAttributableToParent: number;
@@ -541,9 +541,9 @@ export interface ConsolidatedIncomeStatement {
 }
 
 export interface ConsolidatedCashFlow {
-  operatingActivities: any;
-  investingActivities: any;
-  financingActivities: any;
+  operatingActivities: unknown;
+  investingActivities: unknown;
+  financingActivities: unknown;
   netCashFlow: number;
 }
 

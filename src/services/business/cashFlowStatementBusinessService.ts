@@ -639,7 +639,7 @@ export class CashFlowStatementBusinessService {
     accounts: ChartOfAccount[],
     currentBalances: { [accountId: string]: number },
     priorBalances: { [accountId: string]: number },
-    netCashFlow: any,
+    netCashFlow: unknown,
     context: CalculationContext
   ) {
     // Find cash and cash equivalent accounts

@@ -33,7 +33,7 @@ interface FixedAssetDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: FixedAssetFormData;
   editingAsset: FixedAsset | null;
-  onFormInputChange: (field: keyof FixedAssetFormData, value: any) => void;
+  onFormInputChange: (field: keyof FixedAssetFormData, value: unknown) => void;
   onFormSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   getFieldError: (field: keyof FixedAssetFormData) => string | undefined;

@@ -40,14 +40,14 @@ export interface VATTreatmentManagementHook {
   handleDelete: (id: string) => void;
   handleToggleActive: (id: string) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
-  handleFormInputChange: (field: keyof VATTreatmentFormData, value: any) => void;
+  handleFormInputChange: (field: keyof VATTreatmentFormData, value: unknown) => void;
   
   // Dialog management
   setShowDialog: (show: boolean) => void;
   resetForm: () => void;
   
   // Filter and sort
-  handleFilterChange: (field: keyof VATTreatmentFilter, value: any) => void;
+  handleFilterChange: (field: keyof VATTreatmentFilter, value: unknown) => void;
   clearFilters: () => void;
   handleSort: (field: TableSortConfig['field']) => void;
   
@@ -160,7 +160,7 @@ export const useVATTreatmentManagement = (): VATTreatmentManagementHook => {
       } else {
         toast.error('Failed to delete VAT treatment');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting VAT treatment:', error);
       toast.error(error.message || 'Failed to delete VAT treatment');
     }
@@ -171,7 +171,7 @@ export const useVATTreatmentManagement = (): VATTreatmentManagementHook => {
       const updatedTreatment = VATTreatmentBusinessService.toggleActive(id);
       toast.success(`VAT treatment ${updatedTreatment.isActive ? 'activated' : 'deactivated'} successfully`);
       loadTreatments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling VAT treatment status:', error);
       toast.error(error.message || 'Failed to update VAT treatment status');
     }
@@ -212,7 +212,7 @@ export const useVATTreatmentManagement = (): VATTreatmentManagementHook => {
       setShowDialog(false);
       resetForm();
       loadTreatments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting VAT treatment form:', error);
       toast.error(error.message || 'Failed to save VAT treatment');
     } finally {
@@ -220,7 +220,7 @@ export const useVATTreatmentManagement = (): VATTreatmentManagementHook => {
     }
   }, [formData, editingTreatment, loadTreatments]);
 
-  const handleFormInputChange = useCallback((field: keyof VATTreatmentFormData, value: any) => {
+  const handleFormInputChange = useCallback((field: keyof VATTreatmentFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -240,7 +240,7 @@ export const useVATTreatmentManagement = (): VATTreatmentManagementHook => {
   }, []);
 
   // Filter and sort
-  const handleFilterChange = useCallback((field: keyof VATTreatmentFilter, value: any) => {
+  const handleFilterChange = useCallback((field: keyof VATTreatmentFilter, value: unknown) => {
     setFilter(prev => ({
       ...prev,
       [field]: value

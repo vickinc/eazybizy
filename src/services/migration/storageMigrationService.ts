@@ -47,12 +47,10 @@ export class StorageMigrationService {
       const lastMigrationVersion = localStorage.getItem(this.MIGRATION_VERSION_KEY);
       
       if (lastMigrationVersion === this.CURRENT_VERSION) {
-        console.log('Storage migration already completed');
         return;
       }
 
-      console.log('Starting storage migration...');
-      let migratedCount = 0;
+      const migratedCount = 0;
 
       // Migrate each key
       for (const [oldKey, newKey] of Object.entries(this.KEY_MAPPINGS)) {
@@ -65,7 +63,6 @@ export class StorageMigrationService {
           if (existingData === null) {
             // Migrate the data
             localStorage.setItem(newKey, data);
-            console.log(`Migrated ${oldKey} → ${newKey}`);
             migratedCount++;
           } else {
             console.warn(`Skipping ${oldKey} - ${newKey} already exists`);
@@ -75,11 +72,9 @@ export class StorageMigrationService {
 
       // Mark migration as complete
       localStorage.setItem(this.MIGRATION_VERSION_KEY, this.CURRENT_VERSION);
-      console.log(`Storage migration completed. Migrated ${migratedCount} items.`);
       
       // Clean up old keys after successful migration
       if (migratedCount > 0) {
-        console.log('Cleaning up old keys...');
         this.cleanupOldKeys();
       }
 
@@ -94,7 +89,7 @@ export class StorageMigrationService {
    */
   static cleanupOldKeys(): void {
     try {
-      let removedCount = 0;
+      const removedCount = 0;
       
       for (const oldKey of Object.keys(this.KEY_MAPPINGS)) {
         if (localStorage.getItem(oldKey) !== null) {
@@ -103,7 +98,6 @@ export class StorageMigrationService {
         }
       }
 
-      console.log(`Cleanup completed. Removed ${removedCount} old keys.`);
     } catch (error) {
       console.error('Cleanup failed:', error);
     }
@@ -122,13 +116,12 @@ export class StorageMigrationService {
    */
   static forceCleanupOldKeys(): void {
     try {
-      let removedCount = 0;
+      const removedCount = 0;
       
       // First, clean up keys in the mapping
       for (const oldKey of Object.keys(this.KEY_MAPPINGS)) {
         if (localStorage.getItem(oldKey) !== null) {
           localStorage.removeItem(oldKey);
-          console.log(`Removed mapped old key: ${oldKey}`);
           removedCount++;
         }
       }
@@ -139,11 +132,9 @@ export class StorageMigrationService {
       
       for (const oldKey of remainingOldKeys) {
         localStorage.removeItem(oldKey);
-        console.log(`Removed unmapped old key: ${oldKey}`);
         removedCount++;
       }
 
-      console.log(`Force cleanup completed. Removed ${removedCount} old keys total.`);
       
       // Trigger a storage event to notify other parts of the app
       window.dispatchEvent(new StorageEvent('storage', {

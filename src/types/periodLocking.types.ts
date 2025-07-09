@@ -417,8 +417,8 @@ export interface PeriodAuditEntry {
   // Details
   entityType: string;
   entityId: string;
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: unknown;
+  newValue?: unknown;
   
   // Context
   sessionId: string;
@@ -538,7 +538,7 @@ export interface ExternalSystemIntegration {
   
   // Configuration
   syncFrequency: string;
-  dataMapping: any;
+  dataMapping: unknown;
   
   // Error handling
   errorCount: number;

@@ -19,7 +19,7 @@ export async function checkDatabaseHealth(): Promise<DatabaseHealth> {
       isConnected: true,
       responseTime,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     const responseTime = Date.now() - startTime
     
     return {
@@ -34,8 +34,7 @@ export async function optimizeConnection(): Promise<void> {
   try {
     // Warm up the connection pool
     await prisma.$connect()
-    console.log('Database connection pool warmed up')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to warm up database connection:', error.message)
   }
 }
@@ -43,8 +42,7 @@ export async function optimizeConnection(): Promise<void> {
 export async function gracefulDisconnect(): Promise<void> {
   try {
     await prisma.$disconnect()
-    console.log('Database disconnected gracefully')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error during database disconnect:', error.message)
   }
 }

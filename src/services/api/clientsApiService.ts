@@ -174,7 +174,7 @@ export interface ClientStatistics {
     totalInvoiced: number
   }>
   trends: {
-    monthly: any[]
+    monthly: unknown[]
   }
   insights: {
     topIndustry: string | null
@@ -224,7 +224,7 @@ export class ClientsApiService {
       body: JSON.stringify(data),
     })
     if (!response.ok) {
-      let errorMessage = `Failed to create client: ${response.status}`
+      const errorMessage = `Failed to create client: ${response.status}`
       try {
         const errorData = await response.json()
         if (errorData.error) {
@@ -419,7 +419,7 @@ export class ClientsApiService {
     return response.json()
   }
 
-  async bulkExport(ids: string[], format: 'json' | 'csv' = 'json'): Promise<{ success: boolean; data: any; message: string }> {
+  async bulkExport(ids: string[], format: 'json' | 'csv' = 'json'): Promise<{ success: boolean; data: unknown; message: string }> {
     const response = await fetch(`${this.baseUrl}/bulk`, {
       method: 'POST',
       headers: {

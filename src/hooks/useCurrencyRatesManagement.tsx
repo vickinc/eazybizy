@@ -58,7 +58,6 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
         setCryptoRates(data.cryptoRates);
         setIsLoaded(true);
         
-        console.log('Currency rates loaded successfully');
       } catch (error) {
         console.error('Error loading currency rates data:', error);
         toast.error('Failed to load currency rates data');
@@ -158,11 +157,9 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
     if (type === 'fiat') {
       const updatedRates = CurrencyRatesBusinessService.updateCurrencyRate(fiatRates, code, rate);
       setFiatRates(updatedRates);
-      console.log(`Auto-saved FIAT rate change: ${code} = ${rate}`);
     } else {
       const updatedRates = CurrencyRatesBusinessService.updateCurrencyRate(cryptoRates, code, rate);
       setCryptoRates(updatedRates);
-      console.log(`Auto-saved crypto rate change: ${code} = ${rate}`);
     }
     
     // Trigger event to notify other components immediately
@@ -180,7 +177,6 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
       
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-      console.log('Currency rates saved successfully');
     } catch (error) {
       console.error('Error saving currency rates:', error);
       setSaveStatus('error');
@@ -206,11 +202,9 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
         if (type === 'fiat') {
           const defaultRates = CurrencyRatesStorageService.resetFiatRatesToDefaults();
           setFiatRates(defaultRates);
-          console.log('Reset and saved FIAT rates to defaults');
         } else {
           const defaultRates = CurrencyRatesStorageService.resetCryptoRatesToDefaults();
           setCryptoRates(defaultRates);
-          console.log('Reset and saved crypto rates to defaults');
         }
         
         // Trigger event to notify other components

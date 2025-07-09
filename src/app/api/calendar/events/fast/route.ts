@@ -13,7 +13,7 @@ interface CalendarFilters {
 }
 
 interface CachedCalendarResponse {
-  events: any[]
+  events: unknown[]
   pagination: {
     page: number
     limit: number
@@ -58,7 +58,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null) {
       // Cache hit - return immediately with compression
-      console.log(`Calendar cache HIT - ${Date.now() - startTime}ms`)
       
       const responseData = {
         events: cachedData,
@@ -100,14 +99,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Calendar cache MISS - querying database`)
     const dbStartTime = Date.now()
 
     // Build where clause
-    const where: any = {}
+    const where: unknown = {}
     
     // Handle company filtering
-    let companyFilter: any = null
+    let companyFilter: unknown = null
     if (filters.companyId && filters.companyId !== 'all') {
       const companyIdInt = parseInt(filters.companyId)
       const company = await prisma.company.findUnique({
@@ -136,7 +134,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Handle search filtering
-    let searchFilter: any = null
+    let searchFilter: unknown = null
     if (filters.search) {
       searchFilter = {
         OR: [
@@ -203,7 +201,6 @@ export async function GET(request: NextRequest) {
     ])
 
     const dbTime = Date.now() - dbStartTime
-    console.log(`Calendar database query completed - ${dbTime}ms`)
 
     // Process events data
     const processedEvents = events.map(event => ({
@@ -222,7 +219,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Calendar total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       events: processedEvents,

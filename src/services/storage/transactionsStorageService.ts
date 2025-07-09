@@ -117,13 +117,11 @@ export class TransactionsStorageService {
   // Data migration and cleanup
   static migrateData(): void {
     // Future: Add data migration logic if schema changes
-    console.log('Data migration check completed');
   }
 
   static clearAllData(): void {
     try {
       localStorage.removeItem(this.TRANSACTIONS_KEY);
-      console.log('All transaction data cleared');
     } catch (error) {
       console.error('Error clearing transaction data:', error);
     }

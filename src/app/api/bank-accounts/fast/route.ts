@@ -15,7 +15,7 @@ interface BankAccountFilters {
 }
 
 interface CachedBankAccountResponse {
-  data: any[]
+  data: unknown[]
   pagination: {
     total: number
     skip: number
@@ -57,7 +57,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null) {
       // Cache hit - return immediately with compression
-      console.log(`Bank Accounts cache HIT - ${Date.now() - startTime}ms`)
       
       const responseData = {
         data: cachedData,
@@ -97,7 +96,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Bank Accounts cache MISS - querying database`)
     const dbStartTime = Date.now()
 
     // Build optimized where clause
@@ -182,7 +180,6 @@ export async function GET(request: NextRequest) {
     ])
 
     const dbTime = Date.now() - dbStartTime
-    console.log(`Bank Accounts database query completed - ${dbTime}ms`)
 
     // Cache the results asynchronously (don't wait for it)
     const cachePromises = [
@@ -195,7 +192,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Bank Accounts total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       data: bankAccounts,

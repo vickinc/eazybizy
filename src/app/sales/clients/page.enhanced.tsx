@@ -95,7 +95,7 @@ const ClientsPageEnhanced: React.FC<ClientsPageEnhancedProps> = ({ initialCompan
   }, [clients, searchQuery]);
 
   // Event handlers
-  const handleCreateClient = useCallback(async (clientData: any) => {
+  const handleCreateClient = useCallback(async (clientData: unknown) => {
     try {
       await createClient.mutateAsync(clientData);
       toast.success('Client created successfully');
@@ -105,7 +105,7 @@ const ClientsPageEnhanced: React.FC<ClientsPageEnhancedProps> = ({ initialCompan
     }
   }, [createClient]);
 
-  const handleUpdateClient = useCallback(async (id: string, clientData: any) => {
+  const handleUpdateClient = useCallback(async (id: string, clientData: unknown) => {
     try {
       await updateClient.mutateAsync({ id, data: clientData });
       toast.success('Client updated successfully');
@@ -135,7 +135,7 @@ const ClientsPageEnhanced: React.FC<ClientsPageEnhancedProps> = ({ initialCompan
     }
   }, [exportClients, filters]);
 
-  const handleClientClick = useCallback((client: any) => {
+  const handleClientClick = useCallback((client: unknown) => {
     setSelectedClient(client);
   }, []);
 

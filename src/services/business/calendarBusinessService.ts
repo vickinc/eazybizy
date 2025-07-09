@@ -54,7 +54,19 @@ export class CalendarBusinessService {
     const selectedCompanyObj = companies.find(c => c.id === selectedCompany);
     if (!selectedCompanyObj) return [];
     
-    return events.filter(event => event.company === selectedCompanyObj.tradingName);
+    return events.filter(event => {
+      // Check by companyId first (for anniversary events and newer events)
+      if (event.companyId && event.companyId === selectedCompanyObj.id) {
+        return true;
+      }
+      
+      // Fallback to company name string (for legacy events)
+      if (event.company === selectedCompanyObj.tradingName) {
+        return true;
+      }
+      
+      return false;
+    });
   }
 
   /**

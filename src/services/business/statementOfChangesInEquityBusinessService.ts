@@ -163,7 +163,7 @@ export class StatementOfChangesInEquityBusinessService {
    * Generate equity components
    */
   private static async generateEquityComponents(
-    equityData: any,
+    equityData: unknown,
     currentPeriod: StatementPeriod,
     priorPeriod?: StatementPeriod
   ) {
@@ -268,7 +268,7 @@ export class StatementOfChangesInEquityBusinessService {
    * Generate equity movements
    */
   private static async generateEquityMovements(
-    equityData: any,
+    equityData: unknown,
     currentPeriod: StatementPeriod,
     priorPeriod?: StatementPeriod
   ) {
@@ -433,7 +433,7 @@ export class StatementOfChangesInEquityBusinessService {
   /**
    * Calculate total equity
    */
-  private static calculateTotalEquity(equityComponents: any, movements: any) {
+  private static calculateTotalEquity(equityComponents: unknown, movements: unknown) {
     const openingBalance = 1335000; // Sum of all opening balances
     const totalMovements = 80000; // Net movements
     const closingBalance = 1415000; // Sum of all closing balances
@@ -480,7 +480,7 @@ export class StatementOfChangesInEquityBusinessService {
    * Calculate dividend information
    */
   private static async calculateDividendInformation(
-    equityData: any,
+    equityData: unknown,
     currentPeriod: StatementPeriod
   ) {
     // Sample dividend calculation

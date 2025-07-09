@@ -33,11 +33,9 @@ redis.on('error', (error) => {
 })
 
 redis.on('connect', () => {
-  console.log('Redis connected successfully')
 })
 
 redis.on('ready', () => {
-  console.log('Redis is ready to receive commands')
 })
 
 if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis
@@ -148,7 +146,7 @@ export const CacheTTL = {
 }
 
 // Fallback in-memory cache when Redis is not available
-const memoryCache = new Map<string, { value: any; expires: number }>()
+const memoryCache = new Map<string, { value: unknown; expires: number }>()
 
 // Cache utilities
 export class CacheService {
@@ -182,7 +180,7 @@ export class CacheService {
     }
   }
 
-  static async set(key: string, value: any, ttl?: number): Promise<boolean> {
+  static async set(key: string, value: unknown, ttl?: number): Promise<boolean> {
     try {
       const isRedisUp = await this.isRedisAvailable()
       
@@ -278,7 +276,7 @@ export class CacheService {
     }
   }
 
-  static async setMany(items: Array<{key: string, value: any, ttl?: number}>): Promise<boolean> {
+  static async setMany(items: Array<{key: string, value: unknown, ttl?: number}>): Promise<boolean> {
     try {
       const pipeline = redis.pipeline()
       

@@ -56,7 +56,6 @@ export class CompanyMigrationService {
     try {
       // Skip if already migrated
       if (this.hasMigrated()) {
-        console.log('Companies already migrated to database')
         return result
       }
 
@@ -64,12 +63,10 @@ export class CompanyMigrationService {
       const localCompanies = this.getLocalStorageCompanies()
       
       if (localCompanies.length === 0) {
-        console.log('No companies found in localStorage to migrate')
         this.markMigrationComplete()
         return result
       }
 
-      console.log(`Found ${localCompanies.length} companies in localStorage, starting migration...`)
 
       // Call migration API endpoint
       const response = await fetch('/api/migration/companies', {
@@ -89,7 +86,6 @@ export class CompanyMigrationService {
       if (migrationResult.success) {
         // Mark migration as complete
         this.markMigrationComplete()
-        console.log(`✅ ${migrationResult.message}`)
         return migrationResult.result
       } else {
         throw new Error(migrationResult.error || 'Migration failed')
@@ -113,7 +109,6 @@ export class CompanyMigrationService {
     
     try {
       localStorage.removeItem(this.LOCALSTORAGE_KEY)
-      console.log('✅ Cleared companies from localStorage')
     } catch (error) {
       console.error('Error clearing localStorage:', error)
     }
@@ -127,7 +122,6 @@ export class CompanyMigrationService {
       const result = await this.migrateFromLocalStorage()
       
       if (result.errors.length === 0) {
-        console.log('✅ Company migration successful')
         
         if (clearLocalStorageAfter) {
           this.clearLocalStorageData()

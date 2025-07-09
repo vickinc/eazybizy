@@ -119,8 +119,8 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
         
         // Transform to payment method names
         const methodNames = [
-          ...(bankAccounts.data || []).map((bank: any) => `${bank.bankName} (${bank.currency})`),
-          ...(digitalWallets.data || []).map((wallet: any) => `${wallet.walletName} (${wallet.currency})`)
+          ...(bankAccounts.data || []).map((bank: unknown) => `${bank.bankName} (${bank.currency})`),
+          ...(digitalWallets.data || []).map((wallet: unknown) => `${wallet.walletName} (${wallet.currency})`)
         ];
         
         setPaymentMethods(methodNames);

@@ -172,8 +172,8 @@ export class VATTreatmentBusinessService {
 
   static sortTreatments(treatments: VATTreatment[], sortConfig: TableSortConfig): VATTreatment[] {
     return [...treatments].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: unknown;
+      let bValue: unknown;
 
       switch (sortConfig.field) {
         case 'code':

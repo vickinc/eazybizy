@@ -186,7 +186,7 @@ export const AddEditInvoiceDialogEnhanced: React.FC<AddEditInvoiceDialogEnhanced
     }));
   }, [formData.items, formData.taxRate]);
 
-  const handleInputChange = (field: keyof InvoiceFormData, value: any) => {
+  const handleInputChange = (field: keyof InvoiceFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -230,7 +230,7 @@ export const AddEditInvoiceDialogEnhanced: React.FC<AddEditInvoiceDialogEnhanced
     }));
   };
 
-  const updateInvoiceItem = (index: number, field: keyof InvoiceItem, value: any) => {
+  const updateInvoiceItem = (index: number, field: keyof InvoiceItem, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map((item, i) => {

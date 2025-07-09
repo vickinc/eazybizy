@@ -14,7 +14,6 @@ export class BookkeepingDataMigration {
   }
 
   async migrateAll(): Promise<typeof this.migrationStats> {
-    console.log('🚀 Starting bookkeeping data migration...')
     
     try {
       // Step 1: Migrate company accounts first (needed for entries)
@@ -26,8 +25,6 @@ export class BookkeepingDataMigration {
       // Step 3: Migrate transactions (optional, may not exist in localStorage)
       await this.migrateTransactions()
       
-      console.log('✅ Migration completed successfully!')
-      console.log(`📊 Stats:`, this.migrationStats)
       
     } catch (error) {
       console.error('❌ Migration failed:', error)
@@ -39,7 +36,6 @@ export class BookkeepingDataMigration {
   }
 
   private async migrateCompanyAccounts(): Promise<void> {
-    console.log('📦 Migrating company accounts...')
     
     try {
       // Get accounts from localStorage
@@ -74,9 +70,7 @@ export class BookkeepingDataMigration {
             })
             
             this.migrationStats.accountsMigrated++
-            console.log(`✅ Migrated account: ${account.name}`)
           } else {
-            console.log(`⏭️  Account already exists: ${account.name}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate account ${account.name}: ${error}`
@@ -85,7 +79,6 @@ export class BookkeepingDataMigration {
         }
       }
       
-      console.log(`📦 Accounts migration complete: ${this.migrationStats.accountsMigrated} accounts migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage accounts:', error)
       throw error
@@ -93,7 +86,6 @@ export class BookkeepingDataMigration {
   }
 
   private async migrateBookkeepingEntries(): Promise<void> {
-    console.log('📝 Migrating bookkeeping entries...')
     
     try {
       // Get entries from localStorage
@@ -130,9 +122,7 @@ export class BookkeepingDataMigration {
             })
             
             this.migrationStats.entriesMigrated++
-            console.log(`✅ Migrated entry: ${entry.description} (${entry.amount} ${entry.currency})`)
           } else {
-            console.log(`⏭️  Entry already exists: ${entry.description}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate entry ${entry.description}: ${error}`
@@ -141,7 +131,6 @@ export class BookkeepingDataMigration {
         }
       }
       
-      console.log(`📝 Entries migration complete: ${this.migrationStats.entriesMigrated} entries migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage entries:', error)
       throw error
@@ -149,14 +138,12 @@ export class BookkeepingDataMigration {
   }
 
   private async migrateTransactions(): Promise<void> {
-    console.log('💳 Migrating transactions...')
     
     try {
       // Check if transactions exist in localStorage
       const localTransactions = this.getLocalStorageTransactions()
       
       if (!localTransactions || localTransactions.length === 0) {
-        console.log('📝 No transactions found in localStorage')
         return
       }
       
@@ -195,9 +182,7 @@ export class BookkeepingDataMigration {
             })
             
             this.migrationStats.transactionsMigrated++
-            console.log(`✅ Migrated transaction: ${transaction.description}`)
           } else {
-            console.log(`⏭️  Transaction already exists: ${transaction.description}`)
           }
         } catch (error) {
           const errorMsg = `Failed to migrate transaction ${transaction.description}: ${error}`
@@ -206,14 +191,13 @@ export class BookkeepingDataMigration {
         }
       }
       
-      console.log(`💳 Transactions migration complete: ${this.migrationStats.transactionsMigrated} transactions migrated`)
     } catch (error) {
       console.error('❌ Error accessing localStorage transactions:', error)
       // Don't throw here as transactions might not exist
     }
   }
 
-  private getLocalStorageTransactions(): any[] {
+  private getLocalStorageTransactions(): unknown[] {
     try {
       if (typeof window === 'undefined') return []
       
@@ -226,7 +210,6 @@ export class BookkeepingDataMigration {
   }
 
   async validateMigration(): Promise<boolean> {
-    console.log('🔍 Validating migration...')
     
     try {
       // Count records in database
@@ -236,16 +219,11 @@ export class BookkeepingDataMigration {
         prisma.transaction.count(),
       ])
       
-      console.log(`📊 Database counts:`)
-      console.log(`  - Entries: ${entriesCount}`)
-      console.log(`  - Accounts: ${accountsCount}`)
-      console.log(`  - Transactions: ${transactionsCount}`)
       
       // Check if migration was successful
       const hasData = entriesCount > 0 || accountsCount > 0
       
       if (hasData) {
-        console.log('✅ Migration validation successful - data found in database')
         return true
       } else {
         console.log('⚠️  Migration validation warning - no data found in database')
@@ -258,11 +236,9 @@ export class BookkeepingDataMigration {
   }
 
   async clearLocalStorageData(): Promise<void> {
-    console.log('🧹 Clearing localStorage data...')
     
     try {
       if (typeof window === 'undefined') {
-        console.log('⏭️  Not in browser environment, skipping localStorage cleanup')
         return
       }
       
@@ -275,10 +251,8 @@ export class BookkeepingDataMigration {
       
       keysToRemove.forEach(key => {
         localStorage.removeItem(key)
-        console.log(`🗑️  Cleared: ${key}`)
       })
       
-      console.log('✅ localStorage cleanup complete')
     } catch (error) {
       console.error('❌ Error cleaning localStorage:', error)
       throw error
@@ -290,7 +264,6 @@ export class BookkeepingDataMigration {
 export async function runBookkeepingMigration(): Promise<void> {
   const migration = new BookkeepingDataMigration()
   
-  console.log('🔄 Starting manual bookkeeping migration...')
   
   try {
     const stats = await migration.migrateAll()
@@ -304,7 +277,6 @@ export async function runBookkeepingMigration(): Promise<void> {
     const isValid = await migration.validateMigration()
     
     if (isValid) {
-      console.log('🎉 Migration completed successfully!')
       
       // Ask user if they want to clear localStorage
       const shouldClear = confirm(
@@ -313,7 +285,6 @@ export async function runBookkeepingMigration(): Promise<void> {
       
       if (shouldClear) {
         await migration.clearLocalStorageData()
-        console.log('🧹 Old data cleared!')
       }
     } else {
       console.error('❌ Migration validation failed')

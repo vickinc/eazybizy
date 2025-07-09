@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const sortDirection = searchParams.get('sortDirection') || 'desc';
 
     // Build where clause
-    const where: any = {};
+    const where: unknown = {};
     
     // Company filter
     if (company !== 'all') {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    const orderBy: any = {};
+    const orderBy: unknown = {};
     orderBy[sortField] = sortDirection;
 
     // Fetch vendors with pagination

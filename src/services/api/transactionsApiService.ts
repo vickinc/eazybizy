@@ -264,7 +264,7 @@ export interface TransactionStatistics {
 
 export interface BulkOperationRequest {
   operation: 'create' | 'update' | 'delete' | 'categorize' | 'reconcile' | 'approve'
-  data: any
+  data: unknown
 }
 
 export interface BulkOperationResponse {
@@ -411,7 +411,7 @@ export class TransactionsApiService {
     return this.bulkOperation('approve', { ids, approvalStatus, approvedBy })
   }
 
-  private async bulkOperation(operation: string, data: any): Promise<BulkOperationResponse> {
+  private async bulkOperation(operation: string, data: unknown): Promise<BulkOperationResponse> {
     const response = await fetch(`${this.baseUrl}/bulk`, {
       method: 'POST',
       headers: {

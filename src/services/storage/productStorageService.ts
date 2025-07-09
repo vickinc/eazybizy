@@ -11,7 +11,7 @@ export class ProductStorageService {
       if (savedProducts) {
         const parsedProducts = JSON.parse(savedProducts);
         // Handle migration for existing products without new fields
-        return parsedProducts.map((product: any) => ({
+        return parsedProducts.map((product: Partial<Product>) => ({
           ...product,
           companyId: product.companyId || 1,
           vendorId: product.vendorId || 'N/A'

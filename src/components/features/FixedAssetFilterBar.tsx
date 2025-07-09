@@ -25,7 +25,7 @@ import { cn } from '@/utils/cn';
 
 interface FixedAssetFilterBarProps {
   filter: FixedAssetFilter;
-  onFilterChange: (field: keyof FixedAssetFilter, value: any) => void;
+  onFilterChange: (field: keyof FixedAssetFilter, value: unknown) => void;
   onClearFilters: () => void;
   className?: string;
   assetCount: number;

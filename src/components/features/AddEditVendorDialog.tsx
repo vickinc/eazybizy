@@ -43,7 +43,7 @@ interface AddEditVendorDialogProps {
   availableCurrencies: string[];
   availablePaymentMethods: PaymentMethod[];
   onClose: () => void;
-  onVendorFormChange: (field: keyof VendorFormData, value: any) => void;
+  onVendorFormChange: (field: keyof VendorFormData, value: unknown) => void;
   onCustomPaymentTermsChange: (value: string) => void;
   onProductSearchTermChange: (value: string) => void;
   onProductToggle: (productId: string) => void;

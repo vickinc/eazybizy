@@ -19,6 +19,7 @@ const getTypeIcon = (type: string) => {
     case "meeting": return <CalendarClock className="h-4 w-4" />;
     case "deadline": return <Timer className="h-4 w-4" />;
     case "renewal": return <Repeat className="h-4 w-4" />;
+    case "anniversary": return <TrendingUp className="h-4 w-4" />;
     default: return <Bell className="h-4 w-4" />;
   }
 };
@@ -166,7 +167,7 @@ export default function CalendarPage() {
             <CalendarWidget
               selectedDate={selectedDate}
               currentMonth={currentMonth}
-              events={events}
+              events={filteredEvents}
               isExpanded={true}
               onDateSelect={handleCalendarSelect}
               onMonthChange={setCurrentMonth}
@@ -231,7 +232,7 @@ export default function CalendarPage() {
             <CalendarWidget
               selectedDate={selectedDate}
               currentMonth={currentMonth}
-              events={events}
+              events={filteredEvents}
               isExpanded={isCalendarWidgetExpanded}
               onDateSelect={handleCalendarSelect}
               onMonthChange={setCurrentMonth}
@@ -249,7 +250,7 @@ export default function CalendarPage() {
       <MobileCalendarModal
         selectedDate={selectedDate}
         currentMonth={currentMonth}
-        events={events}
+        events={filteredEvents}
         isOpen={isMobileCalendarOpen}
         onOpenChange={toggleMobileCalendar}
         onDateSelect={handleCalendarSelect}

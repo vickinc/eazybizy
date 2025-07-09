@@ -214,7 +214,7 @@ export class FixedAssetsValidationService {
 
   static validateFormField(
     field: keyof FixedAssetFormData,
-    value: any,
+    value: unknown,
     formData: FixedAssetFormData
   ): ValidationError[] {
     const errors: ValidationError[] = [];

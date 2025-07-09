@@ -67,20 +67,29 @@ export const EventItem: React.FC<EventItemProps> = ({
             <Badge className={getPriorityColor(event.priority)}>
               {event.priority}
             </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEditEvent(event)}
-            >
-              <Edit3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDeleteEvent(event.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {event.type === 'anniversary' && (
+              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                Auto-generated
+              </Badge>
+            )}
+            {event.type !== 'anniversary' && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditEvent(event)}
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteEvent(event.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -65,7 +65,6 @@ export class BookkeepingStorageService {
       
       // Log successful save with statistics
       const stats = this.getEntriesStatistics(entries);
-      console.log('📊 Saved bookkeeping entries:', stats);
       
       return true;
     } catch (error) {
@@ -120,7 +119,7 @@ export class BookkeepingStorageService {
       return [];
     }
     
-    return entries.map((entry: any) => {
+    return entries.map((entry: unknown) => {
       // Fix COGS entries and round to 2 decimal places
       if (entry.type === 'income' && entry.isFromInvoice) {
         return {
@@ -130,7 +129,7 @@ export class BookkeepingStorageService {
         };
       }
       return entry;
-    }).filter((entry: any) => {
+    }).filter((entry: unknown) => {
       // Remove old auto-generated COGS entries (legacy cleanup)
       // Only filter out entries that have type 'cogs' (not 'expense')
       if (entry.type === 'cogs' && entry.isFromInvoice) {
@@ -190,11 +189,11 @@ export class BookkeepingStorageService {
       console.error('🚨 Data integrity issues detected during migration:', integrityCheck);
       integrityCheck.issues.forEach(issue => console.error(issue));
     } else {
-      console.log('✅ Migration completed successfully:', {
-        entriesProcessed: afterStats.total,
-        expensesRetained: afterStats.expenses,
-        incomeRetained: afterStats.income
-      });
+      // console.log('✅ Migration completed successfully:', {
+      //   entriesProcessed: afterStats.total,
+      //   expensesRetained: afterStats.expenses,
+      //   incomeRetained: afterStats.income
+      // });
     }
 
     return migratedEntries;
@@ -203,7 +202,7 @@ export class BookkeepingStorageService {
   /**
    * Get statistics about entries array
    */
-  private static getEntriesStatistics(entries: any[]): {
+  private static getEntriesStatistics(entries: unknown[]): {
     total: number;
     expenses: number;
     income: number;

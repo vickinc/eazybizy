@@ -199,7 +199,7 @@ export const BalanceSheetStatement: React.FC<BalanceSheetStatementProps> = ({
     </div>
   );
 
-  const renderGrandTotal = (title: string, totals: any) => (
+  const renderGrandTotal = (title: string, totals: unknown) => (
     <div className={`grid ${showComparatives ? 'grid-cols-4' : 'grid-cols-2'} gap-4 py-3 border-t-2 border-gray-800 font-bold text-base bg-gray-100`}>
       <div>{title}</div>
       <div className="text-right">{totals.formatted}</div>

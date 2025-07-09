@@ -305,7 +305,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate ARR metrics
    */
-  private static calculateARRMetrics(data: any): ARRMetrics {
+  private static calculateARRMetrics(data: unknown): ARRMetrics {
     // Mock calculation - in real implementation, calculate from actual subscription data
     const currentArr = 2400000 + Math.random() * 600000; // $2.4M - $3M
     const previousArr = currentArr * (0.85 + Math.random() * 0.1); // 85-95% of current
@@ -338,7 +338,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate MRR metrics
    */
-  private static calculateMRRMetrics(data: any): MRRMetrics {
+  private static calculateMRRMetrics(data: unknown): MRRMetrics {
     const currentMrr = 200000 + Math.random() * 50000; // $200K - $250K
     const previousMrr = currentMrr * (0.9 + Math.random() * 0.05); // 90-95% of current
     const growth = currentMrr - previousMrr;
@@ -379,7 +379,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate customer metrics
    */
-  private static calculateCustomerMetrics(data: any): CustomerMetrics {
+  private static calculateCustomerMetrics(data: unknown): CustomerMetrics {
     const totalCustomers = 1200 + Math.floor(Math.random() * 300); // 1200-1500 customers
     const newCustomers = Math.floor(totalCustomers * (0.05 + Math.random() * 0.03)); // 5-8% new
     const churnedCustomers = Math.floor(totalCustomers * (0.02 + Math.random() * 0.02)); // 2-4% churned
@@ -427,7 +427,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate churn metrics
    */
-  private static calculateChurnMetrics(data: any): ChurnMetrics {
+  private static calculateChurnMetrics(data: unknown): ChurnMetrics {
     const customerChurnRate = 2 + Math.random() * 3; // 2-5% monthly churn
     const customerChurnCount = Math.floor(1200 * (customerChurnRate / 100));
     
@@ -471,7 +471,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate retention metrics
    */
-  private static calculateRetentionMetrics(data: any): RetentionMetrics {
+  private static calculateRetentionMetrics(data: unknown): RetentionMetrics {
     // Net Revenue Retention (should be >100% for healthy SaaS)
     const netRevenueRetention = 108 + Math.random() * 15; // 108-123%
     
@@ -483,7 +483,7 @@ export class SaaSMetricsBusinessService {
     
     // Cohort retention (mock data)
     const cohortRetention: CohortRetention[] = [];
-    for (let i = 5; i >= 0; i--) {
+    for (const i = 5; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       const period = date.toISOString().substring(0, 7);
@@ -511,7 +511,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate growth metrics
    */
-  private static calculateGrowthMetrics(data: any): GrowthMetrics {
+  private static calculateGrowthMetrics(data: unknown): GrowthMetrics {
     const arrGrowthRate = 25 + Math.random() * 20; // 25-45% annual
     const mrrGrowthRate = arrGrowthRate / 12; // Monthly equivalent
     const customerGrowthRate = 20 + Math.random() * 15; // 20-35% annual
@@ -547,7 +547,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate unit economics
    */
-  private static calculateUnitEconomics(data: any): UnitEconomics {
+  private static calculateUnitEconomics(data: unknown): UnitEconomics {
     const customerAcquisitionCost = 800 + Math.random() * 400; // $800-$1200
     const customerLifetimeValue = 4000 + Math.random() * 2000; // $4000-$6000
     const ltvToCacRatio = customerLifetimeValue / customerAcquisitionCost;
@@ -579,7 +579,7 @@ export class SaaSMetricsBusinessService {
   /**
    * Calculate subscription tier metrics
    */
-  private static calculateSubscriptionTierMetrics(data: any): SubscriptionTierMetrics[] {
+  private static calculateSubscriptionTierMetrics(data: unknown): SubscriptionTierMetrics[] {
     const tiers = [
       { name: 'Starter', price: 29, customerShare: 0.2 },
       { name: 'Standard', price: 79, customerShare: 0.4 },
@@ -620,7 +620,7 @@ export class SaaSMetricsBusinessService {
     const cohorts: CohortAnalysis[] = [];
     
     // Generate cohorts for last 12 months
-    for (let i = 11; i >= 0; i--) {
+    for (const i = 11; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       const cohortMonth = date.toISOString().substring(0, 7);
@@ -631,7 +631,7 @@ export class SaaSMetricsBusinessService {
       const retentionByMonth: { [month: number]: CohortMonth } = {};
       
       // Calculate retention for each subsequent month
-      for (let month = 1; month <= Math.min(12, 12 - i); month++) {
+      for (const month = 1; month <= Math.min(12, 12 - i); month++) {
         const retentionRate = Math.max(0.3, 0.95 - (month * 0.05) + (Math.random() - 0.5) * 0.1);
         const revenueRetentionRate = retentionRate * (1 + Math.random() * 0.2); // Revenue retention can be higher due to expansion
         

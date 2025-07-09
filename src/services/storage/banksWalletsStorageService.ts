@@ -30,12 +30,10 @@ export class BanksWalletsStorageService {
     try {
       const savedData = localStorage.getItem(this.BANK_ACCOUNTS_KEY);
       if (!savedData) {
-        console.log('No bank accounts data found in localStorage');
         return [];
       }
 
       const parsedData = JSON.parse(savedData);
-      console.log('Loaded bank accounts from localStorage:', parsedData);
       return Array.isArray(parsedData) ? parsedData : [];
     } catch (error) {
       console.error('Error loading bank accounts from localStorage:', error);
@@ -48,12 +46,10 @@ export class BanksWalletsStorageService {
     try {
       const savedData = localStorage.getItem(this.DIGITAL_WALLETS_KEY);
       if (!savedData) {
-        console.log('No digital wallets data found in localStorage');
         return [];
       }
 
       const parsedData = JSON.parse(savedData);
-      console.log('Loaded digital wallets from localStorage:', parsedData);
       return Array.isArray(parsedData) ? parsedData : [];
     } catch (error) {
       console.error('Error loading digital wallets from localStorage:', error);
@@ -66,7 +62,6 @@ export class BanksWalletsStorageService {
     try {
       const dataToSave = JSON.stringify(bankAccounts);
       localStorage.setItem(this.BANK_ACCOUNTS_KEY, dataToSave);
-      console.log('Bank accounts saved to localStorage:', bankAccounts);
     } catch (error) {
       console.error('Error saving bank accounts to localStorage:', error);
       throw error;
@@ -78,7 +73,6 @@ export class BanksWalletsStorageService {
     try {
       const dataToSave = JSON.stringify(digitalWallets);
       localStorage.setItem(this.DIGITAL_WALLETS_KEY, dataToSave);
-      console.log('Digital wallets saved to localStorage:', digitalWallets);
     } catch (error) {
       console.error('Error saving digital wallets to localStorage:', error);
       throw error;
@@ -90,7 +84,6 @@ export class BanksWalletsStorageService {
     try {
       this.saveBankAccounts(data.bankAccounts);
       this.saveDigitalWallets(data.digitalWallets);
-      console.log('All banks and wallets data saved successfully');
     } catch (error) {
       console.error('Error saving banks and wallets data:', error);
       throw error;
@@ -102,7 +95,6 @@ export class BanksWalletsStorageService {
     try {
       localStorage.removeItem(this.BANK_ACCOUNTS_KEY);
       localStorage.removeItem(this.DIGITAL_WALLETS_KEY);
-      console.log('All banks and wallets data cleared from localStorage');
     } catch (error) {
       console.error('Error clearing banks and wallets data:', error);
       throw error;
@@ -176,11 +168,11 @@ export class BanksWalletsStorageService {
       
       report.unshift(`Cleanup completed: removed ${removedBankAccounts} bank accounts and ${removedDigitalWallets} digital wallets`);
       
-      console.log('Data cleanup completed:', {
-        removedBankAccounts,
-        removedDigitalWallets,
-        report
-      });
+      // console.log('Data cleanup completed:', {
+      //   removedBankAccounts,
+      //   removedDigitalWallets,
+      //   report
+      // });
       
       return {
         removedBankAccounts,
@@ -200,7 +192,6 @@ export class BanksWalletsStorageService {
       // Perform any necessary data migrations here
       // For example, adding new fields or changing data structure
       
-      console.log('Data migration completed successfully');
     } catch (error) {
       console.error('Error during data migration:', error);
       throw error;
@@ -241,7 +232,6 @@ export class BanksWalletsStorageService {
       this.saveBankAccounts(data.bankAccounts);
       this.saveDigitalWallets(data.digitalWallets);
       
-      console.log('Banks and wallets data imported successfully');
     } catch (error) {
       console.error('Error importing banks and wallets data:', error);
       throw error;

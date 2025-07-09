@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { CompanyFormData } from '@/services/business/companyValidationService';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
+import { calculateCompanyAge } from '@/utils/companyUtils';
 
 interface CompanyCardPreviewProps {
   formData: CompanyFormData;
@@ -137,7 +138,7 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
             {formData.registrationDate && (
               <div className="group flex items-center relative">
                 <p className="text-xs text-gray-600">
-                  Registered: {new Date(formData.registrationDate).toLocaleDateString('en-GB')}
+                  Registered: {new Date(formData.registrationDate).toLocaleDateString('en-GB')} {calculateCompanyAge(formData.registrationDate).ageString}
                 </p>
               </div>
             )}

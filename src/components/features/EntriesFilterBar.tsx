@@ -109,7 +109,7 @@ export const EntriesFilterBar: React.FC<EntriesFilterBarProps> = ({
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium">Period:</span>
-              <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
+              <Select value={selectedPeriod} onValueChange={(value: unknown) => setSelectedPeriod(value)}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>

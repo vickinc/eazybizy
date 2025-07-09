@@ -348,7 +348,7 @@ export class CalendarService {
       isStandalone?: boolean;
       search?: string;
     } = {}
-  ): Promise<{ notes: Note[]; pagination: any }> {
+  ): Promise<{ notes: Note[]; pagination: unknown }> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),

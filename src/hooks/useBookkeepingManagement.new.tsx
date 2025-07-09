@@ -67,7 +67,7 @@ export interface BookkeepingManagementHook {
   isLoaded: boolean
   selectedPeriod: PeriodFilter
   activeCompanies: Company[]
-  availableInvoices: any[] // TODO: Add proper type
+  availableInvoices: unknown[] // TODO: Add proper type
   entryFormData: BookkeepingEntryFormData
   showInvoiceSelect: boolean
   isAllExpanded: boolean
@@ -137,8 +137,8 @@ export interface BookkeepingManagementHook {
   resetPagination: () => void
   
   // Form Handlers
-  updateEntryForm: (field: string, value: any) => void
-  updateAccountForm: (field: string, value: any) => void
+  updateEntryForm: (field: string, value: unknown) => void
+  updateAccountForm: (field: string, value: unknown) => void
   resetEntryForm: () => void
   resetAccountForm: () => void
   
@@ -192,7 +192,7 @@ const initialAccountForm = {
 
 export function useBookkeepingManagement(
   selectedCompany: number | 'all' = 'all',
-  companies?: any[] // Compatibility parameter
+  companies?: unknown[] // Compatibility parameter
 ): BookkeepingManagementHook {
   const queryClient = useQueryClient()
   
@@ -347,7 +347,7 @@ export function useBookkeepingManagement(
   const isLoaded = !isEntriesLoading && !isStatisticsLoading
   const selectedPeriod = filters.period
   const activeCompanies: Company[] = [] // TODO: Add companies if needed
-  const availableInvoices: any[] = [] // TODO: Add invoices if needed
+  const availableInvoices: unknown[] = [] // TODO: Add invoices if needed
   const entryFormData = entryForm
   const isAllExpanded = expandedEntries.size === entries.length
   
@@ -423,11 +423,11 @@ export function useBookkeepingManagement(
     setPagination({ skip: 0, take: 20 })
   }, [])
   
-  const updateEntryForm = useCallback((field: string, value: any) => {
+  const updateEntryForm = useCallback((field: string, value: unknown) => {
     setEntryForm(prev => ({ ...prev, [field]: value }))
   }, [])
   
-  const updateAccountForm = useCallback((field: string, value: any) => {
+  const updateAccountForm = useCallback((field: string, value: unknown) => {
     setAccountForm(prev => ({ ...prev, [field]: value }))
   }, [])
   

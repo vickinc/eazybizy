@@ -197,7 +197,7 @@ export function useNotesManagementDB(
   
   // Filtered Notes
   const filteredNotes = useMemo(() => {
-    let filtered = notes.filter(note => {
+    const filtered = notes.filter(note => {
       // Archive filter
       if (showArchived && !note.isCompleted) return false;
       if (!showArchived && note.isCompleted) return false;

@@ -119,7 +119,6 @@ export class CurrencyRatesStorageService {
       localStorage.removeItem(FIAT_RATES_STORAGE_KEY);
       localStorage.removeItem(CRYPTO_RATES_STORAGE_KEY);
       localStorage.removeItem(DATA_VERSION_KEY);
-      console.log('Currency rates data cleared successfully');
     } catch (error) {
       console.error('Error clearing currency rates data:', error);
     }
@@ -159,7 +158,6 @@ export class CurrencyRatesStorageService {
       this.saveFiatRates(data.fiatRates);
       this.saveCryptoRates(data.cryptoRates);
       
-      console.log('Currency rates data imported successfully');
       return true;
     } catch (error) {
       console.error('Error importing currency rates data:', error);
@@ -188,7 +186,6 @@ export class CurrencyRatesStorageService {
     const currentVersion = this.getDataVersion();
     
     if (!currentVersion || currentVersion !== CURRENT_DATA_VERSION) {
-      console.log('Migrating currency rates data to version', CURRENT_DATA_VERSION);
       
       try {
         const fiatRates = this.loadFiatRates();
@@ -197,7 +194,6 @@ export class CurrencyRatesStorageService {
         this.saveFiatRates(fiatRates);
         this.saveCryptoRates(cryptoRates);
         
-        console.log('Currency rates data migration completed');
       } catch (error) {
         console.error('Error during currency rates data migration:', error);
       }

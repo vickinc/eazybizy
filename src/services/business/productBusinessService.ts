@@ -72,7 +72,7 @@ export class ProductBusinessService {
       sortDirection: 'asc' | 'desc';
     }
   ): Product[] {
-    let filtered = products.filter(product => {
+    const filtered = products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(filters.searchTerm.toLowerCase());
       
@@ -94,8 +94,8 @@ export class ProductBusinessService {
 
     // Sort products
     filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: unknown;
+      let bValue: unknown;
 
       switch (filters.sortField) {
         case 'name':

@@ -13,7 +13,7 @@ interface CompanyFilters {
 }
 
 interface CachedCompanyResponse {
-  data: any[]
+  data: unknown[]
   pagination: {
     total: number
     skip: number
@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null && !bustCache) {
       // Cache hit - return immediately with compression
-      console.log(`Cache HIT for companies list - ${Date.now() - startTime}ms`)
       
       const responseData = {
         data: cachedData,
@@ -99,7 +98,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Cache MISS for companies list - querying database`)
     
     // Build optimized where clause
     const where: Prisma.CompanyWhereInput = {}
@@ -179,7 +177,6 @@ export async function GET(request: NextRequest) {
     ])
     
     const dbTime = Date.now() - dbStartTime
-    console.log(`Database query completed - ${dbTime}ms`)
 
     // Cache the results asynchronously (don't wait for it)
     const cachePromises = [
@@ -193,7 +190,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       data: companies,

@@ -51,7 +51,7 @@ export const JournalEntryFilterBar: React.FC<JournalEntryFilterBarProps> = ({
   filteredCount
 }) => {
   const getActiveFiltersCount = () => {
-    let count = 0;
+    const count = 0;
     if (filters.searchTerm) count++;
     if (filters.status !== 'all') count++;
     if (filters.dateRange.start || filters.dateRange.end) count++;
@@ -199,7 +199,7 @@ export const JournalEntryFilterBar: React.FC<JournalEntryFilterBarProps> = ({
                 </Label>
                 <Select
                   value={filters.status}
-                  onValueChange={(value: any) => onUpdateFilters({ status: value })}
+                  onValueChange={(value: unknown) => onUpdateFilters({ status: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -308,7 +308,7 @@ export const JournalEntryFilterBar: React.FC<JournalEntryFilterBarProps> = ({
                 <Label>Reversal Entries</Label>
                 <Select
                   value={filters.hasReversalEntries}
-                  onValueChange={(value: any) => onUpdateFilters({ hasReversalEntries: value })}
+                  onValueChange={(value: unknown) => onUpdateFilters({ hasReversalEntries: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />

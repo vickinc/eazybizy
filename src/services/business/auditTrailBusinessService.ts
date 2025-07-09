@@ -39,14 +39,14 @@ export class AuditTrailBusinessService {
     entityType: string,
     entityId: string,
     details: {
-      previousValue?: any;
-      newValue?: any;
+      previousValue?: unknown;
+      newValue?: unknown;
       businessJustification?: string;
       financialImpact?: number;
       affectedStatements?: string[];
       requiresApproval?: boolean;
       riskLevel?: RiskLevel;
-      supportingDocuments?: any[];
+      supportingDocuments?: unknown[];
     }
   ): Promise<AuditTrailEntry> {
     
@@ -520,11 +520,11 @@ export class AuditTrailBusinessService {
   private static async assessRisk(
     action: AuditAction,
     entityType: string,
-    details: any
+    details: unknown
   ): Promise<{ riskLevel: RiskLevel; riskFactors: string[] }> {
     
     const riskFactors: string[] = [];
-    let riskScore = 0;
+    const riskScore = 0;
     
     // High-risk actions
     const highRiskActions = ['delete', 'period-unlock', 'statement-publish', 'config-change'];
@@ -563,7 +563,7 @@ export class AuditTrailBusinessService {
   ): Promise<{ impactLevel: ImpactLevel; impactFactors: string[] }> {
     
     const impactFactors: string[] = [];
-    let impactScore = 0;
+    const impactScore = 0;
     
     // Financial magnitude
     if (financialImpact) {
@@ -648,7 +648,7 @@ export class AuditTrailBusinessService {
     return approvalRequiredActions.includes(action);
   }
   
-  private static identifyChangedFields(previousValue: any, newValue: any): string[] {
+  private static identifyChangedFields(previousValue: unknown, newValue: unknown): string[] {
     if (!previousValue || !newValue) return [];
     
     const changedFields: string[] = [];

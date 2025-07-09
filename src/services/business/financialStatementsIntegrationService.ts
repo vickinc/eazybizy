@@ -98,7 +98,7 @@ export class FinancialStatementsIntegrationService {
       let profitLoss: StatementCalculationResult<ProfitLossData> | undefined;
       let cashFlow: StatementCalculationResult<CashFlowData> | undefined;
 
-      let resultIndex = 0;
+      const resultIndex = 0;
       if (includeBalanceSheet) {
         balanceSheet = results[resultIndex++] as StatementCalculationResult<BalanceSheetData>;
       }
@@ -304,7 +304,7 @@ export class FinancialStatementsIntegrationService {
     profitLoss?: ProfitLossData,
     cashFlow?: CashFlowData
   ) {
-    const keyMetrics: any = {
+    const keyMetrics: unknown = {
       totalAssets: 0,
       totalLiabilities: 0,
       totalEquity: 0,

@@ -76,7 +76,7 @@ export class PerformanceDemo {
       this.runComparison()
     }
 
-    let report = `
+    const report = `
 # Performance Improvement Demonstration
 
 ## Overview
@@ -162,7 +162,7 @@ This transformation provides a solid foundation for continued growth and enhance
   }
 
   // Run a live performance test (if API endpoints are available)
-  async runLiveTest(): Promise<{ success: boolean; message: string; results?: any[] }> {
+  async runLiveTest(): Promise<{ success: boolean; message: string; results?: unknown[] }> {
     try {
       const testEndpoints = [
         '/api/invoices?take=100',
@@ -229,24 +229,15 @@ This transformation provides a solid foundation for continued growth and enhance
 
   // Show a quick demo in console
   showConsoleDemo(): void {
-    console.log('🚀 Performance Improvement Demonstration')
-    console.log('==========================================')
     
     const results = this.runComparison()
     
     results.forEach(result => {
-      console.log(`📊 ${result.operation}:`)
-      console.log(`   Before: ${result.before.toFixed(1)}ms`)
-      console.log(`   After:  ${result.after.toFixed(1)}ms`)
-      console.log(`   Result: ${result.improvement} ${result.description}`)
-      console.log('')
     })
 
     const averageImprovement = results.reduce((sum, result) => 
       sum + (result.before / result.after), 0) / results.length
 
-    console.log(`🎯 Overall Result: ${averageImprovement.toFixed(1)}x average performance improvement!`)
-    console.log('🎉 Migration to API-based architecture successful!')
   }
 }
 
@@ -257,28 +248,17 @@ export const performanceDemo = new PerformanceDemo()
 if (require.main === module) {
   const demo = new PerformanceDemo()
   
-  console.log('Running performance demonstration...\n')
   
   // Show console demo
   demo.showConsoleDemo()
   
   // Generate detailed report
   const report = demo.generateReport()
-  console.log('\n' + '='.repeat(50))
-  console.log('DETAILED REPORT')
-  console.log('='.repeat(50))
-  console.log(report)
   
   // Try live test
   demo.runLiveTest().then(result => {
-    console.log('\n' + '='.repeat(50))
-    console.log('LIVE API TEST')
-    console.log('='.repeat(50))
-    console.log(result.message)
     if (result.results) {
-      console.log('Results:', result.results)
     }
   }).catch(error => {
-    console.log('\nLive test not available (API endpoints may not be running)')
   })
 }

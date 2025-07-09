@@ -60,10 +60,10 @@ export class FixedAssetsDepreciationService {
 
     const rate = (factor / usefulLife);
     let bookValue = cost;
-    let totalDepreciation = 0;
+    const totalDepreciation = 0;
 
     // Calculate depreciation for previous years
-    for (let year = 1; year < currentYear; year++) {
+    for (const year = 1; year < currentYear; year++) {
       const yearDepreciation = bookValue * rate;
       totalDepreciation += yearDepreciation;
       bookValue = cost - totalDepreciation;
@@ -120,10 +120,10 @@ export class FixedAssetsDepreciationService {
     const residualValue = asset.residualValue;
     const usefulLife = asset.usefulLifeYears;
     
-    let accumulatedDepreciation = 0;
-    let bookValue = acquisitionCost;
+    const accumulatedDepreciation = 0;
+    const bookValue = acquisitionCost;
 
-    for (let year = 1; year <= usefulLife && bookValue > residualValue; year++) {
+    for (const year = 1; year <= usefulLife && bookValue > residualValue; year++) {
       const periodStart = new Date(startDate);
       periodStart.setFullYear(periodStart.getFullYear() + year - 1);
       
@@ -211,10 +211,10 @@ export class FixedAssetsDepreciationService {
     );
     
     const yearsElapsed = monthsElapsed / 12;
-    let totalDepreciation = 0;
+    const totalDepreciation = 0;
     
     // Calculate depreciation for each year up to current
-    for (let year = 1; year <= Math.ceil(yearsElapsed) && year <= asset.usefulLifeYears; year++) {
+    for (const year = 1; year <= Math.ceil(yearsElapsed) && year <= asset.usefulLifeYears; year++) {
       const yearDepreciation = this.calculateDepreciation({
         method: asset.depreciationMethod,
         cost: asset.acquisitionCost,

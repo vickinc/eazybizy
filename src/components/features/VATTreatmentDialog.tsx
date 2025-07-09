@@ -26,7 +26,7 @@ interface VATTreatmentDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: VATTreatmentFormData;
   editingTreatment: VATTreatment | null;
-  onFormInputChange: (field: keyof VATTreatmentFormData, value: any) => void;
+  onFormInputChange: (field: keyof VATTreatmentFormData, value: unknown) => void;
   onFormSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   getFieldError: (field: keyof VATTreatmentFormData) => string | undefined;

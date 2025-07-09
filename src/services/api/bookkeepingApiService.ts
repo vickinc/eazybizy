@@ -60,7 +60,7 @@ export interface BookkeepingStatistics {
     currency: string
     currentBalance: number
   }>
-  recentTransactions: any[]
+  recentTransactions: unknown[]
 }
 
 export interface BookkeepingQueryParams {
@@ -197,7 +197,7 @@ export class BookkeepingApiService {
     type?: string
     isActive?: boolean
     currency?: string
-  }): Promise<{ data: CompanyAccount[]; statistics: any }> {
+  }): Promise<{ data: CompanyAccount[]; statistics: unknown }> {
     const searchParams = new URLSearchParams()
     searchParams.set('companyId', companyId.toString())
     
@@ -253,9 +253,9 @@ export class BookkeepingApiService {
     sortDirection?: 'asc' | 'desc'
   }): Promise<{
     data: Transaction[]
-    pagination: any
-    statistics: any
-    accountBalances: any[]
+    pagination: unknown
+    statistics: unknown
+    accountBalances: unknown[]
   }> {
     const searchParams = new URLSearchParams()
     

@@ -239,7 +239,7 @@ export const useBookkeepingManagement = (
 
   // Filtered entries calculation
   const filteredEntries = React.useMemo(() => {
-    let filtered = BookkeepingBusinessService.filterEntriesByCompany(entries, selectedCompany);
+    const filtered = BookkeepingBusinessService.filterEntriesByCompany(entries, selectedCompany);
     return BookkeepingBusinessService.filterEntriesByPeriod(filtered, selectedPeriod);
   }, [entries, selectedCompany, selectedPeriod]);
 

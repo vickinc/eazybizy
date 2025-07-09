@@ -23,7 +23,6 @@ export function DataDebugger() {
       };
       
       setDebugInfo(info);
-      console.log('🔍 Data Debug Info:', info);
     };
 
     // Check immediately
@@ -49,7 +48,6 @@ export function DataDebugger() {
 
   const handleCleanup = () => {
     try {
-      console.log('🧹 Starting cleanup...');
       StorageMigrationService.forceCleanupOldKeys();
       
       // Force multiple refreshes to ensure the UI updates
@@ -69,7 +67,6 @@ export function DataDebugger() {
         };
         
         setDebugInfo(info);
-        console.log('🔍 Data Debug Info (after cleanup):', info);
         
         return info;
       };
@@ -89,7 +86,6 @@ export function DataDebugger() {
           
           remainingOldKeys.forEach(key => {
             localStorage.removeItem(key);
-            console.log(`Manually removed: ${key}`);
           });
           
           // Final refresh

@@ -12,7 +12,8 @@ import {
   CalendarDays,
   Clock,
   Building2,
-  StickyNote
+  StickyNote,
+  TrendingUp
 } from "lucide-react";
 import { CalendarEvent } from "@/types/calendar.types";
 
@@ -35,6 +36,7 @@ const getTypeIcon = (type: string) => {
     case "meeting": return <CalendarDays className="h-3 w-3" />;
     case "deadline": return <Clock className="h-3 w-3" />;
     case "renewal": return <StickyNote className="h-3 w-3" />;
+    case "anniversary": return <TrendingUp className="h-3 w-3" />;
     default: return <CalendarDays className="h-3 w-3" />;
   }
 };

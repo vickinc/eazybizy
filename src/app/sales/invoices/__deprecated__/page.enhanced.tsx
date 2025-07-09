@@ -91,7 +91,7 @@ const InvoicesPageEnhanced: React.FC<InvoicesPageEnhancedProps> = ({ initialComp
   }, [invoices, searchQuery]);
 
   // Event handlers
-  const handleCreateInvoice = useCallback(async (invoiceData: any) => {
+  const handleCreateInvoice = useCallback(async (invoiceData: unknown) => {
     try {
       await createInvoice.mutateAsync(invoiceData);
       toast.success('Invoice created successfully');
@@ -101,7 +101,7 @@ const InvoicesPageEnhanced: React.FC<InvoicesPageEnhancedProps> = ({ initialComp
     }
   }, [createInvoice]);
 
-  const handleUpdateInvoice = useCallback(async (id: string, invoiceData: any) => {
+  const handleUpdateInvoice = useCallback(async (id: string, invoiceData: unknown) => {
     try {
       await updateInvoice.mutateAsync({ id, data: invoiceData });
       toast.success('Invoice updated successfully');
@@ -131,7 +131,7 @@ const InvoicesPageEnhanced: React.FC<InvoicesPageEnhancedProps> = ({ initialComp
     }
   }, [exportInvoices, filters]);
 
-  const handleInvoiceClick = useCallback((invoice: any) => {
+  const handleInvoiceClick = useCallback((invoice: unknown) => {
     setSelectedInvoice(invoice);
   }, []);
 

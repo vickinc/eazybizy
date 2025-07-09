@@ -50,7 +50,7 @@ interface Company {
 
 interface AddEditInvoiceDialogProps {
   isOpen: boolean;
-  editingInvoice: any | null;
+  editingInvoice: unknown | null;
   invoiceForm: InvoiceForm;
   clients: Client[];
   activeProducts: Product[];
@@ -58,7 +58,7 @@ interface AddEditInvoiceDialogProps {
   companies: Company[];
   globalSelectedCompany: string;
   onClose: () => void;
-  onFormChange: (field: string, value: any) => void;
+  onFormChange: (field: string, value: unknown) => void;
   onAddFormItem: () => void;
   onRemoveFormItem: (index: number) => void;
   onUpdateFormItemProduct: (index: number, productId: string) => void;

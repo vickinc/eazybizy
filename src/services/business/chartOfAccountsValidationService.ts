@@ -59,7 +59,7 @@ export class ChartOfAccountsValidationService {
     };
   }
 
-  static validateBulkImport(accounts: any[]): ValidationResult {
+  static validateBulkImport(accounts: unknown[]): ValidationResult {
     const errors: string[] = [];
     const codes = new Set<string>();
 

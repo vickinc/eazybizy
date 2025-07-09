@@ -246,7 +246,7 @@ export function useProductsManagementDB(
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Try to extract detailed error message from API response
       const errorMessage = error?.message || 'Failed to delete product';
       const errorDetails = error?.details;
@@ -353,7 +353,7 @@ export function useProductsManagementDB(
   });
   
   // Form Handlers
-  const handleProductFormChange = useCallback((field: string, value: any) => {
+  const handleProductFormChange = useCallback((field: string, value: unknown) => {
     setNewProduct(prev => ({
       ...prev,
       [field]: value

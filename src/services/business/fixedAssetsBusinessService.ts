@@ -197,8 +197,8 @@ export class FixedAssetsBusinessService {
 
   static sortAssets(assets: FixedAsset[], sortConfig: TableSortConfig): FixedAsset[] {
     const sorted = [...assets].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: unknown;
+      let bValue: unknown;
 
       switch (sortConfig.field) {
         case 'code':
@@ -654,7 +654,7 @@ export class FixedAssetsBusinessService {
     const revaluationGain = params.newFairValue - carryingAmount;
     
     let revaluationSurplus = 0;
-    let revaluationDeficit = 0;
+    const revaluationDeficit = 0;
     
     if (revaluationGain > 0) {
       revaluationSurplus = revaluationGain;

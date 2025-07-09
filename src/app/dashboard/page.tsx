@@ -53,6 +53,8 @@ export default function Dashboard() {
         return <AlertCircle className="h-4 w-4" />;
       case "renewal":
         return <CalendarDays className="h-4 w-4" />;
+      case "anniversary":
+        return <TrendingUp className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -125,7 +127,6 @@ export default function Dashboard() {
     try {
       await navigator.clipboard.writeText(text);
       // You could add a toast notification here
-      console.log(`${label} copied to clipboard`);
     } catch (err) {
       console.error('Failed to copy: ', err);
     }

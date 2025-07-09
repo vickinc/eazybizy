@@ -8,11 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   CalendarIcon, 
-  SettingsIcon, 
   BookOpenIcon, 
   BuildingIcon, 
   UserIcon,
@@ -35,9 +33,7 @@ import {
   MATERIALITY_BASIS_OPTIONS,
   REPORTING_FREQUENCIES,
   CASH_FLOW_METHODS,
-  ENTITY_TYPES,
-  DATE_FORMATS,
-  TIME_FORMATS
+  ENTITY_TYPES
 } from '@/types/settings.types';
 import { SettingsStorageService } from '@/services/storage/settingsStorageService';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
@@ -100,18 +96,17 @@ const SettingsPage: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState<string>('');
 
   // Financial Periods Settings Handlers
-  const handlePeriodsSettingsChange = (field: string, value: any) => {
+  const handlePeriodsSettingsChange = (field: string, value: unknown) => {
     // This would update the financial periods settings
-    console.log('Updating periods settings:', field, value);
   };
 
   // IFRS Settings Handlers
-  const handleIFRSSettingsChange = (field: keyof IFRSSettingsFormData, value: any) => {
+  const handleIFRSSettingsChange = (field: keyof IFRSSettingsFormData, value: unknown) => {
     setIFRSSettings(prev => ({ ...prev, [field]: value }));
   };
 
   // Company Settings Handlers
-  const handleCompanySettingsChange = (field: keyof CompanySettingsFormData, value: any) => {
+  const handleCompanySettingsChange = (field: keyof CompanySettingsFormData, value: unknown) => {
     if (field === 'address') {
       setCompanySettings(prev => ({ 
         ...prev, 

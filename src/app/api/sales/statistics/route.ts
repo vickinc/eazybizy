@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const dateTo = searchParams.get('dateTo');
 
     // Build where clause for filtering
-    const where: any = {};
+    const where: unknown = {};
     if (companyId && companyId !== 'all') {
       where.fromCompanyId = parseInt(companyId);
     }
@@ -303,7 +303,7 @@ function getDateRange(period: string, dateFrom?: string | null, dateTo?: string 
 }
 
 // Helper function to get monthly revenue trend
-async function getMonthlyRevenueTrend(where: any) {
+async function getMonthlyRevenueTrend(where: unknown) {
   const thirteenMonthsAgo = new Date();
   thirteenMonthsAgo.setMonth(thirteenMonthsAgo.getMonth() - 13);
   thirteenMonthsAgo.setDate(1);
@@ -323,7 +323,7 @@ async function getMonthlyRevenueTrend(where: any) {
   });
 
   // Group by month
-  const monthlyRevenue = monthlyData.reduce((acc: any, invoice) => {
+  const monthlyRevenue = monthlyData.reduce((acc: unknown, invoice) => {
     if (invoice.paidDate) {
       const monthKey = `${invoice.paidDate.getFullYear()}-${String(invoice.paidDate.getMonth() + 1).padStart(2, '0')}`;
       acc[monthKey] = (acc[monthKey] || 0) + invoice.totalAmount;
@@ -333,7 +333,7 @@ async function getMonthlyRevenueTrend(where: any) {
 
   // Generate array for last 12 months
   const result = [];
-  for (let i = 11; i >= 0; i--) {
+  for (const i = 11; i >= 0; i--) {
     const date = new Date();
     date.setMonth(date.getMonth() - i);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -354,7 +354,7 @@ function calculateHealthScore(metrics: {
   totalInvoicesCount: number;
   activeClientsCount: number;
 }) {
-  let score = 0;
+  const score = 0;
   
   // Conversion rate (40% weight)
   score += Math.min(metrics.conversionRate, 100) * 0.4;

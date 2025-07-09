@@ -578,9 +578,9 @@ export class BalanceSheetBusinessService {
    * Validate IFRS compliance
    */
   private static validateIFRSCompliance(
-    assets: any,
-    liabilities: any,
-    equity: any,
+    assets: unknown,
+    liabilities: unknown,
+    equity: unknown,
     context: CalculationContext
   ): StatementValidationResult[] {
     const validation: StatementValidationResult[] = [];
@@ -718,8 +718,8 @@ export class BalanceSheetBusinessService {
     // Group by category for detailed breakdown
     const categories = Array.from(new Set(tangibleAssets.map(asset => asset.category)));
     
-    let totalGrossCarryingAmount = 0;
-    let totalAccumulatedDepreciation = 0;
+    const totalGrossCarryingAmount = 0;
+    const totalAccumulatedDepreciation = 0;
 
     categories.forEach(category => {
       const categoryAssets = tangibleAssets.filter(asset => asset.category === category);
@@ -803,8 +803,8 @@ export class BalanceSheetBusinessService {
 
     const items: FinancialStatementItem[] = [];
     
-    let totalGrossCarryingAmount = 0;
-    let totalAccumulatedAmortization = 0;
+    const totalGrossCarryingAmount = 0;
+    const totalAccumulatedAmortization = 0;
 
     // Group by subcategory if available
     const subcategories = Array.from(new Set(intangibleAssets.map(asset => asset.subcategory).filter(Boolean)));

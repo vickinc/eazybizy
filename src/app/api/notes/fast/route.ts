@@ -15,7 +15,7 @@ interface NotesFilters {
 }
 
 interface CachedNotesResponse {
-  notes: any[]
+  notes: unknown[]
   pagination: {
     page: number
     limit: number
@@ -62,7 +62,6 @@ export async function GET(request: NextRequest) {
 
     if (cachedData && cachedCount !== null) {
       // Cache hit - return immediately with compression
-      console.log(`Notes cache HIT - ${Date.now() - startTime}ms`)
       
       const responseData = {
         notes: cachedData,
@@ -104,11 +103,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Cache miss - query database with optimized query
-    console.log(`Notes cache MISS - querying database`)
     const dbStartTime = Date.now()
 
     // Build where clause
-    const where: any = {}
+    const where: unknown = {}
     
     if (filters.eventId) {
       where.eventId = filters.eventId
@@ -180,7 +178,6 @@ export async function GET(request: NextRequest) {
     ])
 
     const dbTime = Date.now() - dbStartTime
-    console.log(`Notes database query completed - ${dbTime}ms`)
 
     // Process notes data
     const processedNotes = notes.map(note => ({
@@ -199,7 +196,6 @@ export async function GET(request: NextRequest) {
     )
 
     const totalTime = Date.now() - startTime
-    console.log(`Notes total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     const responseData = {
       notes: processedNotes,

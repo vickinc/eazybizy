@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('companyId')
     
     // Build where clause based on companyId
-    const where: any = { isActive: true }
+    const where: unknown = { isActive: true }
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId)
     }

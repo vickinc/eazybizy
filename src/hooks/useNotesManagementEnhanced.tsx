@@ -184,7 +184,7 @@ export function useNotesManagementEnhanced(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Create note failed:', error);
     }
   });
@@ -195,7 +195,7 @@ export function useNotesManagementEnhanced(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Update note failed:', error);
     }
   });
@@ -205,7 +205,7 @@ export function useNotesManagementEnhanced(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Delete note failed:', error);
     }
   });
@@ -216,7 +216,7 @@ export function useNotesManagementEnhanced(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Toggle note status failed:', error);
     }
   });
@@ -226,7 +226,7 @@ export function useNotesManagementEnhanced(
   
   // Apply client-side sorting
   const filteredNotes = useMemo(() => {
-    let filtered = [...notes];
+    const filtered = [...notes];
     
     // Sort
     filtered.sort((a, b) => {

@@ -21,7 +21,7 @@ export class ChartOfAccountsParserService {
     const headers = this.parseCSVLine(lines[0]);
     const accounts: ChartOfAccount[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
+    for (const i = 1; i < lines.length; i++) {
       const values = this.parseCSVLine(lines[i]);
       
       if (values.length >= 6) {
@@ -37,10 +37,10 @@ export class ChartOfAccountsParserService {
 
   static parseCSVLine(line: string): string[] {
     const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
+    const current = '';
+    const inQuotes = false;
     
-    for (let i = 0; i < line.length; i++) {
+    for (const i = 0; i < line.length; i++) {
       const char = line[i];
       
       if (char === '"') {

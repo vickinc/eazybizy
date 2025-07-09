@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: unknown = {};
     
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId);

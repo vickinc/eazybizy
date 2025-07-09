@@ -7,7 +7,6 @@
 import { prisma } from '@/lib/prisma'
 
 async function checkCompanyLogos() {
-  console.log('🔍 Checking company logos in database...')
   
   try {
     // Get all companies from database
@@ -19,19 +18,15 @@ async function checkCompanyLogos() {
       },
     })
 
-    console.log(`\nFound ${companies.length} companies\n`)
 
     for (const company of companies) {
-      console.log(`Company: ${company.tradingName} (ID: ${company.id})`)
-      console.log(`  Logo: "${company.logo}"`)
-      console.log(`  Logo type: ${
+      // console.log(`  Logo type: ${
         company.logo.startsWith('data:') ? 'Data URL' :
         company.logo.includes('http') ? 'HTTP URL' :
         company.logo.startsWith('/uploads/') ? 'Uploaded file' :
         /^[A-Za-z]{1,3}$/.test(company.logo) ? 'Text initials' :
         'Unknown/Invalid'
       }`)
-      console.log('---')
     }
 
   } catch (error) {
@@ -46,7 +41,6 @@ async function checkCompanyLogos() {
 if (require.main === module) {
   checkCompanyLogos()
     .then(() => {
-      console.log('✅ Script completed successfully')
       process.exit(0)
     })
     .catch((error) => {

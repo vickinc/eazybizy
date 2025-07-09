@@ -5,10 +5,10 @@ import { InvoiceBusinessService } from '@/services/business/invoiceBusinessServi
 
 export class PDFService {
   static async generateInvoicePDF(
-    invoice: any, 
-    company: any, 
-    paymentMethods: any[] = [], 
-    clients: any[] = []
+    invoice: unknown, 
+    company: unknown, 
+    paymentMethods: unknown[] = [], 
+    clients: unknown[] = []
   ): Promise<void> {
     try {
       // Get company info
@@ -56,10 +56,6 @@ export class PDFService {
 
       // Get exchange rates and calculate currency conversions
       const exchangeRates = InvoiceBusinessService.getExchangeRates();
-      console.log('Exchange rates:', exchangeRates);
-      console.log('Invoice currency:', invoice.currency);
-      console.log('Invoice total amount:', invoice.totalAmount);
-      console.log('Payment methods currencies:', invoicePaymentMethods.map(pm => ({ name: pm.name, currency: pm.currency })));
       
       // Calculate currency conversions for all payment methods with different currencies
       const currencyConversions: Array<{
@@ -71,7 +67,7 @@ export class PDFService {
       }> = [];
       
       // Group payment methods by currency
-      const currencyGroups = new Map<string, { methods: any[]; names: string[] }>();
+      const currencyGroups = new Map<string, { methods: unknown[]; names: string[] }>();
       
       invoicePaymentMethods.forEach(method => {
         const currency = method.currency;
@@ -118,7 +114,6 @@ export class PDFService {
         });
       });
       
-      console.log('Final currency conversions:', currencyConversions);
 
       // Create the PDF document using ReactPDFTemplate
       const doc = React.createElement(ReactPDFTemplate, {
@@ -142,7 +137,7 @@ export class PDFService {
           subtotal: invoice.subtotal,
           taxAmount: invoice.taxAmount,
           totalAmount: invoice.totalAmount,
-          items: invoice.items?.map((item: any) => ({
+          items: invoice.items?.map((item: unknown) => ({
             date: invoice.issueDate,
             description: `${item.productName}${item.description ? ` - ${item.description}` : ''}`,
             quantity: item.quantity,

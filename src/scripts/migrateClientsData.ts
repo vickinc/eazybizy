@@ -60,7 +60,6 @@ export class ClientMigrationService {
 
   // Migrate clients from localStorage to database
   async migrateClients(localStorageClients: LocalStorageClient[]): Promise<typeof this.migrationStats> {
-    console.log(`Starting migration of ${localStorageClients.length} clients...`)
 
     for (const localClient of localStorageClients) {
       try {
@@ -107,7 +106,6 @@ export class ClientMigrationService {
             }
           })
           this.migrationStats.clientsUpdated++
-          console.log(`Updated existing client: ${localClient.name}`)
         } else {
           // Create new client
           await prisma.client.create({
@@ -140,7 +138,6 @@ export class ClientMigrationService {
             }
           })
           this.migrationStats.clientsCreated++
-          console.log(`Created new client: ${localClient.name}`)
         }
 
       } catch (error) {
@@ -156,7 +153,6 @@ export class ClientMigrationService {
 
   // Recalculate client totals from invoices
   async recalculateClientTotals(): Promise<void> {
-    console.log('Recalculating client totals from invoices...')
 
     try {
       // Get all clients
@@ -219,7 +215,6 @@ export class ClientMigrationService {
         })
       }
 
-      console.log(`Recalculated totals for ${clients.length} clients`)
 
     } catch (error) {
       console.error('Error recalculating client totals:', error)
@@ -252,15 +247,12 @@ export class ClientMigrationService {
       const clientsData = this.getLocalStorageData('app-clients')
       
       if (!clientsData || clientsData.length === 0) {
-        console.log('No client data found in localStorage')
         return this.migrationStats
       }
 
       await this.migrateClients(clientsData)
       await this.recalculateClientTotals()
 
-      console.log('Client migration completed successfully')
-      console.log('Migration Stats:', this.migrationStats)
 
       return this.migrationStats
 
@@ -275,7 +267,6 @@ export class ClientMigrationService {
   private getLocalStorageData(key: string): LocalStorageClient[] {
     // In actual migration, this would read from exported localStorage data
     // For now, return empty array as placeholder
-    console.log(`Would read localStorage key: ${key}`)
     return []
   }
 
@@ -347,7 +338,6 @@ export class ClientMigrationService {
   async cleanup(): Promise<void> {
     try {
       // Remove any temporary migration data
-      console.log('Cleaning up migration artifacts...')
       
       // Reset migration stats
       this.migrationStats = {
@@ -359,7 +349,6 @@ export class ClientMigrationService {
         errors: []
       }
       
-      console.log('Migration cleanup completed')
     } catch (error) {
       console.error('Error during cleanup:', error)
       throw error
@@ -389,19 +378,16 @@ export const clientMigrationService = new ClientMigrationService()
 // Main migration function for CLI usage
 export async function migrateAllClientData() {
   try {
-    console.log('Starting complete client data migration...')
     
     const migrationService = new ClientMigrationService()
     const stats = await migrationService.migrateFromLocalStorage()
     
-    console.log('\n' + migrationService.getMigrationSummary())
     
     const validation = await migrationService.validateMigration()
     if (!validation.isValid) {
       console.warn('\nValidation Issues Found:')
       validation.issues.forEach(issue => console.warn('- ' + issue))
     } else {
-      console.log('\n✅ Migration validation passed successfully!')
     }
     
     await migrationService.cleanup()

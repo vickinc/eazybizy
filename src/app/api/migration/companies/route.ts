@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
       try {
         // Skip if company already exists in database
         if (existingRegNos.has(localCompany.registrationNo)) {
-          console.log(`Skipping company ${localCompany.tradingName} - already exists in database`)
           result.skipped++
           continue
         }
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        console.log(`✅ Migrated company: ${localCompany.tradingName}`)
         result.migrated++
 
       } catch (error) {

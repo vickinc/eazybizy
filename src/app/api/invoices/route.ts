@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Calculate totals if not provided
-    const calculatedSubtotal = subtotal || items.reduce((sum: number, item: any) => sum + (item.total || 0), 0)
+    const calculatedSubtotal = subtotal || items.reduce((sum: number, item: unknown) => sum + (item.total || 0), 0)
     const calculatedTaxAmount = taxAmount || (calculatedSubtotal * (taxRate || 0) / 100)
     const calculatedTotalAmount = totalAmount || (calculatedSubtotal + calculatedTaxAmount)
 
@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
         fromCompanyId: Number(fromCompanyId),
         notes: notes || '',
         items: {
-          create: items.map((item: any) => ({
+          create: items.map((item: unknown) => ({
             productId: item.productId || null,
             productName: item.productName || '',
             description: item.description || '',

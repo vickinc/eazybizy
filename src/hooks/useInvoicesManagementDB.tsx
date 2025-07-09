@@ -25,8 +25,8 @@ export interface InvoicesManagementDBHook {
   filteredInvoices: Invoice[];
   groupedInvoices: Array<{ key: string; name: string; invoices: Invoice[] }>;
   statistics: InvoiceStatistics | null;
-  clients: any[];
-  paymentMethods: any[];
+  clients: unknown[];
+  paymentMethods: unknown[];
   
   // UI Data Lists
   availableStatuses: Array<{ value: string; label: string; color: string }>;
@@ -34,8 +34,8 @@ export interface InvoicesManagementDBHook {
   availableClients: Array<{ id: string; name: string }>;
   
   // Computed Filtered Data
-  activeProducts: any[];
-  formPaymentMethods: any[];
+  activeProducts: unknown[];
+  formPaymentMethods: unknown[];
   
   // Page Header Data
   pageTitle: string;
@@ -105,7 +105,7 @@ export interface InvoicesManagementDBHook {
   handleSortDirectionChange: (direction: 'asc' | 'desc') => void;
   
   // Form Handlers
-  handleInvoiceFormChange: (field: string, value: any) => void;
+  handleInvoiceFormChange: (field: string, value: unknown) => void;
   resetForm: () => void;
   
   // Form Management Actions
@@ -284,23 +284,19 @@ export function useInvoicesManagementDB(
   const { data: paymentMethodsResponse, isLoading: isLoadingPaymentMethods, error: paymentMethodsError } = useQuery({
     queryKey: ['payment-methods', globalSelectedCompany],
     queryFn: async () => {
-      console.log('Payment methods query running for company:', globalSelectedCompany);
       if (globalSelectedCompany === 'all') {
-        console.log('Skipping payment methods fetch - globalSelectedCompany is "all"');
         return { data: [] };
       }
       
       // Fetch payment methods directly from the PaymentMethod table
       const response = await fetch(`/api/payment-methods?companyId=${globalSelectedCompany}`);
       
-      console.log('Payment methods response:', response.status, response.ok);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch payment methods: ${response.status}`);
       }
       
       const paymentMethods = await response.json();
-      console.log('Payment methods data:', paymentMethods);
       
       return paymentMethods;
     },
@@ -314,9 +310,6 @@ export function useInvoicesManagementDB(
   const clients = useMemo(() => clientsResponse?.data || [], [clientsResponse]);
   const products = useMemo(() => productsResponse?.data || [], [productsResponse]);
   const paymentMethods = useMemo(() => {
-    console.log('PaymentMethods useMemo - globalSelectedCompany:', globalSelectedCompany);
-    console.log('PaymentMethods useMemo - paymentMethodsResponse:', paymentMethodsResponse);
-    console.log('PaymentMethods useMemo - isLoadingPaymentMethods:', isLoadingPaymentMethods);
     console.log('PaymentMethods useMemo - paymentMethodsError:', paymentMethodsError);
     return paymentMethodsResponse?.data || [];
   }, [paymentMethodsResponse, globalSelectedCompany, isLoadingPaymentMethods, paymentMethodsError]);
@@ -332,7 +325,7 @@ export function useInvoicesManagementDB(
       { value: 'ARCHIVED', label: 'Archived', color: 'text-gray-500', bgColor: 'bg-gray-50' }
     ];
 
-    return rawInvoices.map((invoice): any => {
+    return rawInvoices.map((invoice): unknown => {
       // Find status config
       const statusConfig = INVOICE_STATUSES.find(s => s.value === invoice.status) || {
         value: invoice.status,
@@ -396,7 +389,7 @@ export function useInvoicesManagementDB(
         isOverdue,
         daysOverdue,
         // Add paymentMethodIds from paymentMethodInvoices if available
-        paymentMethodIds: invoice.paymentMethodInvoices?.map((pmi: any) => pmi.paymentMethodId) || [],
+        paymentMethodIds: invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [],
         // Add empty paymentMethodNames for now (will be populated by individual components)
         paymentMethodNames: []
       };
@@ -464,7 +457,6 @@ export function useInvoicesManagementDB(
   const formPaymentMethods = useMemo(() => {
     // Filter payment methods for the selected company
     const filtered = paymentMethods.filter(pm => pm.type && pm.name);
-    console.log('Form payment methods:', filtered);
     return filtered;
   }, [paymentMethods]);
 
@@ -538,7 +530,7 @@ export function useInvoicesManagementDB(
   });
 
   // Form Handlers
-  const handleInvoiceFormChange = useCallback((field: string, value: any) => {
+  const handleInvoiceFormChange = useCallback((field: string, value: unknown) => {
     setInvoiceForm(prev => {
       const updated = { ...prev, [field]: value };
       
@@ -763,7 +755,7 @@ export function useInvoicesManagementDB(
   // Invoice Operations
   const handleCreateInvoice = useCallback(async () => {
     // Auto-generate invoice number if empty
-    let finalInvoiceData = { ...invoiceForm };
+    const finalInvoiceData = { ...invoiceForm };
     if (!finalInvoiceData.invoiceNumber || finalInvoiceData.invoiceNumber.trim() === '') {
       const currentDate = new Date();
       const year = currentDate.getFullYear();
@@ -843,7 +835,7 @@ export function useInvoicesManagementDB(
       const response = await invoicesApiService.duplicateInvoice(id);
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       toast.success('Invoice duplicated successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to duplicate invoice: ${error.message}`);
     }
   }, [queryClient]);
@@ -872,7 +864,7 @@ export function useInvoicesManagementDB(
       // Clear selection after successful operation
       setSelectedInvoices(new Set());
       toast.success(`${ids.length} invoice(s) archived successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to archive invoices: ${error.message}`);
     }
   }, [selectedInvoices, updateInvoiceMutation]);
@@ -898,7 +890,7 @@ export function useInvoicesManagementDB(
       // Clear selection after successful operation
       setSelectedInvoices(new Set());
       toast.success(`${ids.length} invoice(s) marked as paid successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to mark invoices as paid: ${error.message}`);
     }
   }, [selectedInvoices, updateInvoiceMutation]);
@@ -924,7 +916,7 @@ export function useInvoicesManagementDB(
       // Clear selection after successful operation
       setSelectedInvoices(new Set());
       toast.success(`${ids.length} invoice(s) marked as sent successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to mark invoices as sent: ${error.message}`);
     }
   }, [selectedInvoices, updateInvoiceMutation]);
@@ -948,7 +940,7 @@ export function useInvoicesManagementDB(
       // Clear selection after successful operation
       setSelectedInvoices(new Set());
       toast.success(`${ids.length} invoice(s) deleted successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(`Failed to delete invoices: ${error.message}`);
     }
   }, [selectedInvoices, deleteInvoiceMutation]);
@@ -983,7 +975,7 @@ export function useInvoicesManagementDB(
       
       // Transform to payment method format
       const invoicePaymentMethods = [
-        ...(bankAccounts.data || []).map((bank: any) => ({
+        ...(bankAccounts.data || []).map((bank: unknown) => ({
           id: bank.id,
           type: 'BANK',
           name: bank.bankName,
@@ -996,7 +988,7 @@ export function useInvoicesManagementDB(
           currency: bank.currency,
           details: bank.notes || ''
         })),
-        ...(digitalWallets.data || []).map((wallet: any) => ({
+        ...(digitalWallets.data || []).map((wallet: unknown) => ({
           id: wallet.id,
           type: 'WALLET',
           name: wallet.walletName,

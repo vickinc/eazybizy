@@ -277,7 +277,6 @@ export class FinancialStatementsIntegrationService {
         currency: companySettings?.currency || 'USD'
       };
       
-      console.log(`Integration completed in ${Date.now() - startTime}ms`);
       return integratedStatements;
       
     } catch (error) {
@@ -340,7 +339,7 @@ export class FinancialStatementsIntegrationService {
     balanceSheet: BalanceSheetData,
     profitLoss: ProfitLossData,
     cashFlowStatement: CashFlowStatementData
-  ): any {
+  ): unknown {
     
     return {
       annualRevenue: profitLoss.revenue?.total || 5000000,

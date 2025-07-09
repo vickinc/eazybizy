@@ -35,7 +35,6 @@ class MigrationValidator {
    * Validate complete migration integrity
    */
   async validateMigration(): Promise<ValidationSummary> {
-    console.log('🔍 Starting Migration Validation...\n');
     
     const results: ValidationResult[] = [];
     
@@ -318,7 +317,7 @@ class MigrationValidator {
   /**
    * Helper method to get localStorage data
    */
-  private getLocalStorageData(key: string): any[] {
+  private getLocalStorageData(key: string): unknown[] {
     if (typeof window === 'undefined') {
       console.warn(`⚠️  Cannot access localStorage for ${key} (server environment)`);
       return [];
@@ -355,9 +354,6 @@ class MigrationValidator {
    * Print detailed validation report
    */
   private printValidationReport(summary: ValidationSummary): void {
-    console.log('\n' + '='.repeat(80));
-    console.log('📋 MIGRATION VALIDATION REPORT');
-    console.log('='.repeat(80));
     
     for (const result of summary.results) {
       const status = result.isValid ? '✅' : '❌';
@@ -365,39 +361,20 @@ class MigrationValidator {
       const dbCount = result.databaseCount.toString().padStart(5);
       const match = result.localStorageCount === result.databaseCount ? '✓' : '✗';
       
-      console.log(`${status} ${result.module.padEnd(20)} LocalStorage: ${localCount}  Database: ${dbCount}  ${match}`);
       
       if (result.issues.length > 0) {
         result.issues.forEach(issue => {
-          console.log(`   🔸 ${issue}`);
         });
       }
     }
     
-    console.log('-'.repeat(80));
-    console.log(`📊 Summary:`);
-    console.log(`   Total LocalStorage Records: ${summary.totalLocalStorageRecords}`);
-    console.log(`   Total Database Records:     ${summary.totalDatabaseRecords}`);
-    console.log(`   Valid Modules:              ${summary.validModules}/${summary.totalModules}`);
-    console.log(`   Success Rate:               ${((summary.validModules/summary.totalModules)*100).toFixed(1)}%`);
     
     const overallStatus = summary.overallValid ? '🎉 VALIDATION PASSED' : '⚠️  VALIDATION ISSUES FOUND';
-    console.log(`\n${overallStatus}`);
     
     if (summary.overallValid) {
-      console.log('\n✨ Migration integrity confirmed!');
-      console.log('   🎯 All data successfully migrated');
-      console.log('   🔄 Ready for production use');
-      console.log('   📈 Performance benefits active');
     } else {
-      console.log('\n💡 Recommended actions:');
-      console.log('   1. Review issues listed above');
-      console.log('   2. Run data cleanup scripts if needed');
-      console.log('   3. Consider re-running migration for affected modules');
-      console.log('   4. Test application functionality manually');
     }
     
-    console.log('='.repeat(80));
   }
 }
 

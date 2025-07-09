@@ -52,7 +52,6 @@ export class JournalEntryStorageService {
       }
 
       localStorage.setItem(JOURNAL_ENTRIES_KEY, JSON.stringify(entries));
-      console.log(`✅ Saved ${entries.length} journal entries to localStorage`);
       
       // Verify the save was successful
       const savedData = localStorage.getItem(JOURNAL_ENTRIES_KEY);
@@ -269,7 +268,6 @@ export class JournalEntryStorageService {
       return [];
     }
 
-    console.log(`🔄 Migrating ${entries.length} journal entries...`);
     
     // Ensure all entries have proper structure
     const migratedEntries = entries.map(entry => {
@@ -301,7 +299,6 @@ export class JournalEntryStorageService {
       validation.issues.forEach(issue => console.warn('  -', issue));
     }
     
-    console.log(`✅ Journal entries migration complete: ${migratedEntries.length} entries, ${validation.balancedEntries} balanced`);
     
     return migratedEntries;
   }
@@ -314,7 +311,6 @@ export class JournalEntryStorageService {
   static clearAllJournalEntries(): void {
     try {
       localStorage.removeItem(JOURNAL_ENTRIES_KEY);
-      console.log('✅ Cleared all journal entries from localStorage');
     } catch (error) {
       console.error('Error clearing journal entries:', error);
     }
@@ -331,7 +327,6 @@ export class JournalEntryStorageService {
       };
       
       const backupString = JSON.stringify(backup, null, 2);
-      console.log(`✅ Created backup of ${entries.length} journal entries`);
       return backupString;
     } catch (error) {
       console.error('Error creating journal entries backup:', error);
@@ -356,7 +351,6 @@ export class JournalEntryStorageService {
       
       const success = this.saveJournalEntries(backup.data);
       if (success) {
-        console.log(`✅ Restored ${backup.data.length} journal entries from backup`);
       }
       
       return success;
@@ -372,21 +366,15 @@ export class JournalEntryStorageService {
     const integrity = this.checkDataIntegrity();
     
     console.group('📊 Journal Entries Storage Report');
-    console.log('Total entries:', entries.length);
-    console.log('Balanced entries:', integrity.balancedEntries);
-    console.log('Unbalanced entries:', integrity.unbalancedEntries);
-    console.log('Data integrity:', integrity.isValid ? '✅ Valid' : '❌ Invalid');
     
     if (integrity.issues.length > 0) {
       console.group('⚠️ Issues found:');
-      integrity.issues.forEach(issue => console.log('-', issue));
       console.groupEnd();
     }
     
     if (entries.length > 0) {
       console.group('📋 Sample entries:');
       entries.slice(0, 3).forEach(entry => {
-        console.log(`${entry.entryNumber}: ${entry.description} (${entry.lines?.length || 0} lines)`);
       });
       console.groupEnd();
     }
@@ -460,7 +448,6 @@ export class JournalEntryStorageService {
   static resetJournalNumberCounter(): void {
     try {
       localStorage.removeItem(JOURNAL_NUMBER_COUNTER_KEY);
-      console.log('✅ Reset journal number counter');
     } catch (error) {
       console.error('Error resetting journal number counter:', error);
     }
@@ -609,7 +596,6 @@ export class JournalEntryStorageService {
           `Created reversal entry ${reversalEntry.entryNumber} for ${originalEntry.entryNumber}`
         );
 
-        console.log(`✅ Created reversal entry ${reversalEntry.entryNumber} for ${originalEntry.entryNumber}`);
         return reversalEntry;
       } else {
         console.error('Failed to save reversal entries');

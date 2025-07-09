@@ -18,7 +18,6 @@ export class DataRecoveryTests {
       this.testBackupCreation();
       this.testValidationLogic();
       
-      console.log('✅ All tests passed!');
     } catch (error) {
       console.error('❌ Test failed:', error);
     }
@@ -27,7 +26,6 @@ export class DataRecoveryTests {
   }
 
   static testBasicAnalysis(): void {
-    console.log('📊 Testing basic analysis...');
     
     const report = DataRecoveryService.analyzeLocalStorageData();
     
@@ -42,11 +40,9 @@ export class DataRecoveryTests {
       throw new Error('Report recommendations should be an array');
     }
     
-    console.log('  ✓ Analysis report structure is valid');
   }
 
   static testDataLossDetection(): void {
-    console.log('🔍 Testing data loss detection...');
     
     // Create mock data with suspicious patterns
     const mockEntries = [
@@ -66,11 +62,9 @@ export class DataRecoveryTests {
       throw new Error('Should report issues when expenses are missing');
     }
     
-    console.log('  ✓ Data loss detection working correctly');
   }
 
   static testBackupCreation(): void {
-    console.log('💾 Testing backup creation...');
     
     try {
       const backup = DataRecoveryService.createDataBackup();
@@ -86,14 +80,12 @@ export class DataRecoveryTests {
         throw new Error('Backup missing version');
       }
       
-      console.log('  ✓ Backup creation working correctly');
     } catch (error) {
       throw new Error(`Backup creation failed: ${error}`);
     }
   }
 
   static testValidationLogic(): void {
-    console.log('✅ Testing validation logic...');
     
     // Test with valid entries
     const validEntries = [
@@ -119,14 +111,12 @@ export class DataRecoveryTests {
       throw new Error('Should detect problematic data patterns');
     }
     
-    console.log('  ✓ Validation logic working correctly');
   }
 
   /**
    * Integration test with actual localStorage
    */
   static testIntegrationWithStorage(): void {
-    console.log('🔗 Testing integration with storage...');
     
     try {
       const integrityCheck = BookkeepingStorageService.checkDataIntegrity();
@@ -143,8 +133,7 @@ export class DataRecoveryTests {
         throw new Error('Integrity check recommendations should be an array');
       }
       
-      console.log('  ✓ Storage integration working correctly');
-      console.log('  📊 Current data status:', {
+      // console.log('  📊 Current data status:', {
         isValid: integrityCheck.isValid,
         issueCount: integrityCheck.issues.length,
         recommendationCount: integrityCheck.recommendations.length
@@ -163,9 +152,8 @@ export class DataRecoveryTests {
     
     try {
       // Step 1: Check current data state
-      console.log('1. Analyzing current data state...');
       const analysis = DataRecoveryService.analyzeLocalStorageData();
-      console.log('   Current state:', {
+      // console.log('   Current state:', {
         totalEntries: analysis.totalEntries,
         expenses: analysis.expenseEntries,
         income: analysis.incomeEntries,
@@ -173,20 +161,14 @@ export class DataRecoveryTests {
       });
       
       // Step 2: Run integrity check
-      console.log('2. Running integrity check...');
       const integrity = BookkeepingStorageService.checkDataIntegrity();
-      console.log('   Integrity status:', integrity.isValid ? '✅ Valid' : '⚠️ Issues detected');
       
       // Step 3: Test backup functionality
-      console.log('3. Testing backup functionality...');
       const backup = DataRecoveryService.createDataBackup();
-      console.log('   Backup size:', new Blob([backup]).size, 'bytes');
       
       // Step 4: Generate detailed report
-      console.log('4. Generating detailed report...');
       DataRecoveryService.logDetailedReport();
       
-      console.log('✅ System test completed successfully');
       
     } catch (error) {
       console.error('❌ System test failed:', error);
@@ -199,5 +181,4 @@ export class DataRecoveryTests {
 // Make tests available globally for browser console
 if (typeof window !== 'undefined') {
   (window as any).DataRecoveryTests = DataRecoveryTests;
-  console.log('🧪 Data Recovery Tests loaded. Run DataRecoveryTests.runAllTests() to execute.');
 }

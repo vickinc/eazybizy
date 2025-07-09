@@ -80,7 +80,7 @@ interface UnitEconomicsProps {
 }
 
 interface CohortTableProps {
-  cohorts: any[];
+  cohorts: unknown[];
 }
 
 /**

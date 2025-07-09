@@ -167,7 +167,7 @@ export interface InvoiceStatistics {
     paidInvoicesCount: number
   }
   trends: {
-    monthly: any[]
+    monthly: unknown[]
   }
   insights: {
     mostValuableClient: string | null
@@ -179,7 +179,7 @@ export interface InvoiceStatistics {
 
 export interface BulkInvoiceOperation {
   operation: 'updateStatus' | 'archive' | 'delete' | 'markPaid' | 'send' | 'duplicate' | 'export'
-  data: any
+  data: unknown
 }
 
 export interface BulkOperationResponse {
@@ -194,7 +194,7 @@ export interface BulkOperationResponse {
   skipped?: number
   message: string
   invoices?: Invoice[]
-  data?: any
+  data?: unknown
 }
 
 export interface WorkflowOperation {
@@ -309,7 +309,7 @@ export class InvoicesApiService {
     return response.json()
   }
 
-  async markInvoicePaid(id: string, options: WorkflowOperation = {}): Promise<{ success: boolean; invoice: Invoice; transaction?: any; message: string }> {
+  async markInvoicePaid(id: string, options: WorkflowOperation = {}): Promise<{ success: boolean; invoice: Invoice; transaction?: unknown; message: string }> {
     const response = await fetch(`${this.baseUrl}/${id}/mark-paid`, {
       method: 'POST',
       headers: {
@@ -323,7 +323,7 @@ export class InvoicesApiService {
     return response.json()
   }
 
-  async duplicateInvoice(id: string, options: DuplicateOperation = {}): Promise<{ success: boolean; originalInvoice: any; duplicatedInvoice: Invoice; message: string }> {
+  async duplicateInvoice(id: string, options: DuplicateOperation = {}): Promise<{ success: boolean; originalInvoice: unknown; duplicatedInvoice: Invoice; message: string }> {
     const response = await fetch(`${this.baseUrl}/${id}/duplicate`, {
       method: 'POST',
       headers: {
@@ -393,7 +393,7 @@ export class InvoicesApiService {
     return this.bulkOperation('export', { ids, format, includeItems })
   }
 
-  private async bulkOperation(operation: string, data: any): Promise<BulkOperationResponse> {
+  private async bulkOperation(operation: string, data: unknown): Promise<BulkOperationResponse> {
     const response = await fetch(`${this.baseUrl}/bulk`, {
       method: 'POST',
       headers: {

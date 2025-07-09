@@ -158,7 +158,7 @@ export class CurrencyService {
     taxRatePercent: number,
     invoiceCurrency: string
   ): { subtotal: number; taxAmount: number; totalAmount: number; currencyMismatch: boolean } {
-    let subtotal = 0;
+    const subtotal = 0;
     let currencyMismatch = false;
 
     // Calculate subtotal and check for currency mismatches

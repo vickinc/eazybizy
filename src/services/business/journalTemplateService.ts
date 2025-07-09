@@ -75,7 +75,7 @@ export class JournalTemplateService {
       const account = chartOfAccounts.find(acc => acc.id === templateLine.accountId);
       
       let debitAmount = 0;
-      let creditAmount = 0;
+      const creditAmount = 0;
 
       // Process amounts based on formulas or variables
       if (templateLine.debitFormula) {
@@ -129,7 +129,7 @@ export class JournalTemplateService {
   private static evaluateFormula(formula: string, variables: Record<string, string | number>): number {
     try {
       // Simple formula evaluation - replace variables and calculate
-      let processedFormula = formula;
+      const processedFormula = formula;
       
       // Replace variables like {amount}, {salary}, etc.
       Object.entries(variables).forEach(([key, value]) => {
@@ -153,7 +153,7 @@ export class JournalTemplateService {
 
   // Process template strings with variables
   private static processTemplateString(template: string, variables: Record<string, string | number>): string {
-    let processed = template;
+    const processed = template;
     
     Object.entries(variables).forEach(([key, value]) => {
       const regex = new RegExp(`\\{${key}\\}`, 'g');

@@ -319,12 +319,10 @@ export class DataMigrationBusinessService {
     try {
       if (options.includeIncomeEntries) {
         // Note: You would need to implement a deleteAll method in storage services
-        console.log('Would delete original income entries');
       }
 
       if (options.includeExpenseEntries) {
         // Note: You would need to implement a deleteAll method in storage services
-        console.log('Would delete original expense entries');
       }
     } catch (error) {
       console.error('Error cleaning up original data:', error);
@@ -382,11 +380,11 @@ export class DataMigrationBusinessService {
     totalAmount: number;
     dateRange: { start: string; end: string } | null;
   } {
-    let incomeCount = 0;
-    let expenseCount = 0;
-    let totalAmount = 0;
-    let minDate = '';
-    let maxDate = '';
+    const incomeCount = 0;
+    const expenseCount = 0;
+    const totalAmount = 0;
+    const minDate = '';
+    const maxDate = '';
 
     try {
       if (options.includeIncomeEntries) {

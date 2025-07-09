@@ -41,10 +41,10 @@ export async function executeWithRetry<T>(
 ): Promise<T> {
   let lastError: Error | null = null
   
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  for (const attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation()
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error
       
       // If it's a connection error, retry

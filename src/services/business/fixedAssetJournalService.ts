@@ -325,7 +325,6 @@ export class FixedAssetJournalService {
     entries.forEach(entry => {
       // Save each entry using the bookkeeping service
       // BookkeepingBusinessService.saveEntry(entry);
-      console.log('Journal Entry Created:', entry);
     });
   }
 

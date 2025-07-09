@@ -14,7 +14,7 @@ interface AddEditClientDialogProps {
   availableIndustries: string[];
   availableStatuses: Array<{ value: string; label: string }>;
   onOpenChange: (open: boolean) => void;
-  onClientFormChange: (field: keyof ClientFormData, value: any) => void;
+  onClientFormChange: (field: keyof ClientFormData, value: unknown) => void;
   onCreateClient: () => void;
   onUpdateClient: () => void;
   onResetForm: () => void;
@@ -178,7 +178,7 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
             </div>
             <div>
               <Label htmlFor="client-status">Status</Label>
-              <Select value={clientForm.status} onValueChange={(value: any) => onClientFormChange('status', value)}>
+              <Select value={clientForm.status} onValueChange={(value: unknown) => onClientFormChange('status', value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

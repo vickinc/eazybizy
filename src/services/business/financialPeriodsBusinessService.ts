@@ -189,7 +189,7 @@ export class FinancialPeriodsBusinessService {
     const periods: FinancialPeriod[] = [];
     const startDate = new Date(year.startDate);
     
-    for (let quarter = 1; quarter <= 4; quarter++) {
+    for (const quarter = 1; quarter <= 4; quarter++) {
       const quarterStart = new Date(startDate);
       quarterStart.setMonth(startDate.getMonth() + (quarter - 1) * 3);
       
@@ -217,8 +217,8 @@ export class FinancialPeriodsBusinessService {
     const startDate = new Date(quarterPeriod.startDate);
     const endDate = new Date(quarterPeriod.endDate);
     
-    let currentMonth = new Date(startDate);
-    let monthNumber = 1;
+    const currentMonth = new Date(startDate);
+    const monthNumber = 1;
     
     while (currentMonth <= endDate) {
       const monthStart = new Date(currentMonth);

@@ -44,7 +44,7 @@ export interface FixedAssetsManagementHook {
   handleDelete: (id: string) => void;
   handleDispose: (asset: FixedAsset) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
-  handleFormInputChange: (field: keyof FixedAssetFormData, value: any) => void;
+  handleFormInputChange: (field: keyof FixedAssetFormData, value: unknown) => void;
   
   // Dialog management
   setShowAssetDialog: (show: boolean) => void;
@@ -52,7 +52,7 @@ export interface FixedAssetsManagementHook {
   resetForm: () => void;
   
   // Filter and sort
-  handleFilterChange: (field: keyof FixedAssetFilter, value: any) => void;
+  handleFilterChange: (field: keyof FixedAssetFilter, value: unknown) => void;
   clearFilters: () => void;
   handleSort: (field: TableSortConfig['field']) => void;
   
@@ -270,7 +270,7 @@ export const useFixedAssetsManagement = (): FixedAssetsManagementHook => {
     }
   }, [formData, editingAsset]);
 
-  const handleFormInputChange = useCallback((field: keyof FixedAssetFormData, value: any) => {
+  const handleFormInputChange = useCallback((field: keyof FixedAssetFormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear validation errors for this field
@@ -290,7 +290,7 @@ export const useFixedAssetsManagement = (): FixedAssetsManagementHook => {
   }, []);
 
   // Filter and sort handlers
-  const handleFilterChange = useCallback((field: keyof FixedAssetFilter, value: any) => {
+  const handleFilterChange = useCallback((field: keyof FixedAssetFilter, value: unknown) => {
     setFilter(prev => ({ ...prev, [field]: value }));
   }, []);
 

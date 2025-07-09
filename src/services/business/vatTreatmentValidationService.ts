@@ -287,7 +287,7 @@ export class VATTreatmentValidationService {
     return `${errors.length} validation errors found. Please check the form fields.`;
   }
 
-  static validateImportData(importData: any[]): ValidationResult {
+  static validateImportData(importData: unknown[]): ValidationResult {
     const errors: ValidationError[] = [];
 
     if (!Array.isArray(importData)) {

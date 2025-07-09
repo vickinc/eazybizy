@@ -13,7 +13,7 @@ export class VendorStorageService {
       const parsedVendors = JSON.parse(savedVendors);
       
       // Ensure all vendors have required fields for backward compatibility
-      return parsedVendors.map((vendor: any) => ({
+      return parsedVendors.map((vendor: Partial<Vendor>) => ({
         ...vendor,
         phone: vendor.phone || '',
         companyName: vendor.companyName || '',
@@ -40,7 +40,6 @@ export class VendorStorageService {
     
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(vendors));
-      console.log('Vendors saved to localStorage:', vendors.length, 'vendors');
     } catch (error) {
       console.error('Failed to save vendors to localStorage:', error);
     }

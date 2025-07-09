@@ -1,4 +1,4 @@
-import { VATTreatment } from '@/types/vatTreatment.types';
+import { VATTreatment, VATApplicability } from '@/types/vatTreatment.types';
 
 export class VATTreatmentStorageService {
   private static readonly STORAGE_KEY = 'vatTreatments';
@@ -120,9 +120,9 @@ export class VATTreatmentStorageService {
     return this.getAll().filter(treatment => treatment.category === category);
   }
 
-  static getByApplicability(applicability: string): VATTreatment[] {
+  static getByApplicability(applicability: VATApplicability): VATTreatment[] {
     return this.getAll().filter(treatment => 
-      treatment.applicability.includes(applicability as any)
+      treatment.applicability.includes(applicability)
     );
   }
 

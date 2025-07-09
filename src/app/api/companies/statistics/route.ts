@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
     if (!forceRefresh && !lightweight) {
       const cachedStats = companyStatisticsCache.get()
       if (cachedStats) {
-        console.log('Serving company statistics from cache')
         return NextResponse.json({
           overview: {
             total: cachedStats.totalActive + cachedStats.totalPassive,
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`Computing ${lightweight ? 'lightweight' : 'full'} company statistics...`)
     
     if (!lightweight) {
       companyStatisticsCache.markAsRefreshing()
@@ -164,7 +162,6 @@ export async function GET(request: NextRequest) {
         newThisMonth,
       }
       companyStatisticsCache.set(basicStats)
-      console.log('Company statistics computed and cached')
     }
 
     return NextResponse.json({

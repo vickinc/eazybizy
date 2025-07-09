@@ -154,7 +154,7 @@ export const InvoiceFilterBar: React.FC<InvoiceFilterBarProps> = ({
             {/* Period and Date Range Selection */}
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
+              <Select value={selectedPeriod} onValueChange={(value: unknown) => setSelectedPeriod(value)}>
                 <SelectTrigger className="w-auto sm:w-40 h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -172,7 +172,7 @@ export const InvoiceFilterBar: React.FC<InvoiceFilterBarProps> = ({
             {/* Client Filter */}
             <div className="flex items-center space-x-2">
               <Users className="h-4 w-4 text-gray-500" />
-              <Select value={filterClient} onValueChange={(value: any) => setFilterClient(value)}>
+              <Select value={filterClient} onValueChange={(value: unknown) => setFilterClient(value)}>
                 <SelectTrigger className="w-auto sm:w-40 h-9">
                   <SelectValue placeholder="All Clients" />
                 </SelectTrigger>
@@ -190,7 +190,7 @@ export const InvoiceFilterBar: React.FC<InvoiceFilterBarProps> = ({
             {/* Currency Filter */}
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">Currency:</span>
-              <Select value={filterCurrency} onValueChange={(value: any) => setFilterCurrency(value)}>
+              <Select value={filterCurrency} onValueChange={(value: unknown) => setFilterCurrency(value)}>
                 <SelectTrigger className="w-auto sm:w-32 h-9">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
@@ -209,7 +209,7 @@ export const InvoiceFilterBar: React.FC<InvoiceFilterBarProps> = ({
             {groupedView && (
               <div className="flex items-center space-x-2">
                 <Folder className="h-4 w-4 text-gray-500" />
-                <Select value={groupBy} onValueChange={(value: any) => setGroupBy(value)}>
+                <Select value={groupBy} onValueChange={(value: unknown) => setGroupBy(value)}>
                   <SelectTrigger className="w-auto sm:w-40 h-9">
                     <SelectValue />
                   </SelectTrigger>

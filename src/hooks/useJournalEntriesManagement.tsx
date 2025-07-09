@@ -463,7 +463,6 @@ export const useJournalEntriesManagement = (selectedCompany: number | 'all', com
         setHighlightedEntryId(reversalEntry.id);
         setExpandedEntries(prev => new Set([...prev, reversalEntry.id]));
         
-        console.log(`✅ Successfully reversed entry ${entry.entryNumber}`);
       } else {
         throw new Error('Failed to create reversal entry');
       }

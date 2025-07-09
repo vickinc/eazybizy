@@ -49,7 +49,7 @@ export const StatementOfChangesInEquity: React.FC<StatementOfChangesInEquityProp
     );
   };
 
-  const EquityComponentRow = ({ component, label }: { component: any; label: string }) => (
+  const EquityComponentRow = ({ component, label }: { component: unknown; label: string }) => (
     <tr className="border-b">
       <td className="py-2 font-medium text-left">{label}</td>
       <td className="py-2 text-right">{component.openingBalanceFormatted}</td>
@@ -68,7 +68,7 @@ export const StatementOfChangesInEquity: React.FC<StatementOfChangesInEquityProp
     </tr>
   );
 
-  const MovementRow = ({ movement, label }: { movement: any; label: string }) => (
+  const MovementRow = ({ movement, label }: { movement: unknown; label: string }) => (
     <tr className="border-b border-gray-100">
       <td className="py-2 text-left">{label}</td>
       <td className="py-2 text-right">{movement.shareCapitalFormatted}</td>

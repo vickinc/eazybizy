@@ -7,7 +7,7 @@ import { InvoiceListItem } from "./InvoiceListItem";
 import { Send, CheckCircle, Archive, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface InvoiceListProps {
-  filteredInvoices: any[];
+  filteredInvoices: unknown[];
   expandedInvoices: Set<string>;
   selectedInvoices: Set<string>;
   viewMode: string;
@@ -22,9 +22,9 @@ interface InvoiceListProps {
   onSelectAllInvoices: () => void;
   onDeselectAllInvoices: () => void;
   isAllInvoicesSelected: boolean;
-  onPreviewInvoice: (invoice: any) => void;
-  onEditInvoice: (invoice: any) => void;
-  onDownloadPDF: (invoice: any) => void;
+  onPreviewInvoice: (invoice: unknown) => void;
+  onEditInvoice: (invoice: unknown) => void;
+  onDownloadPDF: (invoice: unknown) => void;
   onDuplicateInvoice: (id: string) => void;
   onMarkAsSent: (id: string) => void;
   onMarkAsPaid: (id: string) => void;

@@ -95,7 +95,6 @@ class PerformanceIntegrationTester {
 
   // Test data fetching performance
   async testDataFetching(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing data fetching performance...')
     const results: PerformanceMetrics[] = []
 
     const testCases = [
@@ -106,7 +105,6 @@ class PerformanceIntegrationTester {
     ]
 
     for (const testCase of testCases) {
-      console.log(`  Testing ${testCase.description} (${testCase.count} records)...`)
 
       // Test each module
       for (const [module, endpoint] of Object.entries(this.endpoints)) {
@@ -130,13 +128,11 @@ class PerformanceIntegrationTester {
 
   // Test search performance
   async testSearchPerformance(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing search performance...')
     const results: PerformanceMetrics[] = []
 
     const searchTerms = ['test', 'invoice', 'client', 'transaction', 'a']
 
     for (const searchTerm of searchTerms) {
-      console.log(`  Testing search for "${searchTerm}"...`)
 
       for (const [module, endpoint] of Object.entries(this.endpoints)) {
         const metric = await this.measurePerformance(
@@ -162,7 +158,6 @@ class PerformanceIntegrationTester {
 
   // Test filtering performance
   async testFilteringPerformance(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing filtering performance...')
     const results: PerformanceMetrics[] = []
 
     const filterTests = [
@@ -173,7 +168,6 @@ class PerformanceIntegrationTester {
     ]
 
     for (const filter of filterTests) {
-      console.log(`  Testing ${filter.description}...`)
 
       for (const [module, endpoint] of Object.entries(this.endpoints)) {
         const metric = await this.measurePerformance(
@@ -199,7 +193,6 @@ class PerformanceIntegrationTester {
 
   // Test pagination performance
   async testPaginationPerformance(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing pagination performance...')
     const results: PerformanceMetrics[] = []
 
     const paginationTests = [
@@ -210,7 +203,6 @@ class PerformanceIntegrationTester {
     ]
 
     for (const pagination of paginationTests) {
-      console.log(`  Testing pagination skip=${pagination.skip}, take=${pagination.take}...`)
 
       for (const [module, endpoint] of Object.entries(this.endpoints)) {
         const metric = await this.measurePerformance(
@@ -236,7 +228,6 @@ class PerformanceIntegrationTester {
 
   // Test statistics endpoint performance
   async testStatisticsPerformance(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing statistics performance...')
     const results: PerformanceMetrics[] = []
 
     const modules = ['transactions', 'invoices', 'clients']
@@ -260,13 +251,11 @@ class PerformanceIntegrationTester {
 
   // Test concurrent operations
   async testConcurrentOperations(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing concurrent operations...')
     const results: PerformanceMetrics[] = []
 
     const concurrentTests = [2, 5, 10]
 
     for (const concurrency of concurrentTests) {
-      console.log(`  Testing ${concurrency} concurrent requests...`)
 
       for (const [module, endpoint] of Object.entries(this.endpoints)) {
         const metric = await this.measurePerformance(
@@ -293,14 +282,12 @@ class PerformanceIntegrationTester {
 
   // Test bulk operations performance
   async testBulkOperations(): Promise<PerformanceMetrics[]> {
-    console.log('🔍 Testing bulk operations performance...')
     const results: PerformanceMetrics[] = []
 
     // Note: These would be actual bulk operations in a real test
     const bulkSizes = [10, 50, 100]
 
     for (const size of bulkSizes) {
-      console.log(`  Testing bulk operations with ${size} items...`)
 
       // Test invoice bulk operations
       const metric = await this.measurePerformance(
@@ -332,8 +319,6 @@ class PerformanceIntegrationTester {
 
   // Run comprehensive performance test suite
   async runFullTestSuite(): Promise<PerformanceTestSuite> {
-    console.log('🚀 Starting comprehensive performance integration test suite...')
-    console.log('=' * 60)
 
     const startTime = performance.now()
     
@@ -370,8 +355,6 @@ class PerformanceIntegrationTester {
       const summary = this.calculateSummary(allResults)
       const endTime = performance.now()
 
-      console.log('\n✅ Performance test suite completed!')
-      console.log(`⏱️  Total execution time: ${(endTime - startTime).toFixed(2)}ms`)
 
       return {
         testName: 'Performance Integration Test Suite',
@@ -510,7 +493,6 @@ export async function runPerformanceTests(): Promise<void> {
     const testSuite = await tester.runFullTestSuite()
     const report = tester.generateReport(testSuite)
     
-    console.log('\n' + report)
     
     // Save report to file
     const fs = await import('fs')
@@ -519,7 +501,6 @@ export async function runPerformanceTests(): Promise<void> {
     const reportPath = path.join(process.cwd(), 'performance-test-report.txt')
     fs.writeFileSync(reportPath, report)
     
-    console.log(`\n📄 Report saved to: ${reportPath}`)
     
   } catch (error) {
     console.error('Performance test failed:', error)

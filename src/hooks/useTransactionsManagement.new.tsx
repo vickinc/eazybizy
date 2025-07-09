@@ -85,9 +85,9 @@ export interface TransactionsManagementHook {
   resetPagination: () => void
   
   // Form Handlers
-  updateTransactionForm: (field: string, value: any) => void
+  updateTransactionForm: (field: string, value: unknown) => void
   resetTransactionForm: () => void
-  updateBulkTransaction: (index: number, field: string, value: any) => void
+  updateBulkTransaction: (index: number, field: string, value: unknown) => void
   addBulkTransactionRow: () => void
   removeBulkTransactionRow: (index: number) => void
   resetBulkForm: () => void
@@ -239,7 +239,7 @@ export function useTransactionsManagement(
     if (!transactionsResponse?.data) return []
     
     // Apply view filter (client-side for better UX)
-    let filtered = transactionsResponse.data
+    const filtered = transactionsResponse.data
     
     if (filters.viewFilter === 'incoming') {
       filtered = filtered.filter(t => (t.incomingAmount || 0) > 0)
@@ -316,7 +316,7 @@ export function useTransactionsManagement(
     setPagination({ skip: 0, take: 20 })
   }, [])
   
-  const updateTransactionForm = useCallback((field: string, value: any) => {
+  const updateTransactionForm = useCallback((field: string, value: unknown) => {
     setTransactionForm(prev => ({ ...prev, [field]: value }))
   }, [])
   
@@ -324,7 +324,7 @@ export function useTransactionsManagement(
     setTransactionForm(initialTransactionForm)
   }, [])
   
-  const updateBulkTransaction = useCallback((index: number, field: string, value: any) => {
+  const updateBulkTransaction = useCallback((index: number, field: string, value: unknown) => {
     setBulkTransactions(prev => 
       prev.map((item, i) => i === index ? { ...item, [field]: value } : item)
     )

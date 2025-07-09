@@ -16,6 +16,7 @@ import {
 } from '@/services/api/calendarService';
 import { CalendarValidationService } from '@/services/business/calendarValidationService';
 import { CalendarBusinessService } from '@/services/business/calendarBusinessService';
+import { CompanyAnniversaryService } from '@/services/business/companyAnniversaryService';
 
 export interface CalendarManagementDBHook {
   // Data
@@ -180,7 +181,7 @@ export const useCalendarManagementDB = (
         console.warn('Failed to invalidate statistics cache:', err.message)
       );
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Create event failed:', error);
     }
   });
@@ -195,7 +196,7 @@ export const useCalendarManagementDB = (
         console.warn('Failed to invalidate statistics cache:', err.message)
       );
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Update event failed:', error);
     }
   });
@@ -209,15 +210,31 @@ export const useCalendarManagementDB = (
         console.warn('Failed to invalidate statistics cache:', err.message)
       );
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Delete event failed:', error);
       // Don't throw - let the UI handle this gracefully
     }
   });
 
   // Extract events from infinite query data
-  const events = eventsData?.pages.flatMap(page => page.events) || [];
+  const databaseEvents = eventsData?.pages.flatMap(page => page.events) || [];
   const notes = notesData?.notes || [];
+
+  // Generate anniversary events for 1 year ahead
+  const currentDate = new Date();
+  const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  const endDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate()); // 1 year from today
+  
+  // Note: We generate for all companies here because the filtering is applied later in filteredEvents
+  // This allows the CalendarBusinessService.filterEventsByCompany to handle the filtering consistently
+  const anniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
+    companies, 
+    startDate, 
+    endDate
+  ).map(anniversaryEvent => CompanyAnniversaryService.convertToCalendarEvent(anniversaryEvent));
+
+  // Combine database events with anniversary events
+  const events = [...databaseEvents, ...anniversaryEvents];
 
   // Filter events based on selected company (additional client-side filtering)
   const filteredEvents = CalendarBusinessService.filterEventsByCompany(events, selectedCompany, companies);

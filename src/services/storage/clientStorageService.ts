@@ -56,12 +56,10 @@ export class ClientStorageService {
       const savedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
       if (savedClients) {
         const parsedClients = JSON.parse(savedClients) as Client[];
-        console.log('Loaded clients from localStorage:', parsedClients.length, 'clients');
         return parsedClients;
       } else {
         // Initialize with mock data if no clients exist
         this.saveClients(mockClients);
-        console.log('Initialized with mock clients');
         return mockClients;
       }
     } catch (error) {
@@ -73,7 +71,6 @@ export class ClientStorageService {
   static saveClients(clients: Client[]): boolean {
     try {
       localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-      console.log('Saved clients to localStorage:', clients.length, 'clients');
       return true;
     } catch (error) {
       console.error('Error saving clients to localStorage:', error);
@@ -184,7 +181,6 @@ export class ClientStorageService {
   static clearAllClients(): boolean {
     try {
       localStorage.removeItem(CLIENTS_STORAGE_KEY);
-      console.log('Cleared all clients from localStorage');
       return true;
     } catch (error) {
       console.error('Error clearing clients from localStorage:', error);

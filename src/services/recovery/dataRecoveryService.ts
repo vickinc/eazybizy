@@ -37,7 +37,7 @@ export class DataRecoveryService {
       const parsed = JSON.parse(savedEntries);
       const storageFormat = Array.isArray(parsed) ? 'array' : 'object';
       
-      let entries: any[];
+      let entries: unknown[];
       if (Array.isArray(parsed)) {
         entries = parsed;
       } else if (parsed && typeof parsed === 'object') {
@@ -79,12 +79,12 @@ export class DataRecoveryService {
     }
   }
 
-  private static analyzeEntries(entries: any[]): Omit<DataRecoveryReport, 'storageFormat' | 'recommendations'> {
-    let expenseEntries = 0;
-    let incomeEntries = 0;
-    let cogsEntries = 0;
-    let invalidEntries = 0;
-    let possibleDataLoss = false;
+  private static analyzeEntries(entries: unknown[]): Omit<DataRecoveryReport, 'storageFormat' | 'recommendations'> {
+    const expenseEntries = 0;
+    const incomeEntries = 0;
+    const cogsEntries = 0;
+    const invalidEntries = 0;
+    const possibleDataLoss = false;
 
     entries.forEach(entry => {
       if (!entry || typeof entry !== 'object') {
@@ -230,22 +230,9 @@ export class DataRecoveryService {
     const report = this.analyzeLocalStorageData();
     
     console.group('📊 Data Recovery Analysis Report');
-    console.log('📈 Storage Statistics:');
-    console.log(`  Total Entries: ${report.totalEntries}`);
-    console.log(`  Expense Entries: ${report.expenseEntries}`);
-    console.log(`  Income Entries: ${report.incomeEntries}`);
-    console.log(`  COGS Entries: ${report.cogsEntries}`);
-    console.log(`  Invalid Entries: ${report.invalidEntries}`);
-    console.log(`  Storage Format: ${report.storageFormat}`);
-    console.log(`  Possible Data Loss: ${report.possibleDataLoss ? '⚠️ YES' : '✅ NO'}`);
     
-    console.log('\n💡 Recommendations:');
-    report.recommendations.forEach(rec => console.log(`  ${rec}`));
     
     if (report.possibleDataLoss) {
-      console.log('\n🔍 To investigate further, run:');
-      console.log('  DataRecoveryService.createDataBackup()');
-      console.log('  // Copy the result to a safe location');
     }
     
     console.groupEnd();

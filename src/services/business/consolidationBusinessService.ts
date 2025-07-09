@@ -343,7 +343,7 @@ export class ConsolidationBusinessService {
     };
   }
   
-  private static async assessPower(ownershipInfo: any): Promise<any> {
+  private static async assessPower(ownershipInfo: unknown): Promise<any> {
     const hasPower = ownershipInfo.votingPercentage > 50 || ownershipInfo.boardControl;
     
     return {
@@ -361,7 +361,7 @@ export class ConsolidationBusinessService {
     };
   }
   
-  private static async assessPowerReturnLink(powerAssessment: any, returnsAssessment: any): Promise<boolean> {
+  private static async assessPowerReturnLink(powerAssessment: unknown, returnsAssessment: unknown): Promise<boolean> {
     return powerAssessment.hasPower && returnsAssessment.hasVariableReturns;
   }
   
@@ -530,7 +530,7 @@ export class ConsolidationBusinessService {
     }));
   }
   
-  private static async aggregateFinancialStatements(translatedStatements: any[], eliminations: EliminationEntry[]): Promise<any> {
+  private static async aggregateFinancialStatements(translatedStatements: unknown[], eliminations: EliminationEntry[]): Promise<any> {
     return {
       assets: { total: 5000000 },
       liabilities: { total: 2000000 },
@@ -545,7 +545,7 @@ export class ConsolidationBusinessService {
   
   private static async calculateNonControllingInterests(
     relationships: EntityRelationship[],
-    statements: any
+    statements: unknown
   ): Promise<NonControllingInterest[]> {
     
     return relationships
@@ -574,7 +574,7 @@ export class ConsolidationBusinessService {
     return [];
   }
   
-  private static async validateConsolidation(statements: any): Promise<ConsolidationValidation[]> {
+  private static async validateConsolidation(statements: unknown): Promise<ConsolidationValidation[]> {
     return [
       {
         rule: 'Balance Sheet Balance',

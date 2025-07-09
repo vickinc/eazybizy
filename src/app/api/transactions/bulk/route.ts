@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleBulkCreate(transactions: any[]) {
+async function handleBulkCreate(transactions: unknown[]) {
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return NextResponse.json(
       { error: 'Invalid transactions data' },
@@ -83,7 +83,7 @@ async function handleBulkCreate(transactions: any[]) {
   })
 }
 
-async function handleBulkUpdate(updateData: { ids: string[], updates: any }) {
+async function handleBulkUpdate(updateData: { ids: string[], updates: unknown }) {
   const { ids, updates } = updateData
 
   if (!Array.isArray(ids) || ids.length === 0) {
@@ -94,7 +94,7 @@ async function handleBulkUpdate(updateData: { ids: string[], updates: any }) {
   }
 
   // Prepare update data
-  const processedUpdates: any = { ...updates }
+  const processedUpdates: unknown = { ...updates }
 
   if (updates.date) {
     processedUpdates.date = new Date(updates.date)
@@ -199,7 +199,7 @@ async function handleBulkReconcile(reconcileData: { ids: string[], reconciliatio
     )
   }
 
-  const updateData: any = {
+  const updateData: unknown = {
     reconciliationStatus,
     updatedBy
   }
@@ -236,7 +236,7 @@ async function handleBulkApprove(approveData: { ids: string[], approvalStatus: s
     )
   }
 
-  const updateData: any = {
+  const updateData: unknown = {
     approvalStatus,
     updatedBy: approvedBy
   }

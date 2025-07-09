@@ -11,7 +11,6 @@ import { prisma } from '@/lib/prisma'
 import { CompanyBusinessService } from '@/services/business/companyBusinessService'
 
 async function fixCompanyLogos() {
-  console.log('🔧 Starting company logo fix...')
   
   try {
     // Get all companies from database
@@ -23,7 +22,6 @@ async function fixCompanyLogos() {
       },
     })
 
-    console.log(`Found ${companies.length} companies to check`)
 
     let fixedCount = 0
     let skippedCount = 0
@@ -42,17 +40,12 @@ async function fixCompanyLogos() {
           data: { logo: validatedLogo },
         })
 
-        console.log(`✅ Fixed ${company.tradingName}: "${currentLogo}" → "${validatedLogo}"`)
         fixedCount++
       } else {
-        console.log(`⏭️  Skipped ${company.tradingName}: logo already valid ("${currentLogo}")`)
         skippedCount++
       }
     }
 
-    console.log(`\n🎉 Logo fix complete!`)
-    console.log(`✅ Fixed: ${fixedCount} companies`)
-    console.log(`⏭️  Skipped: ${skippedCount} companies`)
 
   } catch (error) {
     console.error('❌ Error fixing company logos:', error)
@@ -66,7 +59,6 @@ async function fixCompanyLogos() {
 if (require.main === module) {
   fixCompanyLogos()
     .then(() => {
-      console.log('✅ Script completed successfully')
       process.exit(0)
     })
     .catch((error) => {

@@ -54,7 +54,7 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({
   
   // Count active filters
   const activeFilterCount = useMemo(() => {
-    let count = 0;
+    const count = 0;
     if (filters.searchTerm.trim()) count++;
     if (filters.eventType !== 'all') count++;
     if (filters.priority !== 'all') count++;

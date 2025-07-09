@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 export interface VirtualScrollItem {
   id: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface VirtualScrollListProps<T extends VirtualScrollItem> {
@@ -116,9 +116,9 @@ export function VirtualScrollList<T extends VirtualScrollItem>({
 
 // Specialized component for bookkeeping entries
 export interface BookkeepingEntryVirtualListProps {
-  entries: any[]
-  onEntryClick?: (entry: any) => void
-  onEntryEdit?: (entry: any) => void
+  entries: unknown[]
+  onEntryClick?: (entry: unknown) => void
+  onEntryEdit?: (entry: unknown) => void
   onEntryDelete?: (entryId: string) => void
   isLoading?: boolean
   hasMore?: boolean
@@ -136,7 +136,7 @@ export function BookkeepingEntryVirtualList({
   onLoadMore,
   className = '',
 }: BookkeepingEntryVirtualListProps) {
-  const renderEntry = useCallback((entry: any, index: number) => (
+  const renderEntry = useCallback((entry: unknown, index: number) => (
     <div className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex-1 min-w-0">
@@ -225,9 +225,9 @@ export function BookkeepingEntryVirtualList({
 
 // Specialized component for transactions
 export interface TransactionVirtualListProps {
-  transactions: any[]
-  onTransactionClick?: (transaction: any) => void
-  onTransactionEdit?: (transaction: any) => void
+  transactions: unknown[]
+  onTransactionClick?: (transaction: unknown) => void
+  onTransactionEdit?: (transaction: unknown) => void
   onTransactionDelete?: (transactionId: string) => void
   onTransactionSelect?: (transactionId: string) => void
   selectedTransactions?: Set<string>
@@ -237,8 +237,8 @@ export interface TransactionVirtualListProps {
   hasMore?: boolean
   onLoadMore?: () => void
   formatCurrency?: (amount: number, currency?: string) => string
-  getAccountName?: (transaction: any) => string
-  getCashFlowDirection?: (transaction: any) => 'incoming' | 'outgoing' | 'neutral'
+  getAccountName?: (transaction: unknown) => string
+  getCashFlowDirection?: (transaction: unknown) => 'incoming' | 'outgoing' | 'neutral'
   className?: string
 }
 
@@ -263,7 +263,7 @@ export function TransactionVirtualList({
   },
   className = '',
 }: TransactionVirtualListProps) {
-  const renderTransaction = useCallback((transaction: any, index: number) => {
+  const renderTransaction = useCallback((transaction: unknown, index: number) => {
     const isSelected = selectedTransactions.has(transaction.id)
     const isExpanded = expandedTransactions.has(transaction.id)
     const direction = getCashFlowDirection(transaction)

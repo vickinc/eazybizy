@@ -36,7 +36,7 @@ export async function executeWithRetry<T>(
 ): Promise<T> {
   try {
     return await operation()
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (retries > 0 && (error.code === 'P1001' || error.code === 'P2024')) {
       console.warn(`Database operation failed, retrying... (${MAX_RETRIES - retries + 1}/${MAX_RETRIES})`)
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))

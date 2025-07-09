@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
     // Try cache first for ultra-fast response
     const cachedData = await CacheService.get<CursorPaginationResponse<any>>(cacheKey)
     if (cachedData) {
-      console.log(`Cursor cache HIT - ${Date.now() - startTime}ms`)
       return NextResponse.json({
         ...cachedData,
         cached: true,
@@ -50,7 +49,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log(`Cursor cache MISS - querying database`)
     const dbStartTime = Date.now()
     
     // Build where clause
@@ -203,7 +201,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Build response with optional statistics
-    const response: CursorPaginationResponse<any> & { statistics?: any } = {
+    const response: CursorPaginationResponse<any> & { statistics?: unknown } = {
       data: dataToReturn,
       pagination: {
         hasMore,
@@ -217,12 +215,10 @@ export async function GET(request: NextRequest) {
       const cachedStats = companyStatisticsCache.get()
       
       if (cachedStats) {
-        console.log('Using cached statistics for cursor pagination')
         response.statistics = cachedStats
         // Add total count for cursor pagination when stats are requested
         response.pagination.totalCount = cachedStats.totalActive + cachedStats.totalPassive
       } else {
-        console.log('Cache miss - fetching fresh statistics')
         // Fallback to fresh computation if cache is empty
         const [statusCounts, industryCounts] = await Promise.all([
           prisma.company.groupBy({
@@ -285,7 +281,6 @@ export async function GET(request: NextRequest) {
 
     const totalTime = Date.now() - startTime
     const dbTime = Date.now() - dbStartTime
-    console.log(`Cursor total response time - ${totalTime}ms (DB: ${dbTime}ms)`)
 
     return NextResponse.json({
       ...response,

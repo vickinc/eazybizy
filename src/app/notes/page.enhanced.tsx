@@ -12,7 +12,7 @@ import { Pagination } from "@/components/ui/pagination";
 
 // Statistics Cards Component
 const NotesStatsCards: React.FC<{
-  statistics: any;
+  statistics: unknown;
   showArchived: boolean;
 }> = ({ statistics, showArchived }) => {
   if (!statistics) return null;
@@ -148,15 +148,15 @@ const NotesFilterBar: React.FC<{
 
 // Note Item Component
 const NoteItem: React.FC<{
-  note: any;
+  note: unknown;
   showArchived: boolean;
   getPriorityColor: (priority: string) => string;
   getCompanyName: (companyId: number | undefined) => string;
-  handleEditNote: (note: any) => void;
+  handleEditNote: (note: unknown) => void;
   handleDeleteNote: (id: string) => void;
   handleCompleteNote: (id: string) => void;
   handleRestoreNote: (id: string) => void;
-  openDetailsDialog: (note: any) => void;
+  openDetailsDialog: (note: unknown) => void;
 }> = ({
   note,
   showArchived,

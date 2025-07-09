@@ -20,7 +20,7 @@ interface DigitalWalletsListProps {
   toggleWalletExpansion: (walletId: string) => void;
   handleToggleWalletStatus: (walletId: string) => void;
   handleDeleteDigitalWallet: (walletId: string) => void;
-  setEditingWallet: (wallet: any) => void;
+  setEditingWallet: (wallet: unknown) => void;
   isAllWalletsExpanded: boolean;
   toggleAllWalletsExpansion: () => void;
 }

@@ -97,7 +97,9 @@ export interface InvoiceFormData {
 }
 
 // Legacy interface for backward compatibility
-export interface NewInvoice extends InvoiceFormData {}
+export interface NewInvoice extends InvoiceFormData {
+  // This interface extends InvoiceFormData for backward compatibility
+}
 
 // Filter and search interfaces
 export interface InvoiceFilters {

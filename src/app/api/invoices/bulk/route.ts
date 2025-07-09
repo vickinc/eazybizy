@@ -81,7 +81,7 @@ async function handleBulkStatusUpdate(data: {
   }
 
   // Update invoices
-  const updateData: any = {
+  const updateData: unknown = {
     status,
     updatedAt: new Date()
   }
@@ -224,7 +224,7 @@ async function handleBulkMarkPaid(data: {
     )
   }
 
-  const updateData: any = {
+  const updateData: unknown = {
     status: 'PAID',
     paidDate: paidDate ? new Date(paidDate) : new Date(),
     updatedAt: new Date()

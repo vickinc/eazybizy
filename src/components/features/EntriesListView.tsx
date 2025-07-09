@@ -35,11 +35,11 @@ interface EnhancedBookkeepingEntry {
   invoiceId?: string;
   createdAt: string;
   updatedAt: string;
-  company?: any;
+  company?: unknown;
   totalLinkedExpenses: number;
   remainingAmount: number;
-  linkedExpensesList: any[];
-  linkedIncome?: any;
+  linkedExpensesList: unknown[];
+  linkedIncome?: unknown;
 }
 
 interface ProcessedGroup {
@@ -66,14 +66,14 @@ interface EntriesListViewProps {
   toggleGroupExpansion: (groupKey: string) => void;
   toggleEntryExpansion: (entryId: string) => void;
   toggleEntrySelection: (entryId: string) => void;
-  handleEditEntry: (entry: any) => void;
-  handleDeleteEntry: (entry: any) => void;
-  handleLinkToIncome: (entry: any) => void;
+  handleEditEntry: (entry: unknown) => void;
+  handleDeleteEntry: (entry: unknown) => void;
+  handleLinkToIncome: (entry: unknown) => void;
   handleViewRelatedIncomeEntry: (incomeId: string) => void;
   
   // Utility functions
   formatCurrency: (amount: number, currency?: string) => string;
-  getCOGSCurrency: (entry: any) => string;
+  getCOGSCurrency: (entry: unknown) => string;
 }
 
 export const EntriesListView: React.FC<EntriesListViewProps> = ({

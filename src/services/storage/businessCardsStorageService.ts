@@ -11,7 +11,7 @@ export class BusinessCardsStorageService {
       if (!saved) return [];
       
       const parsed = JSON.parse(saved);
-      return parsed.map((card: any) => ({
+      return parsed.map((card: unknown) => ({
         ...card,
         createdAt: new Date(card.createdAt)
       }));
@@ -26,7 +26,6 @@ export class BusinessCardsStorageService {
     
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cards));
-      console.log('✅ Business cards saved successfully:', cards.length, 'cards');
       return true;
     } catch (error) {
       console.error('❌ Failed to save business cards:', error);
@@ -39,7 +38,6 @@ export class BusinessCardsStorageService {
     
     try {
       localStorage.removeItem(this.STORAGE_KEY);
-      console.log('🗑️ Business cards cleared from storage');
       return true;
     } catch (error) {
       console.error('❌ Failed to clear business cards:', error);

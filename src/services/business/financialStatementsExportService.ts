@@ -239,7 +239,7 @@ export class FinancialStatementsExportService {
     bundle: FinancialStatementsBundle,
     config: ExportConfiguration
   ): string {
-    let html = `
+    const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -518,7 +518,7 @@ export class FinancialStatementsExportService {
     notes: FinancialStatementNote[],
     config: ExportConfiguration
   ): string {
-    let html = '<div class="notes-section"><h2>Notes to the Financial Statements</h2>';
+    const html = '<div class="notes-section"><h2>Notes to the Financial Statements</h2>';
     
     notes.forEach(note => {
       html += `
@@ -630,7 +630,7 @@ export class FinancialStatementsExportService {
    * Generate XBRL financial items
    */
   private static generateXBRLFinancialItems(bundle: FinancialStatementsBundle): string {
-    let items = '';
+    const items = '';
     
     if (bundle.statements.balanceSheet) {
       items += `
@@ -666,7 +666,7 @@ export class FinancialStatementsExportService {
   /**
    * Create Excel placeholder (in production, use real Excel library)
    */
-  private static createExcelPlaceholder(workbookData: any): string {
+  private static createExcelPlaceholder(workbookData: unknown): string {
     return `Excel Content Placeholder\n\nThis would contain the actual Excel binary data.\n\nWorksheets: ${workbookData.worksheets.length}\n\nGenerated: ${new Date().toISOString()}`;
   }
 }

@@ -416,7 +416,7 @@ export class CompanyValuationBusinessService {
    */
   static async calculateCompanyValuation(
     companyId: string,
-    financialData: any,
+    financialData: unknown,
     options: {
       methods?: string[];
       includeComparables?: boolean;
@@ -468,7 +468,7 @@ export class CompanyValuationBusinessService {
    */
   private static async calculateValuationMethods(
     inputs: FinancialInputs,
-    options: any
+    options: unknown
   ): Promise<ValuationMethods> {
     
     const methods: ValuationMethods = {
@@ -613,10 +613,10 @@ export class CompanyValuationBusinessService {
     
     // Project cash flows
     const projectedCashFlows: ProjectedCashFlow[] = [];
-    let currentRevenue = inputs.annualRevenue;
+    const currentRevenue = inputs.annualRevenue;
     let currentEBITDA = inputs.ebitda;
     
-    for (let year = 1; year <= projectionYears; year++) {
+    for (const year = 1; year <= projectionYears; year++) {
       // Declining growth rate over time
       const growthRate = inputs.revenueGrowthRate * Math.pow(0.85, year - 1);
       currentRevenue *= (1 + growthRate / 100);
@@ -961,7 +961,7 @@ export class CompanyValuationBusinessService {
   /**
    * Helper methods
    */
-  private static prepareFinancialInputs(data: any): FinancialInputs {
+  private static prepareFinancialInputs(data: unknown): FinancialInputs {
     return {
       annualRevenue: data.revenue || 5000000,
       revenueGrowthRate: data.revenueGrowthRate || 25,

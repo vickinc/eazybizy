@@ -28,7 +28,6 @@ export class NotesStorageService {
   static saveNotes(notes: Note[]): boolean {
     try {
       localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
-      console.log('Notes saved to localStorage:', notes.length, 'notes');
       return true;
     } catch (error) {
       console.error('Error saving notes to localStorage:', error);

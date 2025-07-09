@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     const dateTo = searchParams.get('dateTo');
 
     // Build where clause
-    const where: any = {};
+    const where: unknown = {};
     
     // Handle company filtering - save for later to properly combine with search OR clause
-    let companyFilter: any = null;
+    let companyFilter: unknown = null;
     if (companyId && companyId !== 'all') {
       const companyIdInt = parseInt(companyId);
       const company = await prisma.company.findUnique({
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Handle search filtering
-    let searchFilter: any = null;
+    let searchFilter: unknown = null;
     if (search) {
       searchFilter = {
         OR: [

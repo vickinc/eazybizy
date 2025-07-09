@@ -141,7 +141,7 @@ export const AddEditClientDialogEnhanced: React.FC<AddEditClientDialogEnhancedPr
     }
   }, [isOpen, editingClient, initialCompanyId]);
 
-  const handleInputChange = (field: keyof ClientFormData, value: any) => {
+  const handleInputChange = (field: keyof ClientFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

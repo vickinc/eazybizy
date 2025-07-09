@@ -1,4 +1,4 @@
-import { InvoiceFormData, Invoice, ValidationResult, InvoiceValidationError } from '@/types/invoice.types';
+import { InvoiceFormData, Invoice, ValidationResult } from '@/types/invoice.types';
 import { Product } from '@/types/products.types';
 import { Client } from '@/types/client.types';
 import { Company } from '@/types/company.types';
@@ -399,7 +399,7 @@ export class InvoiceValidationService {
    */
   static validatePaymentMethods(
     paymentMethodIds: string[],
-    availablePaymentMethods: any[],
+    availablePaymentMethods: unknown[],
     companyId: number
   ): string[] {
     const errors: string[] = [];
@@ -429,7 +429,7 @@ export class InvoiceValidationService {
     const errors: string[] = [];
     
     // Business rule: Total amount cannot be zero or negative
-    let totalAmount = 0;
+    const totalAmount = 0;
     formData.items.forEach(item => {
       const product = products.find(p => p.id === item.productId);
       if (product) {
@@ -458,7 +458,7 @@ export class InvoiceValidationService {
    */
   static validateField(
     fieldName: string,
-    value: any,
+    value: unknown,
     context?: {
       existingInvoices?: Invoice[];
       currentInvoiceId?: string;

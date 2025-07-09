@@ -184,14 +184,14 @@ export class ClientBusinessService {
       
       if (fiatRates) {
         const fiatData = JSON.parse(fiatRates);
-        fiatData.forEach((currency: any) => {
+        fiatData.forEach((currency: unknown) => {
           rates[currency.code] = currency.rate;
         });
       }
       
       if (cryptoRates) {
         const cryptoData = JSON.parse(cryptoRates);
-        cryptoData.forEach((currency: any) => {
+        cryptoData.forEach((currency: unknown) => {
           rates[currency.code] = currency.rate;
         });
       }
@@ -223,19 +223,19 @@ export class ClientBusinessService {
 
   static updateClientTotalsFromInvoices(
     clients: Client[],
-    invoices: any[],
+    invoices: unknown[],
     exchangeRates: { [key: string]: number }
   ): Client[] {
     return clients.map(client => {
       // Filter invoices for this client (excluding archived invoices)
-      const clientInvoices = invoices.filter((inv: any) => 
+      const clientInvoices = invoices.filter((inv: unknown) => 
         inv.clientName === client.name && inv.status !== 'archived'
       );
       
       // Calculate total invoiced amount (only 'sent' status invoices) - converted to USD
       const totalInvoiced = clientInvoices
-        .filter((inv: any) => inv.status === 'sent')
-        .reduce((sum: number, inv: any) => {
+        .filter((inv: unknown) => inv.status === 'sent')
+        .reduce((sum: number, inv: unknown) => {
           const invoiceAmount = parseFloat(inv.totalAmount || inv.amount) || 0;
           const convertedAmount = this.convertToUSD(invoiceAmount, inv.currency || 'USD', exchangeRates);
           return sum + convertedAmount;
@@ -243,8 +243,8 @@ export class ClientBusinessService {
       
       // Calculate total paid amount (only 'paid' status invoices) - converted to USD
       const totalPaid = clientInvoices
-        .filter((inv: any) => inv.status === 'paid')
-        .reduce((sum: number, inv: any) => {
+        .filter((inv: unknown) => inv.status === 'paid')
+        .reduce((sum: number, inv: unknown) => {
           const invoiceAmount = parseFloat(inv.totalAmount || inv.amount) || 0;
           const convertedAmount = this.convertToUSD(invoiceAmount, inv.currency || 'USD', exchangeRates);
           return sum + convertedAmount;
@@ -252,13 +252,13 @@ export class ClientBusinessService {
       
       // Find the most recent invoice
       const lastInvoice = clientInvoices
-        .sort((a: any, b: any) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())[0];
+        .sort((a: unknown, b: unknown) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())[0];
       
       // Auto-update status based on paid invoices in last 18 months
       const eighteenMonthsAgo = new Date();
       eighteenMonthsAgo.setMonth(eighteenMonthsAgo.getMonth() - 18);
       
-      const recentPaidInvoices = clientInvoices.filter((inv: any) => {
+      const recentPaidInvoices = clientInvoices.filter((inv: unknown) => {
         if (inv.status !== 'paid') return false;
         const invoiceDate = new Date(inv.issueDate);
         return invoiceDate >= eighteenMonthsAgo;
@@ -287,21 +287,21 @@ export class ClientBusinessService {
 
   static updateAllClientStatuses(
     clients: Client[],
-    invoices: any[]
+    invoices: unknown[]
   ): { updatedClients: Client[]; updatedCount: number } {
     const eighteenMonthsAgo = new Date();
     eighteenMonthsAgo.setMonth(eighteenMonthsAgo.getMonth() - 18);
 
-    let updatedCount = 0;
+    const updatedCount = 0;
 
     const updatedClients = clients.map(client => {
       // Filter invoices for this client (excluding archived invoices)
-      const clientInvoices = invoices.filter((inv: any) => 
+      const clientInvoices = invoices.filter((inv: unknown) => 
         inv.clientName === client.name && inv.status !== 'archived'
       );
 
       // Check for recent paid invoices
-      const recentPaidInvoices = clientInvoices.filter((inv: any) => {
+      const recentPaidInvoices = clientInvoices.filter((inv: unknown) => {
         if (inv.status !== 'paid') return false;
         const invoiceDate = new Date(inv.issueDate);
         return invoiceDate >= eighteenMonthsAgo;

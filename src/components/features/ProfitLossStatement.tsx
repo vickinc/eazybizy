@@ -200,7 +200,7 @@ export const ProfitLossStatement: React.FC<ProfitLossStatementProps> = ({
       </div>
     );
 
-    const renderCalculatedTotal = (title: string, totals: any, colorClass: string = '') => (
+    const renderCalculatedTotal = (title: string, totals: unknown, colorClass: string = '') => (
       <div className={`grid ${showComparatives ? 'grid-cols-4' : 'grid-cols-2'} gap-4 py-3 border-t-2 border-gray-800 font-bold text-base bg-gray-100 ${colorClass}`}>
         <div>{title}</div>
         <div className="text-right">{totals.formatted}</div>

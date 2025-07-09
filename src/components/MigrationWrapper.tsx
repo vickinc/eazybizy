@@ -12,11 +12,9 @@ export function MigrationWrapper({ children }: { children: React.ReactNode }) {
         await StorageMigrationService.runMigration();
         
         // Run company migration from localStorage to database
-        console.log('Starting company migration...');
         const success = await CompanyMigrationService.runMigration(false); // Don't clear localStorage yet
         
         if (success) {
-          console.log('✅ Company migration completed successfully');
         } else {
           console.warn('⚠️ Company migration completed with errors');
         }

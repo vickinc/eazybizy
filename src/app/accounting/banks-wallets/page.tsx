@@ -94,13 +94,6 @@ export default function BanksWalletsPage() {
     activeWallets: digitalWallets.filter(w => w.isActive).length
   };
 
-  const pageTitle = globalSelectedCompany === 'all' 
-    ? 'All Banks & Wallets' 
-    : companies.find(c => c.id === globalSelectedCompany)?.tradingName + ' - Banks & Wallets' || 'Banks & Wallets';
-
-  const pageDescription = globalSelectedCompany === 'all'
-    ? 'Manage bank accounts and digital wallets across all companies'
-    : 'Manage bank accounts and digital wallets for the selected company';
 
   const banksNoDataMessage = globalSelectedCompany === 'all'
     ? 'No bank accounts found across any company'

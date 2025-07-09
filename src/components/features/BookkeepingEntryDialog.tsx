@@ -47,7 +47,7 @@ interface BookkeepingEntryDialogProps {
   onEntryInputChange: (field: string, value: string) => void;
   onInvoiceReferenceChange: (value: string) => void;
   onDialogCancel: () => void;
-  onEntrySubmit: (e?: any) => void;
+  onEntrySubmit: (e?: unknown) => void;
   formatCurrency: (amount: number, currency?: string) => string;
 }
 

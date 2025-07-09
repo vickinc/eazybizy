@@ -543,7 +543,7 @@ export class ProfitLossBusinessService {
     const activeAssets = fixedAssets.filter(asset => asset.status === 'active');
     
     // Calculate current period depreciation
-    let currentDepreciation = 0;
+    const currentDepreciation = 0;
     const currentDate = new Date(context.currentPeriod.endDate);
     const startDate = new Date(context.currentPeriod.startDate);
     

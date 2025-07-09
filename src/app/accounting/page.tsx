@@ -32,9 +32,9 @@ export default function AccountingPage() {
         
         setStats({
           totalInvoices: invoices.length,
-          pendingInvoices: invoices.filter((inv: any) => inv.status === 'sent').length,
-          totalRevenue: invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0),
-          expenseEntries: entries.filter((entry: any) => entry.type === 'EXPENSE').length
+          pendingInvoices: invoices.filter((inv: unknown) => inv.status === 'sent').length,
+          totalRevenue: invoices.filter((inv: unknown) => inv.status === 'paid').reduce((sum: number, inv: unknown) => sum + (inv.totalAmount || 0), 0),
+          expenseEntries: entries.filter((entry: unknown) => entry.type === 'EXPENSE').length
         });
       } catch (error) {
         console.error('Error loading dashboard data:', error);

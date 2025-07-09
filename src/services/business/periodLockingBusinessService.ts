@@ -643,7 +643,7 @@ export class PeriodLockingBusinessService {
     action: string,
     status: string,
     entityId: string,
-    details?: any
+    details?: unknown
   ): PeriodAuditEntry {
     return {
       id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

@@ -59,7 +59,7 @@ interface ValuationResultsProps {
 }
 
 interface ValuationMethodCardProps {
-  method: any;
+  method: unknown;
   methodName: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
@@ -77,7 +77,7 @@ interface RiskFactorsProps {
  * Financial inputs form component
  */
 const FinancialInputForm: React.FC<FinancialInputFormProps> = ({ inputs, onChange }) => {
-  const updateInput = (field: keyof FinancialInputs, value: any) => {
+  const updateInput = (field: keyof FinancialInputs, value: unknown) => {
     onChange({ ...inputs, [field]: value });
   };
 
@@ -856,7 +856,6 @@ export const ValuationCalculator: React.FC<ValuationCalculatorProps> = ({
   };
 
   const handleExport = (format: 'PDF' | 'Excel') => {
-    console.log(`Exporting valuation to ${format}`);
     // TODO: Implement export functionality
   };
 

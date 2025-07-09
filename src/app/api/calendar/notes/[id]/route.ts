@@ -97,7 +97,7 @@ export async function PUT(
     }
 
     // Handle completion timestamp
-    const updateData: any = {};
+    const updateData: unknown = {};
     
     if (title !== undefined) updateData.title = title;
     if (content !== undefined) updateData.content = content;

@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: unknown = {
       ...data,
       updatedBy: data.updatedBy,
     }

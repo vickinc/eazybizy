@@ -28,7 +28,7 @@ class NotesStatisticsCache {
     }
 
     // Calculate fresh statistics
-    const where: any = {};
+    const where: unknown = {};
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId);
     }
@@ -119,7 +119,7 @@ class NotesStatisticsCache {
 
     // Generate last 12 months
     const monthsArray: Array<{ month: string; count: number }> = [];
-    for (let i = 11; i >= 0; i--) {
+    for (const i = 11; i >= 0; i--) {
       const date = new Date(now_date.getFullYear(), now_date.getMonth() - i, 1);
       const monthKey = date.toISOString().slice(0, 7);
       monthsArray.push({

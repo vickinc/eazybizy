@@ -73,7 +73,7 @@ export class InvoiceApiService {
   }
 
   async createInvoice(data: InvoiceFormData & { 
-    items: any[]
+    items: unknown[]
     subtotal: number
     taxAmount: number
     totalAmount: number
@@ -94,7 +94,7 @@ export class InvoiceApiService {
   }
 
   async updateInvoice(id: string, data: Partial<InvoiceFormData & { 
-    items: any[]
+    items: unknown[]
     subtotal: number
     taxAmount: number
     totalAmount: number

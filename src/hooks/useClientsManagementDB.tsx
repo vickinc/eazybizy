@@ -347,8 +347,6 @@ export function useClientsManagementDB(
       companyId: Number(globalSelectedCompany)
     };
 
-    console.log('Creating client with data:', formData);
-    console.log('Global selected company:', globalSelectedCompany);
 
     await createClientMutation.mutateAsync(formData);
   }, [clientForm, globalSelectedCompany, createClientMutation]);

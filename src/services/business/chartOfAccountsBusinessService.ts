@@ -149,33 +149,30 @@ export class ChartOfAccountsBusinessService {
     // This ensures users get the complete dataset even if they have partial data
     const needsCompleteDataset = existingAccounts.length < 218;
     
-    console.log('Chart of Accounts initialization:', {
-      existingCount: existingAccounts.length,
-      needsCompleteDataset,
-      reason: existingAccounts.length === 0 ? 'no_accounts' : 
-              existingAccounts.length < 218 ? 'incomplete_dataset' : 'complete'
-    });
+    // console.log('Chart of Accounts initialization:', {
+    //   existingCount: existingAccounts.length,
+    //   needsCompleteDataset,
+    //   reason: existingAccounts.length === 0 ? 'no_accounts' : 
+    //           existingAccounts.length < 218 ? 'incomplete_dataset' : 'complete'
+    // });
     
     if (needsCompleteDataset) {
-      console.log('🔄 Forcing complete Chart of Accounts reload...');
       
       // Clear any incomplete data first
       if (existingAccounts.length > 0) {
-        console.log(`Clearing ${existingAccounts.length} incomplete accounts from localStorage`);
         ChartOfAccountsStorageService.clearAllAccounts();
       }
       
       try {
         const defaultAccounts = ChartOfAccountsParserService.getDefaultChartOfAccounts();
-        console.log('Loading complete default accounts:', { 
-          count: defaultAccounts.length, 
-          expectedCount: 218,
-          isComplete: defaultAccounts.length >= 218
-        });
+        // console.log('Loading complete default accounts:', {
+        //   count: defaultAccounts.length, 
+        //   expectedCount: 218,
+        //   isComplete: defaultAccounts.length >= 218
+        // });
         
         if (defaultAccounts.length >= 218) {
           ChartOfAccountsStorageService.saveAccounts(defaultAccounts);
-          console.log('✅ Successfully loaded and saved complete Chart of Accounts dataset (218 accounts)');
           return defaultAccounts;
         } else {
           console.error(`❌ Expected 218 accounts but got ${defaultAccounts.length}`);
@@ -192,7 +189,6 @@ export class ChartOfAccountsBusinessService {
       }
     }
     
-    console.log('✅ Using existing complete accounts from localStorage:', { count: existingAccounts.length });
     return existingAccounts;
   }
 
@@ -270,18 +266,15 @@ export class ChartOfAccountsBusinessService {
   }
 
   static forceRefreshCompleteDataset(): ChartOfAccount[] {
-    console.log('🔄 Force refreshing Chart of Accounts with complete dataset...');
     
     // Clear all existing data
     ChartOfAccountsStorageService.clearAllAccounts();
     
     // Load complete dataset
     const defaultAccounts = ChartOfAccountsParserService.getDefaultChartOfAccounts();
-    console.log('Force refresh - loading accounts:', { count: defaultAccounts.length });
     
     // Save and return
     ChartOfAccountsStorageService.saveAccounts(defaultAccounts);
-    console.log('✅ Force refresh complete - saved 218 accounts');
     
     return defaultAccounts;
   }

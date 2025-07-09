@@ -419,7 +419,6 @@ export function useCompanyManagementCursor(): CompanyManagementCursorHook {
         setCopiedFields(prev => ({ ...prev, [fieldKey]: false }))
       }, 2000)
       
-      console.log(`${fieldName} copied to clipboard`)
     } catch (err) {
       console.error(`Failed to copy ${fieldName}:`, err)
       toast.error(`Failed to copy ${fieldName}`)

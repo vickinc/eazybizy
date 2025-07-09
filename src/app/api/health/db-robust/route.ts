@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       data: result
     })
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     const responseTime = Date.now() - startTime
     
     return NextResponse.json({

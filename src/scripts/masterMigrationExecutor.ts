@@ -43,7 +43,6 @@ class MasterMigrationExecutor {
    * Execute complete migration with progress tracking and rollback support
    */
   async executeMigration(): Promise<{success: boolean, results: MigrationResult[]}> {
-    console.log('🚀 Starting Master Migration Execution...\n');
     
     const migrationModules = [
       { name: 'Companies', migrator: this.migrateCompanies },
@@ -55,7 +54,7 @@ class MasterMigrationExecutor {
       { name: 'Bookkeeping Entries', migrator: this.migrateBookkeepingEntries }
     ];
 
-    let allSuccessful = true;
+    const allSuccessful = true;
 
     try {
       // Connect to database
@@ -63,7 +62,6 @@ class MasterMigrationExecutor {
       
       for (const module of migrationModules) {
         this.progress.currentModule = module.name;
-        console.log(`\n📦 Migrating ${module.name}...`);
         
         const startTime = Date.now();
         
@@ -79,7 +77,6 @@ class MasterMigrationExecutor {
             duration
           });
           
-          console.log(`✅ ${module.name}: ${result.recordsMigrated} records migrated in ${duration}ms`);
           
         } catch (error) {
           const duration = Date.now() - startTime;
@@ -104,7 +101,6 @@ class MasterMigrationExecutor {
       }
 
       if (!allSuccessful) {
-        console.log('\n⚠️  Some migrations failed. Consider running rollback...');
       }
 
     } catch (error) {
@@ -126,7 +122,6 @@ class MasterMigrationExecutor {
    * Rollback migration - restore localStorage data and clear database
    */
   async rollbackMigration(): Promise<void> {
-    console.log('🔄 Starting Migration Rollback...\n');
     
     try {
       await this.prisma.$connect();
@@ -141,7 +136,6 @@ class MasterMigrationExecutor {
       await this.prisma.chartOfAccount.deleteMany();
       await this.prisma.company.deleteMany();
       
-      console.log('✅ Database cleared successfully');
       
       // Restore localStorage data
       for (const [key, data] of this.rollbackData) {
@@ -150,7 +144,6 @@ class MasterMigrationExecutor {
         }
       }
       
-      console.log('✅ LocalStorage data restored');
       
     } catch (error) {
       console.error('❌ Rollback failed:', error);
@@ -171,7 +164,7 @@ class MasterMigrationExecutor {
     // Backup for rollback
     this.rollbackData.set(storageKey, companies);
     
-    const transformedCompanies = companies.map((company: any) => ({
+    const transformedCompanies = companies.map((company: unknown) => ({
       tradingName: company.tradingName || company.name,
       legalName: company.legalName,
       registrationNumber: company.registrationNumber,
@@ -214,7 +207,7 @@ class MasterMigrationExecutor {
     
     this.rollbackData.set(storageKey, accounts);
     
-    const transformedAccounts = accounts.map((account: any) => ({
+    const transformedAccounts = accounts.map((account: unknown) => ({
       code: account.code,
       name: account.name,
       type: account.type,
@@ -249,7 +242,7 @@ class MasterMigrationExecutor {
     
     this.rollbackData.set(storageKey, clients);
     
-    const transformedClients = clients.map((client: any) => ({
+    const transformedClients = clients.map((client: unknown) => ({
       name: client.name,
       email: client.email,
       phone: client.phone,
@@ -292,7 +285,7 @@ class MasterMigrationExecutor {
     
     this.rollbackData.set(storageKey, products);
     
-    const transformedProducts = products.map((product: any) => ({
+    const transformedProducts = products.map((product: unknown) => ({
       name: product.name,
       description: product.description,
       price: product.price || 0,
@@ -328,7 +321,7 @@ class MasterMigrationExecutor {
     this.rollbackData.set(storageKey, invoices);
     
     // First create invoices
-    const transformedInvoices = invoices.map((invoice: any) => ({
+    const transformedInvoices = invoices.map((invoice: unknown) => ({
       invoiceNumber: invoice.invoiceNumber,
       clientId: invoice.clientId,
       clientName: invoice.clientName,
@@ -354,13 +347,13 @@ class MasterMigrationExecutor {
     );
     
     // Then create invoice items
-    let itemsCreated = 0;
-    for (let i = 0; i < invoices.length; i++) {
+    const itemsCreated = 0;
+    for (const i = 0; i < invoices.length; i++) {
       const originalInvoice = invoices[i];
       const createdInvoice = createdInvoices[i];
       
       if (originalInvoice.items?.length) {
-        const items = originalInvoice.items.map((item: any) => ({
+        const items = originalInvoice.items.map((item: unknown) => ({
           invoiceId: createdInvoice.id,
           productId: item.productId,
           productName: item.productName || item.name,
@@ -390,7 +383,7 @@ class MasterMigrationExecutor {
     
     this.rollbackData.set(storageKey, transactions);
     
-    const transformedTransactions = transactions.map((transaction: any) => ({
+    const transformedTransactions = transactions.map((transaction: unknown) => ({
       type: transaction.type?.toUpperCase() || 'EXPENSE',
       amount: transaction.amount || 0,
       currency: transaction.currency || 'USD',
@@ -428,7 +421,7 @@ class MasterMigrationExecutor {
     
     this.rollbackData.set(storageKey, entries);
     
-    const transformedEntries = entries.map((entry: any) => ({
+    const transformedEntries = entries.map((entry: unknown) => ({
       type: entry.type?.toUpperCase() || 'EXPENSE',
       category: entry.category,
       subcategory: entry.subcategory,
@@ -457,7 +450,7 @@ class MasterMigrationExecutor {
   /**
    * Helper method to get localStorage data
    */
-  private getLocalStorageData(key: string): any[] {
+  private getLocalStorageData(key: string): unknown[] {
     if (typeof window === 'undefined') {
       console.warn(`⚠️  Cannot access localStorage for ${key} (server environment)`);
       return [];
@@ -479,26 +472,20 @@ class MasterMigrationExecutor {
     const progressBar = '█'.repeat(Math.floor(this.progress.overallProgress / 10)) + 
                        '░'.repeat(10 - Math.floor(this.progress.overallProgress / 10));
     
-    console.log(`\n📊 Progress: [${progressBar}] ${this.progress.overallProgress.toFixed(1)}%`);
-    console.log(`   ${this.progress.completedModules}/${this.progress.totalModules} modules completed`);
   }
 
   /**
    * Print final migration summary
    */
   private printFinalSummary(): void {
-    console.log('\n' + '='.repeat(60));
-    console.log('📋 MIGRATION SUMMARY');
-    console.log('='.repeat(60));
     
-    let totalMigrated = 0;
-    let successfulModules = 0;
+    const totalMigrated = 0;
+    const successfulModules = 0;
     
     for (const result of this.progress.results) {
       const status = result.success ? '✅' : '❌';
       const duration = `${result.duration}ms`;
       
-      console.log(`${status} ${result.module.padEnd(20)} ${result.recordsMigrated.toString().padStart(5)} records  ${duration.padStart(8)}`);
       
       if (result.success) {
         totalMigrated += result.recordsMigrated;
@@ -508,26 +495,14 @@ class MasterMigrationExecutor {
       }
     }
     
-    console.log('-'.repeat(60));
-    console.log(`📊 Total: ${totalMigrated} records migrated`);
-    console.log(`🎯 Success Rate: ${successfulModules}/${this.progress.totalModules} modules (${((successfulModules/this.progress.totalModules)*100).toFixed(1)}%)`);
     
     const overallSuccess = successfulModules === this.progress.totalModules;
-    console.log(`\n${overallSuccess ? '🎉' : '⚠️'} Migration ${overallSuccess ? 'COMPLETED SUCCESSFULLY' : 'COMPLETED WITH ISSUES'}`);
     
     if (overallSuccess) {
-      console.log('\n✨ Your application is now running on PostgreSQL!');
-      console.log('   🚀 Performance improvements active');
-      console.log('   📈 Scalability unlocked');
-      console.log('   🔄 Real-time synchronization enabled');
     } else {
-      console.log('\n💡 Next steps:');
       console.log('   1. Review error messages above');
-      console.log('   2. Fix data issues and retry');
-      console.log('   3. Consider running rollback if needed');
     }
     
-    console.log('='.repeat(60));
   }
 }
 

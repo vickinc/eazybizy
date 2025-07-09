@@ -18,7 +18,7 @@ export class ResponseCompression {
    * Compress response data and return NextResponse with appropriate headers
    */
   static async compressResponse(
-    data: any,
+    data: unknown,
     acceptEncoding: string | null = null,
     options: CompressionOptions = {}
   ): Promise<NextResponse> {
@@ -74,7 +74,6 @@ export class ResponseCompression {
       // Calculate compression ratio
       const compressionRatio = ((dataBuffer.length - compressedData.length) / dataBuffer.length * 100).toFixed(1)
       
-      console.log(`Response compressed with ${encoding}: ${dataBuffer.length} → ${compressedData.length} bytes (${compressionRatio}% reduction)`)
 
       return new NextResponse(compressedData, {
         headers: {
@@ -120,7 +119,7 @@ export class ResponseCompression {
    * Enhanced JSON response with automatic compression and caching headers
    */
   static async createOptimizedResponse(
-    data: any,
+    data: unknown,
     request: Request,
     options: {
       compression?: CompressionOptions
@@ -175,7 +174,7 @@ export class ResponseCompression {
 /**
  * Utility function to create an ETag from data
  */
-export function generateETag(data: any): string {
+export function generateETag(data: unknown): string {
   const hash = require('crypto')
     .createHash('md5')
     .update(JSON.stringify(data))

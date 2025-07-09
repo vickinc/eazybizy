@@ -443,12 +443,12 @@ export function useVirtualScroll<T>(
 
 // Virtual Invoice List
 export const VirtualInvoiceList: React.FC<{
-  invoices: any[];
-  onInvoiceClick?: (invoice: any) => void;
+  invoices: unknown[];
+  onInvoiceClick?: (invoice: unknown) => void;
   height?: number;
   loading?: boolean;
 }> = ({ invoices, onInvoiceClick, height = 400, loading }) => {
-  const renderInvoice = (invoice: any, index: number, style: React.CSSProperties) => (
+  const renderInvoice = (invoice: unknown, index: number, style: React.CSSProperties) => (
     <div 
       className="border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer"
       onClick={() => onInvoiceClick?.(invoice)}
@@ -500,12 +500,12 @@ export const VirtualInvoiceList: React.FC<{
 
 // Virtual Client List
 export const VirtualClientList: React.FC<{
-  clients: any[];
-  onClientClick?: (client: any) => void;
+  clients: unknown[];
+  onClientClick?: (client: unknown) => void;
   height?: number;
   loading?: boolean;
 }> = ({ clients, onClientClick, height = 400, loading }) => {
-  const renderClient = (client: any, index: number, style: React.CSSProperties) => (
+  const renderClient = (client: unknown, index: number, style: React.CSSProperties) => (
     <div 
       className="border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer"
       onClick={() => onClientClick?.(client)}

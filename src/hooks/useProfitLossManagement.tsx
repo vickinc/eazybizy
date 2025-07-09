@@ -86,7 +86,6 @@ export const useProfitLossManagement = (
         setEntries(loadedEntries);
         setIsLoaded(true);
         
-        console.log(`Loaded ${loadedEntries.length} bookkeeping entries`);
       } catch (error) {
         console.error('Error loading P&L data:', error);
         toast.error('Failed to load financial data');
@@ -253,7 +252,6 @@ export const useProfitLossManagement = (
     try {
       const loadedEntries = await ProfitLossStorageService.loadBookkeepingEntries();
       setEntries(loadedEntries);
-      console.log('P&L data refreshed successfully');
       toast.success('Financial data refreshed');
     } catch (error) {
       console.error('Error refreshing P&L data:', error);

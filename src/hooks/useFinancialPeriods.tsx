@@ -56,7 +56,7 @@ interface UseFinancialPeriodsReturn {
   
   // Export/Import
   exportData: () => any;
-  importData: (data: any) => Promise<void>;
+  importData: (data: unknown) => Promise<void>;
 }
 
 const defaultFilter: PeriodFilter = {
@@ -296,7 +296,7 @@ export const useFinancialPeriods = (): UseFinancialPeriodsReturn => {
     }
   }, [periods, years, settings]);
 
-  const importData = useCallback(async (data: any): Promise<void> => {
+  const importData = useCallback(async (data: unknown): Promise<void> => {
     try {
       setError(null);
       // Validate data structure

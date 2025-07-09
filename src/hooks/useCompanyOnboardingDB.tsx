@@ -125,7 +125,6 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
   // Create/Update company mutation
   const saveCompanyMutation = useMutation({
     mutationFn: async ({ formData, logoFile }: { formData: CompanyFormData; logoFile: File | null }) => {
-      console.log('🔄 [useCompanyOnboardingDB] saveCompanyMutation called:', { isEditing, editingCompanyId, formData })
       // Convert logo file to base64 if provided
       let logoBase64 = '';
       if (logoFile) {
@@ -158,7 +157,6 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
       return company;
     },
     onSuccess: (company) => {
-      console.log('✅ [useCompanyOnboardingDB] Company save succeeded:', { company, isEditing })
       
       // Invalidate ALL company-related queries with pattern matching
       queryClient.invalidateQueries({ queryKey: ['companies'], exact: false });
@@ -169,7 +167,6 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
       queryClient.refetchQueries({ queryKey: ['companies'], exact: false });
       queryClient.refetchQueries({ queryKey: ['companies-simple'] });
       
-      console.log('🔄 [useCompanyOnboardingDB] Cache invalidation and refetch completed')
       
       const action = isEditing ? 'updated' : 'created';
       toast.success(`Company "${company.tradingName}" ${action} successfully!`);

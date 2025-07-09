@@ -57,7 +57,7 @@ export class TransactionsBusinessService {
   static getBaseCurrencyAmount(amount: number, currency: string, baseCurrency: string = 'USD'): number {
     // In a real app, you'd fetch exchange rates
     // For now, assume 1:1 conversion for simplicity
-    console.log(`Converting ${amount} ${currency} to ${baseCurrency}`); // Using parameters to avoid linting errors
+    // console.log(`Converting ${amount} ${currency} to ${baseCurrency}`); // Using parameters to avoid linting errors
     return amount;
   }
 

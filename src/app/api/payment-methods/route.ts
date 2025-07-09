@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('companyId')
 
     // Build where clause
-    const where: any = {}
+    const where: unknown = {}
     
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId)

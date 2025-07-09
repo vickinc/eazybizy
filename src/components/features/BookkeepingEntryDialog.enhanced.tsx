@@ -121,7 +121,7 @@ export const BookkeepingEntryDialogEnhanced: React.FC<BookkeepingEntryDialogEnha
 
   const availableCategories = formData.type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  const handleInputChange = (field: keyof EntryFormData, value: any) => {
+  const handleInputChange = (field: keyof EntryFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

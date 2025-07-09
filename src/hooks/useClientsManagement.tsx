@@ -133,7 +133,6 @@ export function useClientsManagement(
   useEffect(() => {
     const handleCurrencyRatesUpdate = () => {
       setExchangeRates(ClientBusinessService.getExchangeRates());
-      console.log('Exchange rates updated in clients page');
       // Force recalculation of client totals with new rates
       setTimeout(() => {
         const savedInvoices = localStorage.getItem('app-invoices');
@@ -176,7 +175,6 @@ export function useClientsManagement(
           if (hasChanges) {
             setClients(updatedClients);
             ClientStorageService.updateClientTotals(updatedClients);
-            console.log('Updated client totals from invoices');
           }
         } catch (error) {
           console.error('Error calculating client totals:', error);

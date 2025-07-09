@@ -86,7 +86,7 @@ export class MultiCurrencyBusinessService {
    * Translate foreign operation financial statements (IAS 21.39)
    */
   static async translateForeignOperation(
-    financialStatements: any,
+    financialStatements: unknown,
     functionalCurrency: string,
     presentationCurrency: string,
     period: string
@@ -190,7 +190,7 @@ export class MultiCurrencyBusinessService {
    * Process foreign currency transaction (IAS 21.20-37)
    */
   static async processForeignCurrencyTransaction(
-    transaction: any,
+    transaction: unknown,
     functionalCurrency: string,
     transactionDate: Date
   ): Promise<MultiCurrencyTransaction> {
@@ -361,7 +361,7 @@ export class MultiCurrencyBusinessService {
   static async generateCurrencyDisclosures(
     functionalCurrency: string,
     presentationCurrency: string,
-    translationAdjustment: any
+    translationAdjustment: unknown
   ): Promise<IFRSDisclosure[]> {
     
     const disclosures: IFRSDisclosure[] = [];
@@ -435,7 +435,7 @@ export class MultiCurrencyBusinessService {
     return 1.05; // Sample historical rate
   }
   
-  private static async translateBalance(balance: any, rate: number): Promise<any> {
+  private static async translateBalance(balance: unknown, rate: number): Promise<any> {
     // Translate balance sheet items
     return {
       ...balance,
@@ -445,11 +445,11 @@ export class MultiCurrencyBusinessService {
   }
   
   private static calculateTranslationAdjustment(
-    assets: any,
-    liabilities: any,
-    equity: any,
+    assets: unknown,
+    liabilities: unknown,
+    equity: unknown,
     rate: number
-  ): any {
+  ): unknown {
     // Calculate translation adjustment per IAS 21.39
     const totalAdjustment = (assets.adjustment || 0) - (liabilities.adjustment || 0);
     

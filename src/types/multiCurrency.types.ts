@@ -96,7 +96,7 @@ export interface EffectivenessTest {
 
 export interface MultiCurrencyTransaction {
   id: string;
-  originalTransaction: any; // Reference to base transaction
+  originalTransaction: unknown; // Reference to base transaction
   
   // Currency details
   functionalCurrency: string;
@@ -294,9 +294,9 @@ export interface MultiCurrencyReportingPackage {
   localCurrencies: string[];
   
   // Consolidation adjustments
-  eliminationEntries: any[];
+  eliminationEntries: unknown[];
   translationAdjustments: CurrencyTranslationAdjustment[];
-  intercompanyBalances: any[];
+  intercompanyBalances: unknown[];
   
   // Compliance
   ifrsCompliant: boolean;
@@ -310,8 +310,8 @@ export interface AuditEntry {
   userId: string;
   action: string;
   details: string;
-  previousValue?: any;
-  newValue?: any;
+  previousValue?: unknown;
+  newValue?: unknown;
   ipAddress: string;
 }
 

@@ -158,7 +158,7 @@ export async function PUT(
           fromCompanyId,
           notes,
           items: {
-            create: items.map((item: any) => ({
+            create: items.map((item: unknown) => ({
               productId: item.productId,
               productName: item.productName,
               description: item.description,

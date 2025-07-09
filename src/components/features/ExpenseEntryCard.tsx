@@ -16,8 +16,8 @@ import {
 
 interface ExpenseEntryCardProps {
   // Core data
-  entry: any;
-  company: any;
+  entry: unknown;
+  company: unknown;
   isExpanded: boolean;
   
   // State
@@ -26,12 +26,12 @@ interface ExpenseEntryCardProps {
   
   // Functions
   formatCurrency: (amount: number, currency?: string) => string;
-  getCOGSCurrency: (entry: any) => string;
+  getCOGSCurrency: (entry: unknown) => string;
   toggleEntryExpansion: (entryId: string) => void;
   toggleEntrySelection: (entryId: string) => void;
-  handleEditEntry: (entry: any) => void;
-  handleDeleteEntry: (entry: any) => void;
-  handleLinkToIncome: (entry: any) => void;
+  handleEditEntry: (entry: unknown) => void;
+  handleDeleteEntry: (entry: unknown) => void;
+  handleLinkToIncome: (entry: unknown) => void;
   handleViewRelatedIncomeEntry: (incomeId: string) => void;
 }
 

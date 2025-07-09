@@ -91,7 +91,7 @@ export const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
     setValidationSummary('');
   }, [entry, companies, open]);
 
-  const updateFormData = (field: keyof JournalEntryFormData, value: any) => {
+  const updateFormData = (field: keyof JournalEntryFormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Real-time validation with debounce
     setTimeout(() => validateForm(), 100);

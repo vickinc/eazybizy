@@ -156,7 +156,6 @@ export class ComparativeReportingBusinessService {
         distributionList: []
       };
       
-      console.log(`Comparative report generated in ${Date.now() - startTime}ms`);
       return comparativeReport;
       
     } catch (error) {
@@ -392,7 +391,7 @@ export class ComparativeReportingBusinessService {
     
     // Calculate variances between consecutive periods
     const periodVariances: Variance[] = [];
-    for (let i = 1; i < periods.length; i++) {
+    for (const i = 1; i < periods.length; i++) {
       const currentValue = periodData[periods[i-1].id] || 0;
       const priorValue = periodData[periods[i].id] || 0;
       
@@ -640,7 +639,7 @@ export class ComparativeReportingBusinessService {
   // - etc.
   
   private static async generateComparativeBalanceSheet(
-    financialData: any,
+    financialData: unknown,
     periods: ReportingPeriod[],
     configuration: ComparativeReportConfiguration
   ): Promise<any> {
@@ -649,7 +648,7 @@ export class ComparativeReportingBusinessService {
   }
   
   private static async generateComparativeProfitLoss(
-    financialData: any,
+    financialData: unknown,
     periods: ReportingPeriod[],
     configuration: ComparativeReportConfiguration
   ): Promise<any> {
@@ -658,7 +657,7 @@ export class ComparativeReportingBusinessService {
   }
   
   private static async generateComparativeCashFlow(
-    financialData: any,
+    financialData: unknown,
     periods: ReportingPeriod[],
     configuration: ComparativeReportConfiguration
   ): Promise<any> {
@@ -667,7 +666,7 @@ export class ComparativeReportingBusinessService {
   }
   
   private static async generateComparativeEquityChanges(
-    financialData: any,
+    financialData: unknown,
     periods: ReportingPeriod[],
     configuration: ComparativeReportConfiguration
   ): Promise<any> {
@@ -684,7 +683,7 @@ export class ComparativeReportingBusinessService {
     return Math.abs(variance.percentageVariance) > threshold;
   }
   
-  private static categorizeVariances(variances: Variance[]): any {
+  private static categorizeVariances(variances: Variance[]): unknown {
     // Implementation to categorize variances
     return {};
   }
@@ -700,7 +699,7 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static generateVarianceObservations(variances: Variance[], summary: any): string[] {
+  private static generateVarianceObservations(variances: Variance[], summary: unknown): string[] {
     // Implementation for generating observations
     return [];
   }
@@ -715,11 +714,11 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static determineInvestigationPriority(variance: Variance): any {
+  private static determineInvestigationPriority(variance: Variance): unknown {
     return 'medium';
   }
   
-  private static analyzeOverallTrend(statements: ComparativeFinancialStatements): any {
+  private static analyzeOverallTrend(statements: ComparativeFinancialStatements): unknown {
     // Implementation for overall trend analysis
     return {};
   }
@@ -729,7 +728,7 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static identifyTrendAlerts(trends: any[]): any[] {
+  private static identifyTrendAlerts(trends: unknown[]): unknown[] {
     // Implementation for trend alerts
     return [];
   }
@@ -750,7 +749,7 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static async generateTrendForecasts(trends: any[]): Promise<any[]> {
+  private static async generateTrendForecasts(trends: unknown[]): Promise<any[]> {
     // Implementation for trend forecasting
     return [];
   }
@@ -787,7 +786,7 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static analyzeRatioTrends(ratios: FinancialRatio[]): any[] {
+  private static analyzeRatioTrends(ratios: FinancialRatio[]): unknown[] {
     // Implementation for ratio trend analysis
     return [];
   }
@@ -797,12 +796,12 @@ export class ComparativeReportingBusinessService {
     return [];
   }
   
-  private static identifyDeterioratingRatios(trends: any[]): any[] {
+  private static identifyDeterioratingRatios(trends: unknown[]): unknown[] {
     // Implementation for identifying deteriorating ratios
     return [];
   }
   
-  private static calculateFinancialHealthScore(ratios: FinancialRatio[]): any {
+  private static calculateFinancialHealthScore(ratios: FinancialRatio[]): unknown {
     // Implementation for financial health score calculation
     return {};
   }
@@ -963,7 +962,7 @@ export class ComparativeReportingBusinessService {
   
   private static calculateDataQualityScore(
     statements: ComparativeFinancialStatements,
-    validationResults: any[]
+    validationResults: unknown[]
   ): number {
     // Implementation for data quality scoring
     return 95; // Sample score
