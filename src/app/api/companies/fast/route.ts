@@ -169,8 +169,32 @@ export async function GET(request: NextRequest) {
           youtubeUrl: true,
           whatsappNumber: true,
           telegramNumber: true,
+          mainContactEmail: true,
+          mainContactType: true,
           createdAt: true,
           updatedAt: true,
+          // Include representatives and shareholders for UI components
+          representatives: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phoneNumber: true,
+              role: true,
+              customRole: true,
+            }
+          },
+          shareholders: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phoneNumber: true,
+              ownershipPercent: true,
+            }
+          },
         }
       }),
       prisma.company.count({ where }),

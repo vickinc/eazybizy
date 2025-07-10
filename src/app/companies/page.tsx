@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Plus, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCompanyManagement } from "@/hooks/useCompanyManagement";
 import { CompanyList } from "@/components/features/CompanyList";
@@ -32,6 +32,7 @@ export default function Companies() {
     // CRUD Operations
     handleEdit,
     handleDelete,
+    handleArchive,
     
     // Utility Actions
     copyToClipboard,
@@ -41,9 +42,13 @@ export default function Companies() {
     loadMore
   } = useCompanyManagement();
 
-  // Navigation handler
+  // Navigation handlers
   const handleAddCompany = () => {
     router.push('/companies/company-onboarding');
+  };
+
+  const handleViewArchive = () => {
+    router.push('/companies/archive');
   };
 
   // Use delayed loading to prevent flash for cached data
@@ -90,14 +95,23 @@ export default function Companies() {
         </div>
       </div>
 
-      {/* Add Company Button */}
-      <div className="mb-8">
+      {/* Action Buttons */}
+      <div className="mb-8 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
         <Button 
           onClick={handleAddCompany}
-          className="bg-black hover:bg-gray-800 w-full max-w-md py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white"
+          className="bg-black hover:bg-gray-800 w-full sm:w-auto py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white"
         >
           <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
           Add Company
+        </Button>
+        
+        <Button 
+          onClick={handleViewArchive}
+          variant="outline"
+          className="w-full sm:w-auto py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-medium"
+        >
+          <Archive className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+          View Archive
         </Button>
       </div>
 
@@ -109,6 +123,7 @@ export default function Companies() {
           copiedFields={copiedFields}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
+          handleArchive={handleArchive}
           copyToClipboard={copyToClipboard}
           handleWebsiteClick={handleWebsiteClick}
         />

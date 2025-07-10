@@ -11,6 +11,7 @@ interface CompanyListProps {
   copiedFields: { [key: string]: boolean };
   handleEdit: (company: Company) => void;
   handleDelete: (id: number) => void;
+  handleArchive: (company: Company) => void;
   copyToClipboard: (text: string, fieldName: string, companyId: number) => Promise<void>;
   handleWebsiteClick: (website: string, e: React.MouseEvent) => void;
 }
@@ -22,6 +23,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
   copiedFields,
   handleEdit,
   handleDelete,
+  handleArchive,
   copyToClipboard,
   handleWebsiteClick
 }) => {
@@ -48,6 +50,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
                 copiedFields={copiedFields}
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
+                handleArchive={handleArchive}
                 copyToClipboard={copyToClipboard}
                 handleWebsiteClick={handleWebsiteClick}
               />
@@ -88,6 +91,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
                 copiedFields={copiedFields}
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
+                handleArchive={handleArchive}
                 copyToClipboard={copyToClipboard}
                 handleWebsiteClick={handleWebsiteClick}
                 isPassive={true}

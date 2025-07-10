@@ -8,21 +8,25 @@ import { Shareholder } from '@/types/company.types';
 interface ShareholderFormProps {
   onAdd: (shareholder: Shareholder) => void;
   onCancel: () => void;
+  initialData?: Shareholder;
+  isEditing?: boolean;
 }
 
 export const ShareholderForm: React.FC<ShareholderFormProps> = ({
   onAdd,
-  onCancel
+  onCancel,
+  initialData,
+  isEditing = false
 }) => {
   const [formData, setFormData] = useState<Partial<Shareholder>>({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    nationality: '',
-    countryOfResidence: '',
-    email: '',
-    phoneNumber: '',
-    ownershipPercent: undefined
+    firstName: initialData?.firstName || '',
+    lastName: initialData?.lastName || '',
+    dateOfBirth: initialData?.dateOfBirth || '',
+    nationality: initialData?.nationality || '',
+    countryOfResidence: initialData?.countryOfResidence || '',
+    email: initialData?.email || '',
+    phoneNumber: initialData?.phoneNumber || '',
+    ownershipPercent: initialData?.ownershipPercent || undefined
   });
 
   const handleSubmit = () => {
@@ -163,7 +167,7 @@ export const ShareholderForm: React.FC<ShareholderFormProps> = ({
       </div>
       <div className="flex space-x-2 mt-6">
         <Button onClick={handleSubmit} disabled={!isValid}>
-          Add Shareholder
+          {isEditing ? 'Update Shareholder' : 'Add Shareholder'}
         </Button>
         <Button variant="outline" onClick={onCancel}>
           Cancel

@@ -51,6 +51,7 @@ export default function CompaniesEnhanced() {
     handleSubmit,
     handleEdit,
     handleDelete,
+    handleArchive,
     handleAddNew,
     
     // Utility Actions
@@ -252,6 +253,7 @@ export default function CompaniesEnhanced() {
               copiedFields={copiedFields}
               handleEdit={handleEdit}
               handleDelete={handleDelete}
+              handleArchive={handleArchive}
               copyToClipboard={copyToClipboard}
               handleWebsiteClick={handleWebsiteClick}
               isLoading={isCompaniesLoading}

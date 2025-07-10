@@ -183,6 +183,40 @@ export class CompanyApiService {
     }
   }
 
+  async archiveCompany(id: string): Promise<Company> {
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'Archived' }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Failed to archive company')
+    }
+
+    return response.json()
+  }
+
+  async unarchiveCompany(id: string, status: 'Active' | 'Passive' = 'Active'): Promise<Company> {
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Failed to unarchive company')
+    }
+
+    return response.json()
+  }
+
   async uploadLogo(file: File): Promise<string> {
     const formData = new FormData()
     formData.append('logo', file)

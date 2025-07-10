@@ -9,6 +9,8 @@ import { Representative, RepresentativeRole } from '@/types/company.types';
 interface RepresentativeFormProps {
   onAdd: (representative: Representative) => void;
   onCancel: () => void;
+  initialData?: Representative;
+  isEditing?: boolean;
 }
 
 const REPRESENTATIVE_ROLES: RepresentativeRole[] = [
@@ -26,18 +28,20 @@ const REPRESENTATIVE_ROLES: RepresentativeRole[] = [
 
 export const RepresentativeForm: React.FC<RepresentativeFormProps> = ({
   onAdd,
-  onCancel
+  onCancel,
+  initialData,
+  isEditing = false
 }) => {
   const [formData, setFormData] = useState<Partial<Representative>>({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    nationality: '',
-    countryOfResidence: '',
-    email: '',
-    phoneNumber: '',
-    role: 'Chief Executive Officer',
-    customRole: ''
+    firstName: initialData?.firstName || '',
+    lastName: initialData?.lastName || '',
+    dateOfBirth: initialData?.dateOfBirth || '',
+    nationality: initialData?.nationality || '',
+    countryOfResidence: initialData?.countryOfResidence || '',
+    email: initialData?.email || '',
+    phoneNumber: initialData?.phoneNumber || '',
+    role: initialData?.role || 'Chief Executive Officer',
+    customRole: initialData?.customRole || ''
   });
 
   const handleSubmit = () => {
@@ -190,7 +194,7 @@ export const RepresentativeForm: React.FC<RepresentativeFormProps> = ({
       </div>
       <div className="flex space-x-2 mt-6">
         <Button onClick={handleSubmit} disabled={!isValid}>
-          Add Representative
+          {isEditing ? 'Update Representative' : 'Add Representative'}
         </Button>
         <Button variant="outline" onClick={onCancel}>
           Cancel

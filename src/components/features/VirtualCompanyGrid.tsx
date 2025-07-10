@@ -11,6 +11,7 @@ interface VirtualCompanyGridProps {
   copiedFields: { [key: string]: boolean };
   handleEdit: (company: Company) => void;
   handleDelete: (id: number) => void;
+  handleArchive: (company: Company) => void;
   copyToClipboard: (text: string, fieldName: string, companyId: number) => Promise<void>;
   handleWebsiteClick: (website: string, e: React.MouseEvent) => void;
   isLoading: boolean;
@@ -27,6 +28,7 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
   copiedFields,
   handleEdit,
   handleDelete,
+  handleArchive,
   copyToClipboard,
   handleWebsiteClick,
   isLoading,
@@ -88,13 +90,14 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
           copiedFields={copiedFields}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
+          handleArchive={handleArchive}
           copyToClipboard={copyToClipboard}
           handleWebsiteClick={handleWebsiteClick}
           isPassive={company.status === 'Passive'}
         />
       </div>
     );
-  }, [companies, copiedFields, handleEdit, handleDelete, copyToClipboard, handleWebsiteClick]);
+  }, [companies, copiedFields, handleEdit, handleDelete, handleArchive, copyToClipboard, handleWebsiteClick]);
 
   // Render function for list view
   const renderListItem = useCallback((

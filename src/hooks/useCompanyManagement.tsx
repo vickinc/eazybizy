@@ -84,11 +84,15 @@ export interface CompanyManagementHook {
   createCompany: () => Promise<void>
   updateCompany: () => Promise<void>
   deleteCompany: (id: string) => Promise<void>
+  archiveCompany: (id: string) => Promise<void>
+  unarchiveCompany: (id: string, status?: 'Active' | 'Passive') => Promise<void>
   
   // Form Management
   handleSubmit: (e: React.FormEvent) => void
   handleEdit: (company: Company) => void
   handleDelete: (id: number) => void
+  handleArchive: (company: Company) => void
+  handleUnarchive: (company: Company) => void
   handleAddNew: () => void
   
   // Utility Actions
@@ -309,6 +313,51 @@ export function useCompanyManagement(): CompanyManagementHook {
       toast.error(`Failed to delete company: ${error.message}`)
     },
   })
+
+  const archiveMutation = useMutation({
+    mutationFn: (id: string) => companyApiService.archiveCompany(id),
+    onSuccess: () => {
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      // Invalidate ALL queries that start with COMPANIES_QUERY_KEY regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      
+      // Force refetch of companies data
+      queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
+      
+      toast.success('Company archived successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to archive company: ${error.message}`)
+    },
+  })
+
+  const unarchiveMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status?: 'Active' | 'Passive' }) => 
+      companyApiService.unarchiveCompany(id, status),
+    onSuccess: () => {
+      // Reset accumulated companies to force fresh data
+      setAccumulatedCompanies([])
+      setPagination({ skip: 0, take: 20 })
+      
+      // Invalidate ALL queries that start with COMPANIES_QUERY_KEY regardless of params
+      queryClient.invalidateQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.invalidateQueries({ queryKey: ['companies-simple'] })
+      
+      // Force refetch of companies data
+      queryClient.refetchQueries({ queryKey: [COMPANIES_QUERY_KEY], exact: false })
+      queryClient.refetchQueries({ queryKey: ['companies-simple'] })
+      
+      toast.success('Company unarchived successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to unarchive company: ${error.message}`)
+    },
+  })
   
   // Action handlers
   const updateFilters = useCallback((newFilters: Partial<typeof filters>) => {
@@ -431,6 +480,14 @@ export function useCompanyManagement(): CompanyManagementHook {
   const deleteCompany = useCallback(async (id: string) => {
     deleteMutation.mutate(id)
   }, [deleteMutation])
+
+  const archiveCompany = useCallback(async (id: string) => {
+    archiveMutation.mutate(id)
+  }, [archiveMutation])
+
+  const unarchiveCompany = useCallback(async (id: string, status: 'Active' | 'Passive' = 'Active') => {
+    unarchiveMutation.mutate({ id, status })
+  }, [unarchiveMutation])
   
   // Form management actions (compatibility layer)
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -480,6 +537,14 @@ export function useCompanyManagement(): CompanyManagementHook {
       deleteCompany(id.toString())
     }
   }, [deleteCompany])
+
+  const handleArchive = useCallback((company: Company) => {
+    archiveCompany(company.id.toString())
+  }, [archiveCompany])
+
+  const handleUnarchive = useCallback((company: Company) => {
+    unarchiveCompany(company.id.toString(), 'Active')
+  }, [unarchiveCompany])
   
   const handleAddNew = useCallback(() => {
     setEditingCompany(null)
@@ -625,11 +690,15 @@ export function useCompanyManagement(): CompanyManagementHook {
     createCompany,
     updateCompany,
     deleteCompany,
+    archiveCompany,
+    unarchiveCompany,
     
     // Form Management
     handleSubmit,
     handleEdit,
     handleDelete,
+    handleArchive,
+    handleUnarchive,
     handleAddNew,
     
     // Utility Actions

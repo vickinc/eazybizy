@@ -37,6 +37,12 @@ export const OwnersRepresentativesStep: React.FC<OwnersRepresentativesStepProps>
     onUpdateFormData({ shareholders: updatedShareholders });
   };
 
+  const handleEditShareholder = (index: number, shareholder: Shareholder) => {
+    const updatedShareholders = [...formData.shareholders];
+    updatedShareholders[index] = shareholder;
+    onUpdateFormData({ shareholders: updatedShareholders });
+  };
+
   const handleAddRepresentative = (representative: Representative) => {
     const updatedRepresentatives = [...formData.representatives, representative];
     onUpdateFormData({
@@ -46,6 +52,12 @@ export const OwnersRepresentativesStep: React.FC<OwnersRepresentativesStepProps>
 
   const handleRemoveRepresentative = (index: number) => {
     const updatedRepresentatives = formData.representatives.filter((_, i) => i !== index);
+    onUpdateFormData({ representatives: updatedRepresentatives });
+  };
+
+  const handleEditRepresentative = (index: number, representative: Representative) => {
+    const updatedRepresentatives = [...formData.representatives];
+    updatedRepresentatives[index] = representative;
     onUpdateFormData({ representatives: updatedRepresentatives });
   };
 
@@ -78,12 +90,14 @@ export const OwnersRepresentativesStep: React.FC<OwnersRepresentativesStepProps>
           representatives={formData.representatives}
           onAdd={handleAddRepresentative}
           onRemove={handleRemoveRepresentative}
+          onEdit={handleEditRepresentative}
         />
 
         <ShareholderSection
           shareholders={formData.shareholders}
           onAdd={handleAddShareholder}
           onRemove={handleRemoveShareholder}
+          onEdit={handleEditShareholder}
         />
 
         <ContactPersonSection

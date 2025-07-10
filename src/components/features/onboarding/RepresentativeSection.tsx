@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCheck, Trash2, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { UserCheck, Trash2, Plus, ChevronUp, ChevronDown, Edit2 } from 'lucide-react';
 import { Representative } from '@/types/company.types';
 import { RepresentativeForm } from './RepresentativeForm';
 
@@ -9,23 +9,37 @@ interface RepresentativeSectionProps {
   representatives: Representative[];
   onAdd: (representative: Representative) => void;
   onRemove: (index: number) => void;
+  onEdit: (index: number, representative: Representative) => void;
 }
 
 export const RepresentativeSection: React.FC<RepresentativeSectionProps> = ({
   representatives,
   onAdd,
-  onRemove
+  onRemove,
+  onEdit
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const handleAdd = (representative: Representative) => {
-    onAdd(representative);
+    if (editingIndex !== null) {
+      onEdit(editingIndex, representative);
+      setEditingIndex(null);
+    } else {
+      onAdd(representative);
+    }
     setShowForm(false);
+  };
+
+  const handleEdit = (index: number) => {
+    setEditingIndex(index);
+    setShowForm(true);
   };
 
   const handleCancel = () => {
     setShowForm(false);
+    setEditingIndex(null);
   };
 
   return (
@@ -87,14 +101,30 @@ export const RepresentativeSection: React.FC<RepresentativeSectionProps> = ({
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onRemove(index)}
-                    className="text-red-600 border-red-200 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(index);
+                      }}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove(index);
+                      }}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
 
@@ -106,9 +136,14 @@ export const RepresentativeSection: React.FC<RepresentativeSectionProps> = ({
               )}
             </div>
 
-            {/* Add Representative Form */}
+            {/* Add/Edit Representative Form */}
             {showForm ? (
-              <RepresentativeForm onAdd={handleAdd} onCancel={handleCancel} />
+              <RepresentativeForm 
+                onAdd={handleAdd} 
+                onCancel={handleCancel}
+                initialData={editingIndex !== null ? representatives[editingIndex] : undefined}
+                isEditing={editingIndex !== null}
+              />
             ) : (
               <Button
                 onClick={(e) => {

@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Phone, Mail, Globe, Copy, ExternalLink, Check, Settings } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Trash2, MapPin, Phone, Mail, Globe, Copy, ExternalLink, Check, Settings, MoreHorizontal, Share2, Download, Archive, User, ChevronDown, ChevronUp } from "lucide-react";
 import { Company } from '@/types';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 import { calculateCompanyAge } from '@/utils/companyUtils';
+import { ShareCompanyDialog } from './ShareCompanyDialog';
+import { ArchiveCompanyDialog } from './ArchiveCompanyDialog';
+import { DownloadCompanyDialog } from './DownloadCompanyDialog';
+import { PDFGenerationService } from '@/services/business/pdfGenerationService';
 
 interface CompanyCardProps {
   company: Company;
   copiedFields: { [key: string]: boolean };
   handleEdit: (company: Company) => void;
   handleDelete: (id: number) => void;
+  handleArchive: (company: Company) => void;
   copyToClipboard: (text: string, fieldName: string, companyId: number) => Promise<void>;
   handleWebsiteClick: (website: string, e: React.MouseEvent) => void;
   isPassive?: boolean;
@@ -22,10 +28,56 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
   copiedFields,
   handleEdit,
   handleDelete,
+  handleArchive,
   copyToClipboard,
   handleWebsiteClick,
   isPassive = false
 }) => {
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
+  const [isContactPersonExpanded, setIsContactPersonExpanded] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    try {
+      // Use default options that match the company information dialog
+      await PDFGenerationService.generateCompanyPDF(company, {
+        includeRepresentatives: true,
+        includeShareholders: false,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // You could show a toast notification here
+    }
+  };
+
+  const handleMenuItemClick = (action: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    switch (action) {
+      case 'share':
+        setIsShareDialogOpen(true);
+        break;
+      case 'download':
+        setIsDownloadDialogOpen(true);
+        break;
+      case 'edit':
+        window.location.href = `/companies/company-onboarding?edit=${company.id}`;
+        break;
+      case 'archive':
+        if (company.status === 'Archived') {
+          // For archived companies, call unarchive directly
+          handleArchive(company);
+        } else {
+          // For active/passive companies, show confirmation dialog
+          setIsArchiveDialogOpen(true);
+        }
+        break;
+      case 'delete':
+        handleDelete(company.id);
+        break;
+    }
+  };
   
   return (
     <Card className={`hover:shadow-lg transition-shadow flex flex-col ${isPassive ? 'opacity-75' : ''}`}>
@@ -460,29 +512,290 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
             )}
           </div>
 
+          {/* Contact Person Section - Collapsible */}
+          {(company.mainContactEmail || company.mainContactType) && (
+            <div className="mt-4 pt-4 border-t border-gray-100 bg-lime-100 rounded-lg p-3">
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setIsContactPersonExpanded(!isContactPersonExpanded)}
+              >
+                <div className="flex items-center space-x-2">
+                  <User className={`h-4 w-4 ${isPassive ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <span className={`text-sm font-medium ${isPassive ? 'text-gray-600' : 'text-gray-700'}`}>
+                    Contact Person
+                  </span>
+                </div>
+                {isContactPersonExpanded ? (
+                  <ChevronUp className={`h-4 w-4 ${isPassive ? 'text-gray-400' : 'text-gray-500'}`} />
+                ) : (
+                  <ChevronDown className={`h-4 w-4 ${isPassive ? 'text-gray-400' : 'text-gray-500'}`} />
+                )}
+              </div>
+              
+              {isContactPersonExpanded && (
+                <div className="mt-3 pl-6 space-y-2">
+                  {(() => {
+                    // Try to find the main contact person from representatives or shareholders
+                    let contactPerson = null;
+                    
+                    if (company.mainContactEmail && company.mainContactType) {
+                      if (company.mainContactType === 'representative' && company.representatives) {
+                        contactPerson = company.representatives.find(rep => rep.email === company.mainContactEmail);
+                      } else if (company.mainContactType === 'shareholder' && company.shareholders) {
+                        contactPerson = company.shareholders.find(sh => sh.email === company.mainContactEmail);
+                      }
+                    }
+                    
+                    if (contactPerson) {
+                      return (
+                        <>
+                          <div className="group flex items-center relative">
+                            <p 
+                              className={`text-sm ${isPassive ? 'text-gray-600' : 'text-gray-700'} cursor-pointer font-medium`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(`${contactPerson.firstName} ${contactPerson.lastName}`, 'Contact Person Name', company.id);
+                              }}
+                            >
+                              {contactPerson.firstName} {contactPerson.lastName}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(`${contactPerson.firstName} ${contactPerson.lastName}`, 'Contact Person Name', company.id);
+                              }}
+                            >
+                              {copiedFields[`${company.id}-Contact Person Name`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                            </Button>
+                          </div>
+                          
+                          <div className="group flex items-center relative">
+                            <p 
+                              className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(contactPerson.email, 'Contact Person Email', company.id);
+                              }}
+                            >
+                              Email: {contactPerson.email}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(contactPerson.email, 'Contact Person Email', company.id);
+                              }}
+                            >
+                              {copiedFields[`${company.id}-Contact Person Email`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                            </Button>
+                          </div>
+                          
+                          {contactPerson.phoneNumber && (
+                            <div className="group flex items-center relative">
+                              <p 
+                                className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(contactPerson.phoneNumber, 'Contact Person Phone', company.id);
+                                }}
+                              >
+                                Phone: {contactPerson.phoneNumber}
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(contactPerson.phoneNumber, 'Contact Person Phone', company.id);
+                                }}
+                              >
+                                {copiedFields[`${company.id}-Contact Person Phone`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                              </Button>
+                            </div>
+                          )}
+                          
+                          <div className="group flex items-center relative">
+                            <p 
+                              className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const role = company.mainContactType === 'representative' 
+                                  ? ((contactPerson as any).role === 'Other' ? (contactPerson as any).customRole || 'Other' : (contactPerson as any).role)
+                                  : 'Shareholder';
+                                copyToClipboard(role, 'Contact Person Role', company.id);
+                              }}
+                            >
+                              Role: {company.mainContactType === 'representative' 
+                                ? ((contactPerson as any).role === 'Other' ? (contactPerson as any).customRole || 'Other' : (contactPerson as any).role)
+                                : 'Shareholder'
+                              }
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const role = company.mainContactType === 'representative' 
+                                  ? ((contactPerson as any).role === 'Other' ? (contactPerson as any).customRole || 'Other' : (contactPerson as any).role)
+                                  : 'Shareholder';
+                                copyToClipboard(role, 'Contact Person Role', company.id);
+                              }}
+                            >
+                              {copiedFields[`${company.id}-Contact Person Role`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                            </Button>
+                          </div>
+                        </>
+                      );
+                    } else if (company.mainContactEmail && company.mainContactType) {
+                      return (
+                        <>
+                          <div className="group flex items-center relative">
+                            <p 
+                              className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(company.mainContactEmail!, 'Contact Email', company.id);
+                              }}
+                            >
+                              Email: {company.mainContactEmail}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(company.mainContactEmail!, 'Contact Email', company.id);
+                              }}
+                            >
+                              {copiedFields[`${company.id}-Contact Email`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                            </Button>
+                          </div>
+                          
+                          <div className="group flex items-center relative">
+                            <p 
+                              className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(company.mainContactType!, 'Contact Type', company.id);
+                              }}
+                            >
+                              Type: {company.mainContactType}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(company.mainContactType!, 'Contact Type', company.id);
+                              }}
+                            >
+                              {copiedFields[`${company.id}-Contact Type`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                            </Button>
+                          </div>
+                        </>
+                      );
+                    } else {
+                      return (
+                        <p className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'}`}>
+                          No contact person designated
+                        </p>
+                      );
+                    }
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
         
-        {/* Button Section - Always at bottom */}
-        <div className="flex space-x-2 pt-4 mt-6 border-t border-gray-200">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1 bg-lime-50 hover:bg-lime-100 text-green-700 border-green-200"
-              onClick={() => window.location.href = `/companies/company-onboarding?edit=${company.id}`}
-            >
-              <Settings className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => handleDelete(company.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+        {/* Action Buttons Section - Always at bottom */}
+        <div className="flex justify-center items-center gap-2 pt-4 mt-6 border-t border-gray-200">
+          {/* Share Button */}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="hover:bg-gray-100 hover:-translate-y-0.5 flex items-center gap-1.5 transition-all duration-200"
+            onClick={(e) => handleMenuItemClick('share', e)}
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="text-sm">Share</span>
+          </Button>
+          
+          {/* Download Button */}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="hover:bg-gray-100 hover:-translate-y-0.5 flex items-center gap-1.5 transition-all duration-200"
+            onClick={(e) => handleMenuItemClick('download', e)}
+          >
+            <Download className="w-4 h-4" />
+            <span className="text-sm">Download</span>
+          </Button>
+          
+          {/* Three-dot Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="hover:bg-gray-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-48">
+              <DropdownMenuItem onClick={(e) => handleMenuItemClick('edit', e)}>
+                <Settings className="w-4 h-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleMenuItemClick('archive', e)}>
+                <Archive className="w-4 h-4 mr-2" />
+                {company.status === 'Archived' ? 'Unarchive' : 'Archive'}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => handleMenuItemClick('delete', e)}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardContent>
+      
+      {/* Share Dialog */}
+      <ShareCompanyDialog
+        company={company}
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+      />
+      
+      {/* Download Dialog */}
+      <DownloadCompanyDialog
+        company={company}
+        isOpen={isDownloadDialogOpen}
+        onOpenChange={setIsDownloadDialogOpen}
+      />
+      
+      {/* Archive Dialog */}
+      <ArchiveCompanyDialog
+        company={company}
+        isOpen={isArchiveDialogOpen}
+        onOpenChange={setIsArchiveDialogOpen}
+        onConfirmArchive={handleArchive}
+      />
     </Card>
   );
 };
