@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mail, Globe, Phone, Eye, Download, Trash2 } from "lucide-react";
+import { Mail, Globe, Phone, Share2, Download, Trash2 } from "lucide-react";
 import { FormattedBusinessCard } from "@/types/businessCards.types";
 import { isImageLogo } from "@/utils/logoUtils";
 
@@ -48,7 +48,7 @@ const TooltipWrapper: React.FC<TooltipWrapperProps> = ({
 interface BusinessCardProps {
   card: FormattedBusinessCard;
   showActions?: boolean;
-  handlePreview: (card: FormattedBusinessCard) => void;
+  handleShareCard: (card: FormattedBusinessCard) => void;
   handleDownloadCard: (card: FormattedBusinessCard) => void;
   handleDelete: (cardId: string) => void;
   getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => TemplateStyles;
@@ -58,7 +58,7 @@ interface BusinessCardProps {
 export const BusinessCard: React.FC<BusinessCardProps> = ({
   card,
   showActions = true,
-  handlePreview,
+  handleShareCard,
   handleDownloadCard,
   handleDelete,
   getTemplateStyles,
@@ -70,9 +70,8 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
     <div className="relative">
       <div 
         id={`business-card-${card.id}`}
-        className="w-80 h-48 rounded-lg shadow-lg p-6 relative overflow-hidden cursor-pointer transform transition-all duration-200 hover:scale-105"
+        className="w-80 h-48 rounded-lg shadow-lg p-6 relative overflow-hidden transform transition-all duration-200 hover:scale-105"
         style={templateStyles}
-        onClick={() => handlePreview(card)}
       >
         {/* Header with Logo and Company */}
         <div className="flex items-start gap-3 mb-4 pr-20 -ml-2 -mt-3">
@@ -145,8 +144,8 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
         {showActions && (
           <div className="absolute top-2 right-2 flex gap-1">
             <TooltipWrapper 
-              text="Preview Card" 
-              buttonId={`preview-${card.id}`}
+              text="Share Card" 
+              buttonId={`share-${card.id}`}
               setHoveredButton={setHoveredButton}
             >
               <Button 
@@ -154,11 +153,11 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
                 variant="ghost"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handlePreview(card);
+                  handleShareCard(card);
                 }}
                 className="h-8 w-8 p-0 bg-white hover:bg-blue-50 rounded-lg shadow-md border border-gray-200"
               >
-                <Eye className="w-4 h-4 text-gray-700" />
+                <Share2 className="w-4 h-4 text-gray-700" />
               </Button>
             </TooltipWrapper>
 

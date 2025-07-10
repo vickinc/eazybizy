@@ -15,17 +15,17 @@ interface TemplateStyles {
 interface BusinessCardListProps {
   visibleCards: FormattedBusinessCard[];
   companies: Company[];
-  handlePreview: (card: FormattedBusinessCard) => void;
+  handleShareCard: (card: FormattedBusinessCard) => void;
   handleDownloadCard: (card: FormattedBusinessCard) => void;
   handleDelete: (cardId: string) => void;
-  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy") => TemplateStyles;
+  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => TemplateStyles;
   setHoveredButton: (buttonId: string | null) => void;
 }
 
 export const BusinessCardList: React.FC<BusinessCardListProps> = ({
   visibleCards,
   companies,
-  handlePreview,
+  handleShareCard,
   handleDownloadCard,
   handleDelete,
   getTemplateStyles,
@@ -40,7 +40,7 @@ export const BusinessCardList: React.FC<BusinessCardListProps> = ({
             <BusinessCard 
               key={card.id} 
               card={card}
-              handlePreview={handlePreview}
+              handleShareCard={handleShareCard}
               handleDownloadCard={handleDownloadCard}
               handleDelete={handleDelete}
               getTemplateStyles={getTemplateStyles}

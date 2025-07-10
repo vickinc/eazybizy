@@ -56,6 +56,7 @@ export default function BusinessCardsPage() {
     
     // Actions
     handleCreateCard,
+    handleShareCard,
     handlePreview,
     handleDelete,
     handleDownloadCard,
@@ -189,7 +190,7 @@ export default function BusinessCardsPage() {
       <BusinessCardList 
         visibleCards={businessCards}
         companies={companies}
-        handlePreview={handlePreview}
+        handleShareCard={handleShareCard}
         handleDownloadCard={handleDownloadCard}
         handleDelete={handleDelete}
         getTemplateStyles={getTemplateStyles}

@@ -54,6 +54,7 @@ export interface BusinessCardsManagementDBHook {
   
   // Actions
   handleCreateCard: () => void;
+  handleShareCard: (card: BusinessCard) => void;
   handlePreview: (card: BusinessCard) => void;
   handleDelete: (cardId: string) => void;
   handleDownloadCard: (card: BusinessCard) => Promise<void>;
@@ -74,7 +75,7 @@ export interface BusinessCardsManagementDBHook {
   
   // Utility Functions
   setHoveredButton: (buttonId: string | null) => void;
-  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy") => any;
+  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => any;
   
   // Data Refresh
   refetch: () => void;
@@ -339,6 +340,65 @@ export function useBusinessCardsManagementDB(
     createBusinessCardMutation.mutate(cardData);
   }, [formData, selectedCompany, companies, personOptions, createBusinessCardMutation]);
   
+  const handleShareCard = useCallback(async (card: BusinessCard) => {
+    try {
+      toast.info('Generating business card image...');
+      
+      // Generate the business card image blob
+      const blob = await BusinessCardsBusinessService.generateBusinessCardImageBlob(card);
+      
+      // Try native file sharing first (this works for AirDrop, etc.)
+      if (navigator.share) {
+        const file = new File([blob], `${card.company.tradingName.replace(/[^a-zA-Z0-9]/g, '-')}-business-card.png`, { type: 'image/png' });
+        const shareData = {
+          text: "",
+          files: [file]
+        };
+
+        // Check if sharing with files is supported
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          toast.success('Business card image shared successfully');
+          return;
+        }
+      }
+
+      // Fallback: copy image to clipboard (good for messaging apps)
+      try {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+        toast.success('Business card image copied to clipboard! You can now paste it in any app.');
+        return;
+      } catch (clipboardError) {
+        console.log('Clipboard image write failed, trying download...', clipboardError);
+      }
+
+      // Final fallback: trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${card.company.tradingName.replace(/[^a-zA-Z0-9]/g, '-')}-business-card.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Business card image downloaded! You can now share it manually from your downloads.');
+
+    } catch (error) {
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Share error:', error);
+        // Ultimate fallback: copy text to clipboard
+        try {
+          const shareText = `${card.personName} - ${card.company.tradingName}\n\nContact: ${card.personEmail || card.company.email}\nWebsite: ${card.company.website}`;
+          await navigator.clipboard.writeText(shareText);
+          toast.success('Business card details copied to clipboard (image generation failed)');
+        } catch (clipboardError) {
+          toast.error('Failed to share business card');
+        }
+      }
+    }
+  }, []);
+  
   const handlePreview = useCallback((card: BusinessCard) => {
     setPreviewCard(card);
     setIsPreviewOpen(true);
@@ -442,6 +502,7 @@ export function useBusinessCardsManagementDB(
     
     // Actions
     handleCreateCard,
+    handleShareCard,
     handlePreview,
     handleDelete,
     handleDownloadCard,
