@@ -51,7 +51,7 @@ interface BusinessCardProps {
   handlePreview: (card: FormattedBusinessCard) => void;
   handleDownloadCard: (card: FormattedBusinessCard) => void;
   handleDelete: (cardId: string) => void;
-  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy") => TemplateStyles;
+  getTemplateStyles: (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => TemplateStyles;
   setHoveredButton: (buttonId: string | null) => void;
 }
 
@@ -117,16 +117,16 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
           <div className="space-y-1" style={{ color: templateStyles.textColor }}>
             <div className="flex items-center gap-2 text-xs">
               <Mail className="w-3 h-3 flex-shrink-0 opacity-75" />
-              <span className="truncate">{card.company.email}</span>
+              <span className="truncate">{card.personEmail || card.company.email}</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
               <Globe className="w-3 h-3 flex-shrink-0 opacity-75" />
               <span className="truncate">{card.company.website}</span>
             </div>
-            {card.company.phone && (
+            {(card.personPhone || card.company.phone) && (
               <div className="flex items-center gap-2 text-xs">
                 <Phone className="w-3 h-3 flex-shrink-0 opacity-75" />
-                <span className="truncate">{card.company.phone}</span>
+                <span className="truncate">{card.personPhone || card.company.phone}</span>
               </div>
             )}
           </div>

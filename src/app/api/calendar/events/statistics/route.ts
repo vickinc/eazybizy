@@ -26,7 +26,7 @@ class CalendarStatisticsCache {
     }
 
     // Calculate fresh statistics
-    const where: unknown = {};
+    const where: any = {};
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId);
     }
@@ -95,7 +95,7 @@ class CalendarStatisticsCache {
 
     // Generate last 12 months
     const monthsArray: Array<{ month: string; count: number }> = [];
-    for (const i = 11; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const date = new Date(now_date.getFullYear(), now_date.getMonth() - i, 1);
       const monthKey = date.toISOString().slice(0, 7);
       monthsArray.push({

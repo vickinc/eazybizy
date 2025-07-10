@@ -847,6 +847,8 @@ model BusinessCard {
   companyId    Int
   personName   String              @default("")
   position     String              @default("")
+  personEmail  String              @default("")
+  personPhone  String              @default("")
   qrType       BusinessCardQRType  @default(WEBSITE)
   qrValue      String              @default("")
   template     BusinessCardTemplate @default(MODERN)
@@ -897,6 +899,7 @@ enum BusinessCardTemplate {
   CLASSIC
   MINIMAL
   EAZY
+  BIZY
 
   @@map("business_card_template")
 }

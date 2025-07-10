@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Force rebuild */
+
 @custom-variant dark (&:is(.dark *));
 
 /* Force calendar to not be sticky */

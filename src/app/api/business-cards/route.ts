@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { companyId, personName, position, qrType, template } = body;
+    const { companyId, personName, position, personEmail, personPhone, qrType, template } = body;
 
     // Validate required fields
     if (!companyId) {
@@ -105,8 +105,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine QR value based on type
-    const qrValue = qrType?.toUpperCase() === 'WEBSITE' ? company.website : company.email;
+    // Determine QR value based on type - use person email if available, otherwise company email
+    const qrValue = qrType?.toUpperCase() === 'WEBSITE' 
+      ? company.website 
+      : (personEmail || company.email);
 
     // Create business card
     const businessCard = await prisma.businessCard.create({
@@ -114,6 +116,8 @@ export async function POST(request: NextRequest) {
         companyId: parseInt(companyId),
         personName: personName || '',
         position: position || '',
+        personEmail: personEmail || '',
+        personPhone: personPhone || '',
         qrType: qrType?.toUpperCase() || 'WEBSITE',
         qrValue,
         template: template?.toUpperCase() || 'MODERN'

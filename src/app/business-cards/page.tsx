@@ -4,7 +4,8 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreditCard, Plus } from "lucide-react";
+import { CreditCard, Plus, Users } from "lucide-react";
+import Link from "next/link";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBusinessCardsManagementDB } from "@/hooks/useBusinessCardsManagementDB";
 import { CreateCardDialog } from "@/components/features/CreateCardDialog";
@@ -40,9 +41,13 @@ export default function BusinessCardsPage() {
     // Form State
     formData,
     
+    // Person Options
+    personOptions,
+    
     // Company Info
     selectedCompanyName,
     canAddCard,
+    hasRepresentativesOrShareholders,
     
     // Loading & Error States
     isLoading,
@@ -127,7 +132,7 @@ export default function BusinessCardsPage() {
         </div>
 
         {/* Add Business Card Section */}
-        {canAddCard ? (
+        {canAddCard && hasRepresentativesOrShareholders ? (
           <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
             <DialogTrigger asChild>
               <Button className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-lg font-bold text-white" onClick={openDialog}>
@@ -137,14 +142,14 @@ export default function BusinessCardsPage() {
             </DialogTrigger>
             <CreateCardDialog 
               formData={formData}
-              companies={companies}
-              handleInputChange={handleInputChange}
+              personOptions={personOptions}
+              selectedCompany={selectedCompanyObj}
               handleSelectChange={handleSelectChange}
               handleCreateCard={handleCreateCard}
               closeDialog={closeDialog}
             />
           </Dialog>
-        ) : (
+        ) : canAddCard ? null : (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <div className="bg-amber-100 p-2 rounded-full">
@@ -158,6 +163,28 @@ export default function BusinessCardsPage() {
           </div>
         )}
       </div>
+
+      {/* Representatives/Shareholders Notice */}
+      {canAddCard && !hasRepresentativesOrShareholders && (
+        <div className="mb-6">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-amber-100 p-2 rounded-full">
+                <Users className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-amber-800 font-semibold">Add Company Representatives and Shareholders Required</h3>
+                <p className="text-amber-700 text-sm mt-1">Before creating business cards, please add company representatives and/or shareholders to your company profile.</p>
+              </div>
+              <Link href={`/companies/company-onboarding?edit=${selectedCompanyObj?.id}&step=owners`}>
+                <Button variant="outline" className="bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100">
+                  Go to Company Profile
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BusinessCardList 
         visibleCards={businessCards}

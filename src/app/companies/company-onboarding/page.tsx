@@ -11,6 +11,7 @@ import { useCompanyOnboardingDB } from "@/hooks/useCompanyOnboardingDB";
 function CompanyOnboardingContent() {
   const searchParams = useSearchParams();
   const companyId = searchParams.get('edit');
+  const initialStep = searchParams.get('step');
   const isEditing = !!companyId;
 
   // Get loading state from the onboarding hook
@@ -52,7 +53,7 @@ function CompanyOnboardingContent() {
         </div>
 
         {/* Onboarding Wizard */}
-        <OnboardingWizard editingCompanyId={companyId} />
+        <OnboardingWizard editingCompanyId={companyId} initialStep={initialStep} />
       </div>
     </div>
   );

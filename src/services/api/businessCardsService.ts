@@ -6,6 +6,8 @@ export interface BusinessCardResponse {
   companyId: number;
   personName: string;
   position: string;
+  personEmail: string;
+  personPhone: string;
   qrType: string;
   qrValue: string;
   template: string;
@@ -67,6 +69,8 @@ export interface BusinessCardCreateRequest {
   companyId: number;
   personName?: string;
   position?: string;
+  personEmail?: string;
+  personPhone?: string;
   qrType?: string;
   template?: string;
 }
@@ -74,6 +78,8 @@ export interface BusinessCardCreateRequest {
 export interface BusinessCardUpdateRequest {
   personName?: string;
   position?: string;
+  personEmail?: string;
+  personPhone?: string;
   qrType?: string;
   template?: string;
   isArchived?: boolean;
@@ -90,6 +96,8 @@ export class BusinessCardsService {
       company: card.company,
       personName: card.personName,
       position: card.position,
+      personEmail: card.personEmail,
+      personPhone: card.personPhone,
       qrType: card.qrType.toLowerCase() as BusinessCard['qrType'],
       qrValue: card.qrValue,
       template: card.template.toLowerCase() as BusinessCard['template'],

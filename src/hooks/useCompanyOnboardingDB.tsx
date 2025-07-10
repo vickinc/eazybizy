@@ -41,11 +41,18 @@ export interface CompanyOnboardingDBHook {
   getStepErrors: () => string[];
 }
 
-export function useCompanyOnboardingDB(editingCompanyId?: string | null): CompanyOnboardingDBHook {
+export function useCompanyOnboardingDB(editingCompanyId?: string | null, initialStep?: string | null): CompanyOnboardingDBHook {
   const router = useRouter();
   const queryClient = useQueryClient();
   const companyApiService = new CompanyApiService();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>('company');
+  
+  // Validate and set initial step
+  const validSteps: OnboardingStep[] = ['company', 'business', 'owners', 'review', 'complete'];
+  const defaultStep: OnboardingStep = initialStep && validSteps.includes(initialStep as OnboardingStep) 
+    ? (initialStep as OnboardingStep) 
+    : 'company';
+  
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(defaultStep);
   
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);

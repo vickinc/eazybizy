@@ -6,19 +6,30 @@ export interface BusinessCard {
   company: Company;
   personName?: string;
   position?: string;
+  personEmail?: string;
+  personPhone?: string;
   qrType: "website" | "email";
   qrValue: string;
-  template: "modern" | "classic" | "minimal" | "eazy";
+  template: "modern" | "classic" | "minimal" | "eazy" | "bizy";
   createdAt: Date;
   isArchived?: boolean;
 }
 
+export interface PersonOption {
+  id: string;
+  type: 'representative' | 'shareholder';
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  role: string; // For representatives: actual role, for shareholders: "X% Owner"
+}
+
 export interface BusinessCardFormData {
-  companyId: number;
-  personName: string;
-  position: string;
+  personId: string;
+  personType: 'representative' | 'shareholder';
   qrType: "website" | "email";
-  template: "modern" | "classic" | "minimal" | "eazy";
+  template: "modern" | "classic" | "minimal" | "eazy" | "bizy";
 }
 
 export interface FormattedBusinessCard extends BusinessCard {

@@ -4,7 +4,7 @@ import {
   useMutation, 
   useQueryClient 
 } from '@tanstack/react-query';
-import { BusinessCard, BusinessCardFormData } from '@/types/businessCards.types';
+import { BusinessCard, BusinessCardFormData, PersonOption } from '@/types/businessCards.types';
 import { BusinessCardsBusinessService } from '@/services/business/businessCardsBusinessService';
 import { Company } from '@/types';
 import { 
@@ -38,9 +38,13 @@ export interface BusinessCardsManagementDBHook {
   // Form State
   formData: BusinessCardFormData;
   
+  // Person Options
+  personOptions: PersonOption[];
+  
   // Company Info
   selectedCompanyName: string;
   canAddCard: boolean;
+  hasRepresentativesOrShareholders: boolean;
   
   // Loading & Error States
   isLoading: boolean;
@@ -77,11 +81,10 @@ export interface BusinessCardsManagementDBHook {
 }
 
 const initialFormData: BusinessCardFormData = {
-  companyId: 0,
-  personName: "",
-  position: "",
+  personId: "",
+  personType: "representative",
   qrType: "website",
-  template: "modern"
+  template: "eazy"
 };
 
 export function useBusinessCardsManagementDB(
@@ -186,6 +189,65 @@ export function useBusinessCardsManagementDB(
     }
   });
   
+  // Company logic and person options (must be defined before form actions)
+  const canAddCard = selectedCompany !== 'all' && selectedCompany !== null;
+  const selectedCompanyName = useMemo(() => {
+    if (selectedCompany === 'all' || !selectedCompany) return '';
+    const company = companies.find(c => c.id === selectedCompany);
+    return company?.tradingName || '';
+  }, [selectedCompany, companies]);
+  
+  const hasRepresentativesOrShareholders = useMemo(() => {
+    if (selectedCompany === 'all' || !selectedCompany) return true;
+    const company = companies.find(c => c.id === selectedCompany);
+    if (!company) return false;
+    const hasReps = company.representatives && company.representatives.length > 0;
+    const hasShareholders = company.shareholders && company.shareholders.length > 0;
+    return hasReps || hasShareholders;
+  }, [selectedCompany, companies]);
+
+  // Generate person options from selected company's representatives and shareholders
+  const personOptions = useMemo(() => {
+    if (selectedCompany === 'all' || !selectedCompany) return [];
+    const company = companies.find(c => c.id === selectedCompany);
+    if (!company) return [];
+
+    const options: PersonOption[] = [];
+
+    // Add representatives
+    if (company.representatives) {
+      company.representatives.forEach((rep, index) => {
+        const displayRole = rep.role === 'Other' ? rep.customRole || 'Other' : rep.role;
+        options.push({
+          id: `rep-${index}`,
+          type: 'representative',
+          firstName: rep.firstName,
+          lastName: rep.lastName,
+          email: rep.email,
+          phoneNumber: rep.phoneNumber || '',
+          role: displayRole
+        });
+      });
+    }
+
+    // Add shareholders
+    if (company.shareholders) {
+      company.shareholders.forEach((shareholder, index) => {
+        options.push({
+          id: `share-${index}`,
+          type: 'shareholder',
+          firstName: shareholder.firstName,
+          lastName: shareholder.lastName,
+          email: shareholder.email,
+          phoneNumber: shareholder.phoneNumber || '',
+          role: 'Shareholder'
+        });
+      });
+    }
+
+    return options;
+  }, [selectedCompany, companies]);
+
   // Form Actions
   const updateFormField = useCallback((field: keyof BusinessCardFormData, value: string | number) => {
     setFormData(prev => ({
@@ -204,12 +266,17 @@ export function useBusinessCardsManagementDB(
   }, [updateFormField]);
   
   const handleSelectChange = useCallback((name: string, value: string) => {
-    if (name === 'companyId') {
-      updateFormField(name, parseInt(value) || 0);
+    if (name === 'personId') {
+      // When person is selected, also set the person type
+      const selectedPerson = personOptions.find(p => p.id === value);
+      if (selectedPerson) {
+        updateFormField('personId', value);
+        updateFormField('personType', selectedPerson.type);
+      }
     } else {
       updateFormField(name as keyof BusinessCardFormData, value);
     }
-  }, [updateFormField]);
+  }, [updateFormField, personOptions]);
   
   // Dialog Management
   const openDialog = useCallback(() => {
@@ -233,27 +300,44 @@ export function useBusinessCardsManagementDB(
   // CRUD Operations
   const handleCreateCard = useCallback(() => {
     // Basic validation
-    if (!formData.companyId) {
+    if (!formData.personId) {
+      toast.error('Please select a person');
+      return;
+    }
+
+    if (selectedCompany === 'all' || !selectedCompany) {
       toast.error('Please select a company');
       return;
     }
     
-    const company = companies.find(c => c.id === formData.companyId);
+    const company = companies.find(c => c.id === selectedCompany);
     if (!company) {
       toast.error('Selected company not found');
       return;
     }
+
+    // Find the selected person
+    const selectedPerson = personOptions.find(p => p.id === formData.personId);
+    if (!selectedPerson) {
+      toast.error('Selected person not found');
+      return;
+    }
+
+    const personName = `${selectedPerson.firstName} ${selectedPerson.lastName}`;
+    const position = selectedPerson.role;
     
     const cardData: BusinessCardCreateRequest = {
-      companyId: formData.companyId,
-      personName: formData.personName || '',
-      position: formData.position || '',
+      companyId: typeof selectedCompany === 'number' ? selectedCompany : parseInt(selectedCompany.toString()),
+      personName,
+      position,
+      personEmail: selectedPerson.email,
+      personPhone: selectedPerson.phoneNumber,
       qrType: formData.qrType,
       template: formData.template
     };
     
     createBusinessCardMutation.mutate(cardData);
-  }, [formData, companies, createBusinessCardMutation]);
+  }, [formData, selectedCompany, companies, personOptions, createBusinessCardMutation]);
   
   const handlePreview = useCallback((card: BusinessCard) => {
     setPreviewCard(card);
@@ -285,7 +369,7 @@ export function useBusinessCardsManagementDB(
   }, [archiveBusinessCardMutation]);
   
   // Utility Functions
-  const getTemplateStyles = useCallback((template: "modern" | "classic" | "minimal" | "eazy") => {
+  const getTemplateStyles = useCallback((template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => {
     // Template styles - same as original implementation
     const styles = {
       modern: {
@@ -309,6 +393,11 @@ export function useBusinessCardsManagementDB(
         color: '#365314',
         border: '1px solid #a3e635',
         textColor: '#365314'
+      },
+      bizy: {
+        background: 'linear-gradient(316deg, #ffcc66 0%, #ff9933 74%)',
+        backgroundColor: '#ffcc66',
+        textColor: 'black'
       }
     };
     
@@ -318,14 +407,6 @@ export function useBusinessCardsManagementDB(
   const refetch = useCallback(() => {
     refetchBusinessCards();
   }, [refetchBusinessCards]);
-
-  // Company logic
-  const canAddCard = selectedCompany !== 'all' && selectedCompany !== null;
-  const selectedCompanyName = useMemo(() => {
-    if (selectedCompany === 'all' || !selectedCompany) return '';
-    const company = companies.find(c => c.id === selectedCompany);
-    return company?.tradingName || '';
-  }, [selectedCompany, companies]);
   
   return {
     // Data
@@ -342,9 +423,13 @@ export function useBusinessCardsManagementDB(
     // Form State
     formData,
     
+    // Person Options
+    personOptions,
+    
     // Company Info
     selectedCompanyName,
     canAddCard,
+    hasRepresentativesOrShareholders,
     
     // Loading & Error States
     isLoading,

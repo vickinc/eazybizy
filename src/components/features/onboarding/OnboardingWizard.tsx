@@ -9,9 +9,10 @@ import { WelcomeStep } from './WelcomeStep';
 
 interface OnboardingWizardProps {
   editingCompanyId?: string | null;
+  initialStep?: string | null;
 }
 
-export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ editingCompanyId }) => {
+export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ editingCompanyId, initialStep }) => {
   const {
     // Current state
     currentStep,
@@ -36,7 +37,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ editingCompa
     
     // Validation
     getStepErrors
-  } = useCompanyOnboardingDB(editingCompanyId);
+  } = useCompanyOnboardingDB(editingCompanyId, initialStep);
 
   const renderStepIndicator = () => {
     const steps = [

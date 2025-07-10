@@ -29,10 +29,15 @@ export class BusinessCardsBusinessService {
   }
 
   static formatBusinessCardForDisplay(card: BusinessCard): FormattedBusinessCard {
+    // Generate QR code dynamically based on current data
+    const qrValue = card.qrType === 'website' 
+      ? card.company.website 
+      : (card.personEmail || card.company.email);
+      
     return {
       ...card,
       formattedCreatedAt: formatDateForDisplay(card.createdAt.toISOString().split('T')[0]),
-      qrCodeUrl: BusinessCardsBusinessService.generateQRCodeUrl(card.qrValue)
+      qrCodeUrl: BusinessCardsBusinessService.generateQRCodeUrl(qrValue)
     };
   }
 
@@ -106,7 +111,7 @@ export class BusinessCardsBusinessService {
           {
             key: "email",
             label: "Email",
-            value: card.company.email
+            value: card.personEmail || card.company.email
           },
           {
             key: "website",
@@ -118,12 +123,12 @@ export class BusinessCardsBusinessService {
           {
             key: "phone",
             label: "Phone",
-            value: card.company.phone
+            value: card.personPhone || card.company.phone
           },
           {
             key: "email_back",
             label: "Email",
-            value: card.company.email
+            value: card.personEmail || card.company.email
           },
           {
             key: "website_back", 
@@ -143,7 +148,9 @@ export class BusinessCardsBusinessService {
         ]
       },
       barcode: {
-        message: card.qrValue,
+        message: card.qrType === 'website' 
+          ? card.company.website 
+          : (card.personEmail || card.company.email),
         format: "PKBarcodeFormatQR",
         messageEncoding: "iso-8859-1"
       }
@@ -221,7 +228,7 @@ export class BusinessCardsBusinessService {
                 <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                 <path d="m22 7-10 5L2 7"></path>
               </svg>
-              <span>${card.company.email}</span>
+              <span>${card.personEmail || card.company.email}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: ${templateStyles.textColor};">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;">
@@ -231,19 +238,23 @@ export class BusinessCardsBusinessService {
               </svg>
               <span>${card.company.website}</span>
             </div>
-            ${card.company.phone ? `
+            ${(card.personPhone || card.company.phone) ? `
               <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: ${templateStyles.textColor};">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75;">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
-                <span>${card.company.phone}</span>
+                <span>${card.personPhone || card.company.phone}</span>
               </div>
             ` : ''}
           </div>
         </div>
         
         <div style="position: absolute; bottom: 24px; right: 24px; width: 70px; height: 70px; background: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">
-          <img src="${BusinessCardsBusinessService.generateQRCodeUrl(card.qrValue)}" alt="QR Code" style="width: 100%; height: 100%;">
+          <img src="${BusinessCardsBusinessService.generateQRCodeUrl(
+            card.qrType === 'website' 
+              ? card.company.website 
+              : (card.personEmail || card.company.email)
+          )}" alt="QR Code" style="width: 100%; height: 100%;">
         </div>
       `;
       
@@ -413,7 +424,7 @@ export class BusinessCardsBusinessService {
     return oklchColor; // Return original if not OKLCH
   }
 
-  static getTemplateStyles(template: "modern" | "classic" | "minimal" | "eazy") {
+  static getTemplateStyles(template: "modern" | "classic" | "minimal" | "eazy" | "bizy") {
     switch (template) {
       case "modern":
         return {
@@ -441,6 +452,13 @@ export class BusinessCardsBusinessService {
           color: "#365314",
           border: "1px solid #a3e635",
           textColor: "#365314"
+        };
+      case "bizy":
+        return {
+          background: "linear-gradient(316deg, #ffcc66 0%, #ff9933 74%)",
+          backgroundColor: "#ffcc66",
+          color: "#000000",
+          textColor: "#000000"
         };
       default:
         return {
