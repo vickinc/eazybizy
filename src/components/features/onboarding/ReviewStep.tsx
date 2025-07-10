@@ -17,7 +17,10 @@ import {
   Loader2,
   Hash,
   Calendar,
-  FileText
+  FileText,
+  Users,
+  UserCheck,
+  User
 } from 'lucide-react';
 import { CompanyFormData } from '@/services/business/companyValidationService';
 
@@ -27,7 +30,7 @@ interface ReviewStepProps {
   isLoading: boolean;
   onPrev: () => void;
   onSubmit: () => void;
-  onGoToStep: (step: 'company' | 'business') => void;
+  onGoToStep: (step: 'company' | 'business' | 'owners') => void;
   errors: string[];
   isEditing?: boolean;
 }
@@ -405,6 +408,151 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           </CardContent>
         </Card>
 
+        {/* Owners & Representatives */}
+        {(formData.shareholders.length > 0 || formData.representatives.length > 0) && (
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-indigo-600" />
+                  Owners & Representatives
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => onGoToStep('owners')}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Shareholders */}
+              {formData.shareholders.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                    <User className="h-4 w-4 mr-2 text-blue-600" />
+                    Shareholders ({formData.shareholders.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {formData.shareholders.map((shareholder, index) => (
+                      <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {shareholder.firstName} {shareholder.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600">{shareholder.email}</p>
+                            {shareholder.phoneNumber && (
+                              <p className="text-sm text-gray-600">{shareholder.phoneNumber}</p>
+                            )}
+                            {(shareholder.nationality || shareholder.countryOfResidence) && (
+                              <p className="text-sm text-gray-500">
+                                {shareholder.nationality && `Nationality: ${shareholder.nationality}`}
+                                {shareholder.nationality && shareholder.countryOfResidence && ' • '}
+                                {shareholder.countryOfResidence && `Residence: ${shareholder.countryOfResidence}`}
+                              </p>
+                            )}
+                          </div>
+                          <div className="ml-4 text-right">
+                            <Badge variant="outline" className="text-blue-600 border-blue-200">
+                              {shareholder.ownershipPercent}% ownership
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Total Ownership */}
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-blue-900">Total Ownership:</span>
+                      <span className="font-bold text-blue-900">
+                        {formData.shareholders.reduce((total, s) => total + s.ownershipPercent, 0)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Representatives */}
+              {formData.representatives.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                    <UserCheck className="h-4 w-4 mr-2 text-purple-600" />
+                    Representatives ({formData.representatives.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {formData.representatives.map((rep, index) => (
+                      <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {rep.firstName} {rep.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600">{rep.email}</p>
+                            {rep.phoneNumber && (
+                              <p className="text-sm text-gray-600">{rep.phoneNumber}</p>
+                            )}
+                            {(rep.nationality || rep.countryOfResidence) && (
+                              <p className="text-sm text-gray-500">
+                                {rep.nationality && `Nationality: ${rep.nationality}`}
+                                {rep.nationality && rep.countryOfResidence && ' • '}
+                                {rep.countryOfResidence && `Residence: ${rep.countryOfResidence}`}
+                              </p>
+                            )}
+                          </div>
+                          <div className="ml-4 text-right">
+                            <Badge variant="outline" className="text-purple-600 border-purple-200">
+                              {rep.role === 'Other' ? rep.customRole : rep.role}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Main Contact Person */}
+              {formData.mainContactPerson && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-4 flex items-center">
+                    <Mail className="h-4 w-4 mr-2 text-green-600" />
+                    Main Contact Person
+                  </h4>
+                  <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        {formData.mainContactPerson.type === 'shareholder' ? (
+                          <User className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <UserCheck className="h-4 w-4 text-green-600" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-green-900">
+                          {formData.mainContactPerson.firstName} {formData.mainContactPerson.lastName}
+                        </p>
+                        <p className="text-sm text-green-700 flex items-center">
+                          <Mail className="h-3 w-3 mr-1" />
+                          {formData.mainContactPerson.email}
+                        </p>
+                        {formData.mainContactPerson.phoneNumber && (
+                          <p className="text-sm text-green-700 flex items-center">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {formData.mainContactPerson.phoneNumber}
+                          </p>
+                        )}
+                        <p className="text-sm text-green-600 font-medium">
+                          {formData.mainContactPerson.displayRole} • Primary contact
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       </div>
 

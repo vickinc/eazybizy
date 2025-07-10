@@ -12,7 +12,7 @@ import { CompanyBusinessService } from '@/services/business/companyBusinessServi
 import { Company } from '@/types/company.types';
 import { companiesCache } from '@/services/cache/companiesCache';
 
-type OnboardingStep = 'company' | 'business' | 'review' | 'complete';
+type OnboardingStep = 'company' | 'business' | 'owners' | 'review' | 'complete';
 
 export interface CompanyOnboardingDBHook {
   // Current state
@@ -25,7 +25,7 @@ export interface CompanyOnboardingDBHook {
   // Navigation
   nextStep: () => void;
   prevStep: () => void;
-  goToStep: (step: 'company' | 'business') => void;
+  goToStep: (step: 'company' | 'business' | 'owners') => void;
   canProceed: boolean;
   
   // Form handling
@@ -72,7 +72,10 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
     xUrl: '',
     youtubeUrl: '',
     whatsappNumber: '',
-    telegramNumber: ''
+    telegramNumber: '',
+    shareholders: [],
+    representatives: [],
+    mainContactPerson: undefined
   });
 
   // Fetch company data if editing
@@ -112,8 +115,44 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
         xUrl: existingCompany.xUrl || '',
         youtubeUrl: existingCompany.youtubeUrl || '',
         whatsappNumber: existingCompany.whatsappNumber || '',
-        telegramNumber: existingCompany.telegramNumber || ''
+        telegramNumber: existingCompany.telegramNumber || '',
+        shareholders: existingCompany.shareholders || [],
+        representatives: existingCompany.representatives || [],
+        mainContactPerson: undefined // Will be set after form data is populated
       });
+
+      // Reconstruct main contact person from database fields
+      if (existingCompany.mainContactEmail && existingCompany.mainContactType) {
+        const allPersons = [
+          ...(existingCompany.representatives || []).map((r, index) => ({
+            type: 'representative' as const,
+            id: index,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            email: r.email,
+            phoneNumber: r.phoneNumber || '',
+            displayRole: r.role === 'Other' ? r.customRole || 'Other' : r.role
+          })),
+          ...(existingCompany.shareholders || []).map((s, index) => ({
+            type: 'shareholder' as const,
+            id: index,
+            firstName: s.firstName,
+            lastName: s.lastName,
+            email: s.email,
+            phoneNumber: s.phoneNumber || '',
+            displayRole: `${s.ownershipPercent}% Owner`
+          }))
+        ];
+        
+        const mainContact = allPersons.find(p => 
+          p.email === existingCompany.mainContactEmail && 
+          p.type === existingCompany.mainContactType
+        );
+        
+        if (mainContact) {
+          setFormData(prev => ({ ...prev, mainContactPerson: mainContact }));
+        }
+      }
 
       // Handle logo preview
       if (existingCompany.logo && CompanyBusinessService.isImageLogo(existingCompany.logo)) {
@@ -314,9 +353,63 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
     return errors;
   };
 
+  const validateOwnersStep = () => {
+    const errors: string[] = [];
+    
+    // At least one representative is required
+    if (formData.representatives.length === 0) {
+      errors.push('At least one company representative is required');
+    }
+    
+    // Validate shareholder data (optional, but if provided must be complete)
+    formData.shareholders.forEach((shareholder, index) => {
+      if (!shareholder.firstName.trim()) {
+        errors.push(`Shareholder ${index + 1}: First name is required`);
+      }
+      if (!shareholder.lastName.trim()) {
+        errors.push(`Shareholder ${index + 1}: Last name is required`);
+      }
+      if (!shareholder.email.trim()) {
+        errors.push(`Shareholder ${index + 1}: Email is required`);
+      }
+      if (!shareholder.ownershipPercent || shareholder.ownershipPercent <= 0 || shareholder.ownershipPercent > 100) {
+        errors.push(`Shareholder ${index + 1}: Ownership percentage must be greater than 0 and not exceed 100%`);
+      }
+    });
+    
+    // Check total ownership doesn't exceed 100%
+    if (formData.shareholders.length > 0) {
+      const totalOwnership = formData.shareholders.reduce((total, s) => total + (s.ownershipPercent || 0), 0);
+      if (totalOwnership > 100) {
+        errors.push('Total ownership percentage cannot exceed 100%');
+      }
+    }
+    
+    // Validate representative data
+    formData.representatives.forEach((rep, index) => {
+      if (!rep.firstName.trim()) {
+        errors.push(`Representative ${index + 1}: First name is required`);
+      }
+      if (!rep.lastName.trim()) {
+        errors.push(`Representative ${index + 1}: Last name is required`);
+      }
+      if (!rep.email.trim()) {
+        errors.push(`Representative ${index + 1}: Email is required`);
+      }
+      if (!rep.role) {
+        errors.push(`Representative ${index + 1}: Role is required`);
+      }
+      if (rep.role === 'Other' && !rep.customRole?.trim()) {
+        errors.push(`Representative ${index + 1}: Custom role is required when role is 'Other'`);
+      }
+    });
+    
+    return errors;
+  };
+
   const validateReviewStep = () => {
     // Combine all validations for final review
-    return [...validateCompanyStep(), ...validateBusinessStep()];
+    return [...validateCompanyStep(), ...validateBusinessStep(), ...validateOwnersStep()];
   };
 
   // Get current step validation errors
@@ -326,6 +419,8 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
         return validateCompanyStep();
       case 'business':
         return validateBusinessStep();
+      case 'owners':
+        return validateOwnersStep();
       case 'review':
         return validateReviewStep();
       default:
@@ -351,6 +446,9 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
         setCurrentStep('business');
         break;
       case 'business':
+        setCurrentStep('owners');
+        break;
+      case 'owners':
         setCurrentStep('review');
         break;
       case 'review':
@@ -364,14 +462,17 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null): Compan
       case 'business':
         setCurrentStep('company');
         break;
-      case 'review':
+      case 'owners':
         setCurrentStep('business');
+        break;
+      case 'review':
+        setCurrentStep('owners');
         break;
     }
   }, [currentStep]);
 
   // Go to specific step (used for edit navigation from review)
-  const goToStep = useCallback((step: 'company' | 'business') => {
+  const goToStep = useCallback((step: 'company' | 'business' | 'owners') => {
     setCurrentStep(step);
   }, []);
 

@@ -23,8 +23,67 @@ export interface Company {
   // Messenger contact numbers (optional)
   whatsappNumber?: string;
   telegramNumber?: string;
+  // Main contact person
+  mainContactEmail?: string;
+  mainContactType?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  // Ownership and representatives
+  shareholders?: Shareholder[];
+  representatives?: Representative[];
+}
+
+export interface Shareholder {
+  id?: number;
+  companyId?: number;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string; // ISO date string for form handling
+  nationality: string;
+  countryOfResidence: string;
+  email: string;
+  phoneNumber: string;
+  ownershipPercent: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export type RepresentativeRole = 
+  | 'Chief Executive Officer'
+  | 'Chief Financial Officer'
+  | 'Chief Operating Officer'
+  | 'Board of Directors'
+  | 'President'
+  | 'Managing Director'
+  | 'Public Relations Officer'
+  | 'Company Secretary'
+  | 'Vice President'
+  | 'Other';
+
+export interface Representative {
+  id?: number;
+  companyId?: number;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string; // ISO date string for form handling
+  nationality: string;
+  countryOfResidence: string;
+  email: string;
+  phoneNumber: string;
+  role: RepresentativeRole;
+  customRole?: string; // Required when role is 'Other'
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ContactPerson {
+  type: 'shareholder' | 'representative';
+  id?: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  displayRole?: string; // For representatives: their role, for shareholders: ownership %
 }
 
 // Cursor pagination types

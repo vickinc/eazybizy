@@ -1,4 +1,4 @@
-import { Company } from '@/types';
+import { Company, Shareholder, Representative, ContactPerson } from '@/types';
 
 export interface CompanyFormData {
   legalName: string;
@@ -23,6 +23,10 @@ export interface CompanyFormData {
   // Messenger contact numbers (optional)
   whatsappNumber: string;
   telegramNumber: string;
+  // Ownership and representatives
+  shareholders: Shareholder[];
+  representatives: Representative[];
+  mainContactPerson?: ContactPerson;
 }
 
 export interface ValidationResult {

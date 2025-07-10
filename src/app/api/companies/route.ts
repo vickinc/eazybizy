@@ -119,6 +119,9 @@ export async function POST(request: NextRequest) {
       youtubeUrl,
       whatsappNumber,
       telegramNumber,
+      shareholders = [],
+      representatives = [],
+      mainContactPerson,
     } = body
     
     // Validate required fields
@@ -144,32 +147,85 @@ export async function POST(request: NextRequest) {
     // Validate and fix logo before creation
     const validatedLogo = CompanyBusinessService.validateAndFixLogo(logo, tradingName);
 
-    const company = await prisma.company.create({
-      data: {
-        legalName,
-        tradingName,
-        registrationNo,
-        registrationDate: new Date(registrationDate),
-        countryOfRegistration,
-        baseCurrency,
-        businessLicenseNr,
-        vatNumber,
-        industry,
-        address,
-        phone,
-        email,
-        website,
-        status,
-        logo: validatedLogo,
-        facebookUrl,
-        instagramUrl,
-        xUrl,
-        youtubeUrl,
-        whatsappNumber,
-        telegramNumber,
-      },
-      // Removed expensive _count include for better performance
-    })
+    // Use transaction to create company with shareholders and representatives
+    const company = await prisma.$transaction(async (tx) => {
+      // Create the company first
+      const newCompany = await tx.company.create({
+        data: {
+          legalName,
+          tradingName,
+          registrationNo,
+          registrationDate: new Date(registrationDate),
+          countryOfRegistration,
+          baseCurrency,
+          businessLicenseNr,
+          vatNumber,
+          industry,
+          address,
+          phone,
+          email,
+          website,
+          status,
+          logo: validatedLogo,
+          facebookUrl,
+          instagramUrl,
+          xUrl,
+          youtubeUrl,
+          whatsappNumber,
+          telegramNumber,
+          mainContactEmail: mainContactPerson?.email,
+          mainContactType: mainContactPerson?.type,
+        },
+      });
+
+      // Create shareholders if provided
+      if (shareholders && shareholders.length > 0) {
+        await tx.shareholder.createMany({
+          data: shareholders.map((shareholder: any) => ({
+            companyId: newCompany.id,
+            firstName: shareholder.firstName,
+            lastName: shareholder.lastName,
+            dateOfBirth: new Date(shareholder.dateOfBirth),
+            nationality: shareholder.nationality || '',
+            countryOfResidence: shareholder.countryOfResidence || '',
+            email: shareholder.email,
+            phoneNumber: shareholder.phoneNumber || '',
+            ownershipPercent: shareholder.ownershipPercent,
+          })),
+        });
+      }
+
+      // Create representatives if provided
+      if (representatives && representatives.length > 0) {
+        await tx.representative.createMany({
+          data: representatives.map((rep: any) => ({
+            companyId: newCompany.id,
+            firstName: rep.firstName,
+            lastName: rep.lastName,
+            dateOfBirth: new Date(rep.dateOfBirth),
+            nationality: rep.nationality || '',
+            countryOfResidence: rep.countryOfResidence || '',
+            email: rep.email,
+            phoneNumber: rep.phoneNumber || '',
+            role: rep.role,
+            customRole: rep.customRole || null,
+          })),
+        });
+      }
+
+      // Return company with related data
+      return await tx.company.findUnique({
+        where: { id: newCompany.id },
+        include: {
+          shareholders: true,
+          representatives: true,
+        },
+      });
+    });
+
+    if (!company) {
+      throw new Error('Failed to create company');
+    }
     
     // Invalidate statistics cache after creating a company
     await invalidateCompanyStatistics()

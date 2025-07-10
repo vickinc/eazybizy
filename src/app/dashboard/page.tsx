@@ -1,31 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Building2, Calendar, StickyNote, CreditCard, Plus, TrendingUp, Clock, CalendarDays, FileText, AlertCircle, Copy, ExternalLink, Home } from "lucide-react";
+import { Building2, Plus, Home, AlertCircle, Calendar } from "lucide-react";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
-import { useHomeDashboard } from "@/hooks/useHomeDashboard";
+import { useDashboardManagement } from "@/hooks/useDashboardManagement";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { Company } from '@/types/company.types';
-import { CalendarEvent, Note } from '@/types/calendar.types';
+import { CompanyDetailsDialog } from "@/components/features/CompanyDetailsDialog";
+import { EventDetailsDialog } from "@/components/features/EventDetailsDialog";
+import { DashboardStats } from "@/components/features/DashboardStats";
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 
 export default function Dashboard() {
-  const router = useRouter();
   const { selectedCompany: globalSelectedCompany } = useCompanyFilter();
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
-
-  // Fetch all dashboard data from database
+  
+  // Use dashboard management hook
   const {
+    // Data
     companies,
     activeCompanies,
     recentActiveCompanies,
@@ -34,8 +27,29 @@ export default function Dashboard() {
     isLoading,
     isError,
     error,
-    refetch
-  } = useHomeDashboard(globalSelectedCompany);
+    refetch,
+    
+    // UI State
+    selectedCompany,
+    isCompanyDialogOpen,
+    selectedEvent,
+    isEventDialogOpen,
+    copiedFields,
+    
+    // Handlers
+    handleAddCompany,
+    handleViewCompanies,
+    handleViewCalendar,
+    handleViewCalendarWithDate,
+    handleCompanyClick,
+    handleEventClick,
+    setIsCompanyDialogOpen,
+    setIsEventDialogOpen,
+    copyToClipboard,
+    formatEventDate,
+    getPriorityColor,
+    getTypeIcon,
+  } = useDashboardManagement(globalSelectedCompany);
 
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
@@ -44,93 +58,6 @@ export default function Dashboard() {
   const selectedCompanyObj = globalSelectedCompany !== 'all' ? companies.find(c => c.id === globalSelectedCompany) : null;
   const isFiltered = globalSelectedCompany !== 'all';
 
-  // Get type icon
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "meeting":
-        return <Clock className="h-4 w-4" />;
-      case "deadline":
-        return <AlertCircle className="h-4 w-4" />;
-      case "renewal":
-        return <CalendarDays className="h-4 w-4" />;
-      case "anniversary":
-        return <TrendingUp className="h-4 w-4" />;
-      default:
-        return <FileText className="h-4 w-4" />;
-    }
-  };
-
-  // Get priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return "bg-red-50 border-red-200 text-red-800";
-      case "high":
-        return "bg-orange-50 border-orange-200 text-orange-800";
-      case "medium":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
-      default:
-        return "bg-blue-50 border-blue-200 text-blue-800";
-    }
-  };
-
-  // Format date for display
-  const formatEventDate = (date: Date) => {
-    const eventDate = new Date(date);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    
-    // Reset hours for comparison
-    eventDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    tomorrow.setHours(0, 0, 0, 0);
-    
-    if (eventDate.getTime() === today.getTime()) {
-      return "Today";
-    } else if (eventDate.getTime() === tomorrow.getTime()) {
-      return "Tomorrow";
-    } else {
-      return eventDate.toLocaleDateString('en-GB');
-    }
-  };
-
-  const handleAddCompany = () => {
-    router.push('/companies/company-onboarding');
-  };
-
-  const handleViewCompanies = () => {
-    router.push('/companies');
-  };
-
-  const handleViewCalendar = () => {
-    router.push('/calendar');
-  };
-
-  const handleViewCalendarWithDate = (date: Date) => {
-    // Save the selected date to localStorage so the calendar can navigate to it
-    localStorage.setItem('calendar-selected-date', date.toISOString());
-    router.push('/calendar');
-  };
-
-  const handleCompanyClick = (company: Company) => {
-    setSelectedCompany(company);
-    setIsCompanyDialogOpen(true);
-  };
-
-  const handleEventClick = (event: CalendarEvent) => {
-    setSelectedEvent(event);
-    setIsEventDialogOpen(true);
-  };
-
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-    }
-  };
 
   // Handle loading state
   if (showLoader) {
@@ -173,100 +100,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <TooltipProvider>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-help">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Total Companies
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl sm:text-2xl font-bold">{isLoading ? "..." : stats.totalCompanies}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.activeCompaniesCount} Active, {stats.passiveCompaniesCount} Passive
-                  </p>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Total number of companies in your portfolio (Active + Passive)</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-help">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Upcoming Events
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl sm:text-2xl font-bold">{isLoading ? "..." : stats.upcomingEventsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Next 30 days
-                  </p>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Number of events scheduled in the next 30 days</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-help">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <StickyNote className="h-4 w-4 mr-2" />
-                    Active Notes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl sm:text-2xl font-bold">{isLoading ? "..." : stats.activeNotesCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.activeNotesCount > 0 ? "View all notes" : "No active notes"}
-                  </p>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Number of incomplete notes (Standalone + Event-Related)</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-help">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Business Cards
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xl sm:text-2xl font-bold">{isLoading ? "..." : stats.activeBusinessCardsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.activeBusinessCardsCount > 0 ? 
-                      `${stats.activeBusinessCardsCount} active, ${stats.archivedBusinessCardsCount} archived` : 
-                      "Ready to download"
-                    }
-                  </p>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Number of active business cards (not archived)</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
+      <DashboardStats stats={stats} isLoading={isLoading} />
 
       {/* Recent Activity & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -445,286 +279,24 @@ export default function Dashboard() {
       </div>
 
       {/* Event Details Dialog */}
-      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-3">
-              {selectedEvent && (
-                <>
-                  <div className="flex-shrink-0">
-                    {getTypeIcon(selectedEvent.type)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold">{selectedEvent.title}</p>
-                    <p className="text-sm text-gray-600">{formatEventDate(selectedEvent.date)} at {selectedEvent.time}</p>
-                  </div>
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Event details and information
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedEvent && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Date</p>
-                  <p className="text-sm text-gray-900">{selectedEvent.date.toLocaleDateString('en-GB')}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Time</p>
-                  <p className="text-sm text-gray-900">{selectedEvent.time}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Type</p>
-                  <Badge variant="outline" className="text-xs capitalize w-fit">
-                    {selectedEvent.type}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Priority</p>
-                  <Badge className={`text-xs w-fit ${getPriorityColor(selectedEvent.priority)}`}>
-                    {selectedEvent.priority}
-                  </Badge>
-                </div>
-              </div>
-              
-              {selectedEvent.company && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Company</p>
-                  <p className="text-sm text-gray-900">{selectedEvent.company}</p>
-                </div>
-              )}
-              
-              {selectedEvent.description && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Description</p>
-                  <p className="text-sm text-gray-900">{selectedEvent.description}</p>
-                </div>
-              )}
-              
-              {selectedEvent.participants && selectedEvent.participants.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Participants</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedEvent.participants.map((participant, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {participant}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => selectedEvent && handleViewCalendarWithDate(selectedEvent.date)}>
-              <Calendar className="w-4 h-4 mr-2" />
-              View in Calendar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EventDetailsDialog
+        event={selectedEvent}
+        isOpen={isEventDialogOpen}
+        onOpenChange={setIsEventDialogOpen}
+        onViewInCalendar={handleViewCalendarWithDate}
+        formatEventDate={formatEventDate}
+        getPriorityColor={getPriorityColor}
+        getTypeIcon={getTypeIcon}
+      />
 
       {/* Company Details Dialog */}
-      <Dialog open={isCompanyDialogOpen} onOpenChange={setIsCompanyDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-3">
-              {selectedCompany && (
-                <>
-                  <div className={`w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden ${
-                    isImageLogo(selectedCompany.logo)
-                      ? '' 
-                      : 'bg-blue-600'
-                  }`}>
-                    {isImageLogo(selectedCompany.logo) ? (
-                      <img 
-                        src={selectedCompany.logo} 
-                        alt={`${selectedCompany.tradingName} logo`} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-lg">{validateLogo(selectedCompany.logo, selectedCompany.tradingName)}</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-lg font-semibold">{selectedCompany.tradingName}</p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm text-gray-600">{selectedCompany.legalName}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(selectedCompany.legalName, 'Legal name')}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              Company information and details
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedCompany && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Registration No.</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm text-gray-900">{selectedCompany.registrationNo}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(selectedCompany.registrationNo, 'Registration number')}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Status</p>
-                  <Badge 
-                    className={`${selectedCompany.status === 'Active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {selectedCompany.status}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Registration Date</p>
-                  <p className="text-sm text-gray-900">
-                    {selectedCompany.registrationDate ? new Date(selectedCompany.registrationDate).toLocaleDateString('en-GB') : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Country</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm text-gray-900">{selectedCompany.countryOfRegistration || 'N/A'}</p>
-                    {selectedCompany.countryOfRegistration && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(selectedCompany.countryOfRegistration, 'Country')}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {selectedCompany.businessLicenseNr && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Business License</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm text-gray-900">{selectedCompany.businessLicenseNr}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(selectedCompany.businessLicenseNr!, 'Business license number')}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              <div>
-                <p className="text-sm font-medium text-gray-700">Industry</p>
-                <p className="text-sm text-gray-900">{selectedCompany.industry}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-700">Address</p>
-                <div className="flex items-start">
-                  <p className="text-sm text-gray-900">{selectedCompany.address}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(selectedCompany.address, 'Address')}
-                    className="h-6 w-6 p-0 ml-2"
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Phone</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm text-gray-900">{selectedCompany.phone}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(selectedCompany.phone, 'Phone number')}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Email</p>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm text-gray-900">{selectedCompany.email}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(selectedCompany.email, 'Email')}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-700">Website</p>
-                <div className="flex items-center space-x-2">
-                  <a 
-                    href={selectedCompany.website.startsWith('http') ? selectedCompany.website : `https://${selectedCompany.website}`}
-          target="_blank"
-          rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center space-x-1"
-                  >
-                    <span>{selectedCompany.website}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(selectedCompany.website, 'Website')}
-                    className="h-6 w-6 p-0"
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CompanyDetailsDialog
+        company={selectedCompany}
+        isOpen={isCompanyDialogOpen}
+        onOpenChange={setIsCompanyDialogOpen}
+        copiedFields={copiedFields}
+        onCopyToClipboard={copyToClipboard}
+      />
       </div>
     </div>
   );

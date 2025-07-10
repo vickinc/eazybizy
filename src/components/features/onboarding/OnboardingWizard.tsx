@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useCompanyOnboardingDB } from '@/hooks/useCompanyOnboardingDB';
 import { CompanySetupStep } from './CompanySetupStep';
 import { BusinessDetailsStep } from './BusinessDetailsStep';
+import { OwnersRepresentativesStep } from './OwnersRepresentativesStep';
 import { ReviewStep } from './ReviewStep';
 import { WelcomeStep } from './WelcomeStep';
 
@@ -41,8 +42,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ editingCompa
     const steps = [
       { id: 'company', label: 'Company Info', number: 1 },
       { id: 'business', label: 'Business Details', number: 2 },
-      { id: 'review', label: 'Review', number: 3 },
-      ...(editingCompanyId ? [] : [{ id: 'complete', label: 'Complete', number: 4 }])
+      { id: 'owners', label: 'Owners & Reps', number: 3 },
+      { id: 'review', label: 'Review', number: 4 },
+      ...(editingCompanyId ? [] : [{ id: 'complete', label: 'Complete', number: 5 }])
     ];
 
     const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -104,6 +106,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ editingCompa
         return <CompanySetupStep {...stepProps} isEditing={!!editingCompanyId} />;
       case 'business':
         return <BusinessDetailsStep {...stepProps} />;
+      case 'owners':
+        return <OwnersRepresentativesStep {...stepProps} />;
       case 'review':
         return <ReviewStep {...stepProps} onGoToStep={goToStep} isEditing={!!editingCompanyId} />;
       case 'complete':
