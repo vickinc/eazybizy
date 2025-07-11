@@ -17,6 +17,7 @@ interface EventListProps {
   getTypeIcon: (type: string) => React.ReactNode;
   formatDate?: (date: Date) => string;
   className?: string;
+  isDeleting?: boolean;
 }
 
 export const EventList: React.FC<EventListProps> = ({
@@ -32,7 +33,8 @@ export const EventList: React.FC<EventListProps> = ({
   getPriorityColor,
   getTypeIcon,
   formatDate,
-  className = ""
+  className = "",
+  isDeleting = false
 }) => {
   return (
     <Card className={className}>
@@ -64,6 +66,7 @@ export const EventList: React.FC<EventListProps> = ({
                   formatDate={formatDate}
                   showDate={showDate}
                   className={showDate ? "p-4 bg-white rounded-lg border border-gray-200 shadow-sm" : ""}
+                  isDeleting={isDeleting}
                 />
               );
             })

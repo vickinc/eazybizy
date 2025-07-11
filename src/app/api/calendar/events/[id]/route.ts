@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService';
+import { authenticateRequest } from '@/lib/api-auth';
 
 // GET /api/calendar/events/[id] - Get single calendar event
 export async function GET(
@@ -60,16 +61,35 @@ export async function PUT(
       description,
       date,
       time,
+      endTime,
       type,
       priority,
       company,
       participants,
-      companyId
+      companyId,
+      isAllDay,
+      location,
+      eventScope
     } = body;
 
-    // Check if event exists
+    // Authenticate the user
+    const { user: currentUser, error } = await authenticateRequest();
+    if (error) return error;
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Check if event exists and get user info for Google sync
     const existingEvent = await prisma.calendarEvent.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            googleSyncEnabled: true,
+            timezoneId: true,
+            googleCalendarId: true
+          }
+        }
+      }
     });
 
     if (!existingEvent) {
@@ -98,11 +118,17 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(eventDate && { date: eventDate }),
         ...(time !== undefined && { time }),
+        ...(endTime !== undefined && { endTime }),
         ...(type !== undefined && { type: type.toUpperCase() }),
         ...(priority !== undefined && { priority: priority.toUpperCase() }),
         ...(company !== undefined && { company }),
         ...(participants !== undefined && { participants: JSON.stringify(participants) }),
-        ...(companyId !== undefined && { companyId: companyId ? parseInt(companyId) : null })
+        ...(companyId !== undefined && { companyId: companyId ? parseInt(companyId) : null }),
+        ...(isAllDay !== undefined && { isAllDay }),
+        ...(location !== undefined && { location }),
+        ...(eventScope !== undefined && { eventScope }),
+        // Mark as LOCAL for sync if user has Google Calendar enabled
+        ...(existingEvent.createdBy?.googleSyncEnabled && { syncStatus: 'LOCAL' })
       },
       include: {
         notes: {
@@ -117,6 +143,38 @@ export async function PUT(
         }
       }
     });
+
+    // Auto-sync to Google Calendar if user has it enabled and event has Google ID
+    if (existingEvent.createdBy?.googleSyncEnabled && existingEvent.googleEventId) {
+      try {
+        console.log('Auto-syncing updated event to Google Calendar...');
+        const { GoogleCalendarService } = require('@/services/integration/googleCalendarService');
+        const googleCalendarService = new GoogleCalendarService(
+          existingEvent.createdBy.id, 
+          existingEvent.createdBy.timezoneId || 'UTC'
+        );
+        
+        const syncResult = await googleCalendarService.pushEventToGoogle(
+          updatedEvent,
+          existingEvent.createdBy.googleCalendarId || 'primary'
+        );
+        
+        if (syncResult.success) {
+          // Update sync status
+          await prisma.calendarEvent.update({
+            where: { id },
+            data: {
+              syncStatus: 'SYNCED',
+              lastSyncedAt: new Date()
+            }
+          });
+          console.log('Event update synced successfully to Google Calendar');
+        }
+      } catch (error) {
+        console.error('Auto-sync update to Google Calendar failed:', error);
+        // Don't fail the update if sync fails
+      }
+    }
 
     // Invalidate calendar caches after update
     await CacheInvalidationService.invalidateCalendar();
@@ -151,11 +209,24 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // Check if event exists
+    // Authenticate the user
+    const { user: currentUser, error } = await authenticateRequest();
+    if (error) return error;
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Check if event exists and get user info for Google sync
     const existingEvent = await prisma.calendarEvent.findUnique({
       where: { id },
       include: {
-        notes: true
+        notes: true,
+        createdBy: {
+          select: {
+            id: true,
+            googleSyncEnabled: true,
+            timezoneId: true,
+            googleCalendarId: true
+          }
+        }
       }
     });
 
@@ -164,6 +235,54 @@ export async function DELETE(
         { error: 'Calendar event not found' },
         { status: 404 }
       );
+    }
+
+    // Try to delete from Google Calendar first if sync is enabled and event has Google ID
+    if (existingEvent.createdBy?.googleSyncEnabled && existingEvent.googleEventId) {
+      try {
+        console.log('Deleting event from Google Calendar:', existingEvent.googleEventId);
+        const { GoogleCalendarService } = require('@/services/integration/googleCalendarService');
+        const googleCalendarService = new GoogleCalendarService(
+          existingEvent.createdBy.id, 
+          existingEvent.createdBy.timezoneId || 'UTC'
+        );
+        
+        const deleteResult = await googleCalendarService.deleteEvent(
+          existingEvent.createdBy.googleCalendarId || 'primary',
+          existingEvent.googleEventId
+        );
+        
+        if (deleteResult.success) {
+          console.log('Event successfully deleted from Google Calendar');
+          
+          // Log successful sync
+          await prisma.googleCalendarSync.create({
+            data: {
+              userId: existingEvent.createdBy.id,
+              eventId: existingEvent.id,
+              syncType: 'PUSH',
+              syncStatus: 'SYNCED'
+            }
+          });
+        } else {
+          console.warn('Failed to delete from Google Calendar:', deleteResult.error);
+          
+          // Log failed sync
+          await prisma.googleCalendarSync.create({
+            data: {
+              userId: existingEvent.createdBy.id,
+              eventId: existingEvent.id,
+              syncType: 'PUSH',
+              syncStatus: 'FAILED',
+              errorMessage: deleteResult.error || 'Unknown error'
+            }
+          });
+          // Continue with local deletion even if Google deletion fails
+        }
+      } catch (error) {
+        console.error('Error deleting from Google Calendar:', error);
+        // Continue with local deletion even if Google deletion fails
+      }
     }
 
     // Delete the event (notes will be cascade deleted)

@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
-import { CalendarDays, CalendarClock, Timer, Bell, Repeat, TrendingUp } from "lucide-react";
+import React, { useState } from "react";
+import { CalendarDays, CalendarClock, Timer, Bell, Repeat, TrendingUp, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useCalendarManagementDB } from "@/hooks/useCalendarManagementDB";
 import { CalendarWidget } from "@/components/features/CalendarWidget";
@@ -11,6 +12,7 @@ import { MobileCalendarModal } from "@/components/features/MobileCalendarModal";
 import { EventDialog } from "@/components/features/EventDialog";
 import { EventList } from "@/components/features/EventList";
 import { CalendarStats } from "@/components/features/CalendarStats";
+import { CalendarSettings } from "@/components/features/CalendarSettings";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -26,6 +28,7 @@ const getTypeIcon = (type: string) => {
 
 export default function CalendarPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Clean up any old localStorage data on first load
   React.useEffect(() => {
@@ -136,18 +139,37 @@ export default function CalendarPage() {
         )}
 
         <div className="mb-6 sm:mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <CalendarDays className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <CalendarDays className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                {isFiltered ? `${selectedCompanyObj?.tradingName || 'Selected Company'} Calendar` : 'Calendar'}
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                {isFiltered ? `Events for ${selectedCompanyObj?.tradingName || 'selected company'}` : 'Manage events and deadlines across all companies'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-              {isFiltered ? `${selectedCompanyObj?.tradingName || 'Selected Company'} Calendar` : 'Calendar'}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600">
-              {isFiltered ? `Events for ${selectedCompanyObj?.tradingName || 'selected company'}` : 'Manage events and deadlines across all companies'}
-            </p>
-          </div>
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Calendar Settings</DialogTitle>
+                <DialogDescription>
+                  Manage your calendar integration, timezone settings, and synchronization options.
+                </DialogDescription>
+              </DialogHeader>
+              <CalendarSettings />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -192,6 +214,7 @@ export default function CalendarPage() {
             formatDateForInput={formatDateForInput}
             parseDateFromInput={parseDateFromInput}
             isMutating={isMutating}
+            selectedCompany={globalSelectedCompany}
           />
 
           {/* Selected Date Events */}
@@ -206,6 +229,7 @@ export default function CalendarPage() {
               handleDeleteEvent={handleDeleteEvent}
               getPriorityColor={getPriorityColor}
               getTypeIcon={getTypeIcon}
+              isDeleting={isMutating}
             />
           )}
 
@@ -223,6 +247,7 @@ export default function CalendarPage() {
             getPriorityColor={getPriorityColor}
             getTypeIcon={getTypeIcon}
             formatDate={formatDate}
+            isDeleting={isMutating}
           />
         </div>
 

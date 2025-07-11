@@ -8,6 +8,7 @@ export interface CalendarEvent {
   priority: "low" | "medium" | "high" | "critical";
   company?: string;
   participants?: string[];
+  eventScope: "personal" | "company";
 }
 
 export interface Note {
@@ -41,6 +42,7 @@ export interface CalendarEventFormData {
   priority: "low" | "medium" | "high" | "critical";
   company: string;
   participants: string[];
+  eventScope: "personal" | "company";
 }
 
 export interface NoteFormData {

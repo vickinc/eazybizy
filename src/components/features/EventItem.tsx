@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Edit3, Trash2, StickyNote } from "lucide-react";
+import { Building2, Edit3, Trash2, StickyNote, Loader2 } from "lucide-react";
 import { CalendarEvent, Note } from '@/types/calendar.types';
+import { toast } from 'sonner';
 
 interface EventItemProps {
   event: CalendarEvent;
@@ -14,6 +15,7 @@ interface EventItemProps {
   formatDate?: (date: Date) => string;
   showDate?: boolean;
   className?: string;
+  isDeleting?: boolean;
 }
 
 export const EventItem: React.FC<EventItemProps> = ({
@@ -25,10 +27,26 @@ export const EventItem: React.FC<EventItemProps> = ({
   getTypeIcon,
   formatDate,
   showDate = false,
-  className = ""
+  className = "",
+  isDeleting = false
 }) => {
+  const [isBeingDeleted, setIsBeingDeleted] = useState(false);
+
+  const handleDelete = async () => {
+    setIsBeingDeleted(true);
+    try {
+      await handleDeleteEvent(event.id);
+      toast.success(`Event "${event.title}" deleted successfully`);
+    } catch (error) {
+      // Reset the local state if deletion fails
+      setIsBeingDeleted(false);
+      toast.error('Failed to delete event. Please try again.');
+    }
+  };
+  const isEventDeleting = isDeleting || isBeingDeleted;
+
   return (
-    <div className={`p-3 bg-gray-50 rounded-lg ${className}`}>
+    <div className={`p-3 bg-gray-50 rounded-lg transition-opacity ${isEventDeleting ? 'opacity-60' : ''} ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
@@ -78,15 +96,22 @@ export const EventItem: React.FC<EventItemProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEditEvent(event)}
+                  disabled={isEventDeleting}
                 >
                   <Edit3 className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDeleteEvent(event.id)}
+                  onClick={handleDelete}
+                  disabled={isEventDeleting}
+                  className={`transition-all duration-200 ${isEventDeleting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-50 hover:text-red-600'}`}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {isEventDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               </>
             )}

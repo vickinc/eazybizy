@@ -131,15 +131,29 @@ model User {
   // Supabase Auth UUID (matches auth.users.id)
   authId        String?   @unique
   
+  // Google Calendar Integration
+  googleId         String?        @unique
+  googleEmail      String?
+  googleRefreshToken String?     // Encrypted in application layer
+  googleAccessToken String?      // Encrypted in application layer
+  googleTokenExpiry DateTime?
+  googleCalendarId String?       // Primary calendar to sync with
+  googleSyncEnabled Boolean      @default(false)
+  lastGoogleSync   DateTime?
+  timezoneId       String        @default("UTC")
+  
   // Multi-tenant relationships
   companyMemberships CompanyMembership[]
   auditLogs          AuditLog[]
   createdTransactions Transaction[] @relation("CreatedByUser")
   updatedTransactions Transaction[] @relation("UpdatedByUser")
+  googleCalendarSyncs GoogleCalendarSync[]
+  calendarEvents     CalendarEvent[]
   
   @@index([email])
   @@index([authId])
   @@index([role])
+  @@index([googleId])
   @@map("users")
 }
 
@@ -788,10 +802,26 @@ model CalendarEvent {
   companyId       Int?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  
+  // Google Calendar Integration
+  googleEventId    String?          @unique
+  googleCalendarId String?
+  syncStatus       SyncStatus       @default(LOCAL)
+  lastSyncedAt     DateTime?
+  googleEtag       String?          // For conflict detection
+  location         String?
+  endTime          String?          // End time for Google Calendar
+  isAllDay         Boolean          @default(false)
+  recurrence       String?          // RRULE for recurring events
+  createdByUserId  String?
+  timezoneId       String           @default("UTC")
+  eventScope       String           @default("personal") // 'personal' | 'company'
 
   // Relations
   companyRecord   Company?          @relation(fields: [companyId], references: [id])
   notes           Note[]
+  createdBy       User?             @relation(fields: [createdByUserId], references: [id])
+  syncLogs        GoogleCalendarSync[]
 
   // Optimized indexes for cursor pagination
   @@index([createdAt, id])                    // Primary cursor: createdAt + id for stability
@@ -804,7 +834,32 @@ model CalendarEvent {
   @@index([type])                             // For statistics groupBy
   @@index([priority])                         // For statistics groupBy
   @@index([date])                             // For date-based queries
+  @@index([googleEventId])                    // For Google sync lookups
+  @@index([syncStatus])                       // For sync filtering
+  @@index([createdByUserId])                  // For user events
   @@map("calendar_events")
+}
+
+// Google Calendar Sync Models
+model GoogleCalendarSync {
+  id              String            @id @default(cuid())
+  userId          String
+  eventId         String?
+  syncType        SyncType          @default(PULL)
+  syncStatus      SyncStatus        @default(PENDING)
+  errorMessage    String?
+  syncedAt        DateTime          @default(now())
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event           CalendarEvent?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([eventId])
+  @@index([syncType])
+  @@index([syncStatus])
+  @@index([syncedAt])
+  @@map("google_calendar_syncs")
 }
 
 model Note {
@@ -884,6 +939,24 @@ enum EventPriority {
   CRITICAL
 
   @@map("event_priority")
+}
+
+enum SyncStatus {
+  LOCAL       // Only exists locally
+  SYNCED      // Synchronized with Google Calendar
+  PENDING     // Waiting to sync
+  FAILED      // Sync failed
+  CONFLICT    // Conflict detected
+
+  @@map("sync_status")
+}
+
+enum SyncType {
+  PULL        // Pull from Google Calendar
+  PUSH        // Push to Google Calendar
+  BIDIRECTIONAL // Two-way sync
+
+  @@map("sync_type")
 }
 
 // Business Card Enums

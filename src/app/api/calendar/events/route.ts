@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService';
+import { authenticateRequest } from '@/lib/api-auth';
 
 // GET /api/calendar/events - Get all calendar events with basic pagination
 export async function GET(request: NextRequest) {
@@ -126,23 +127,40 @@ export async function GET(request: NextRequest) {
 // POST /api/calendar/events - Create new calendar event
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate the user
+    const { user: currentUser, error } = await authenticateRequest();
+    if (error) return error;
+    if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json();
     const {
       title,
       description = '',
       date,
       time,
+      endTime,
       type = 'OTHER',
       priority = 'MEDIUM',
       company,
       participants = [],
-      companyId
+      companyId,
+      isAllDay = false,
+      location,
+      eventScope = 'personal'
     } = body;
 
     // Validate required fields
     if (!title || !date || !time) {
       return NextResponse.json(
         { error: 'Title, date, and time are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate company is provided for company events
+    if (eventScope === 'company' && !company) {
+      return NextResponse.json(
+        { error: 'Company is required for company events' },
         { status: 400 }
       );
     }
@@ -156,17 +174,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get user record to set createdByUserId
+    const user = await prisma.user.findUnique({
+      where: { email: currentUser.email },
+      select: { id: true, googleSyncEnabled: true, timezoneId: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const event = await prisma.calendarEvent.create({
       data: {
         title,
         description,
         date: eventDate,
         time,
+        endTime,
         type: type.toUpperCase(),
         priority: priority.toUpperCase(),
         company,
         participants: JSON.stringify(participants),
-        companyId: companyId ? parseInt(companyId) : null
+        companyId: companyId ? parseInt(companyId) : null,
+        isAllDay,
+        location,
+        createdByUserId: user.id,
+        // Set sync status to LOCAL if user has Google Calendar enabled
+        syncStatus: user.googleSyncEnabled ? 'LOCAL' : 'NONE',
+        timezoneId: user.timezoneId || 'UTC', // Use user's timezone or fallback to UTC
+        eventScope: eventScope
       },
       include: {
         notes: true,
@@ -186,6 +222,32 @@ export async function POST(request: NextRequest) {
     // Also invalidate company-related caches if this event is linked to a company
     if (companyId) {
       await CacheInvalidationService.invalidateOnCompanyMutation(companyId);
+    }
+
+    // Auto-sync to Google Calendar if user has it enabled
+    if (user.googleSyncEnabled && event.syncStatus === 'LOCAL') {
+      try {
+        console.log('Auto-syncing new event to Google Calendar...');
+        const { GoogleCalendarService } = require('@/services/integration/googleCalendarService');
+        const googleCalendarService = new GoogleCalendarService(user.id, user.timezoneId || 'UTC');
+        const syncResult = await googleCalendarService.pushEventToGoogle(event, 'primary');
+        
+        if (syncResult.success) {
+          // Update the event with Google event ID
+          await prisma.calendarEvent.update({
+            where: { id: event.id },
+            data: {
+              googleEventId: syncResult.eventId,
+              syncStatus: 'SYNCED',
+              lastSyncedAt: new Date()
+            }
+          });
+          console.log('Event auto-synced successfully to Google Calendar');
+        }
+      } catch (error) {
+        console.error('Auto-sync to Google Calendar failed:', error);
+        // Don't fail the event creation if sync fails
+      }
     }
 
     return NextResponse.json({

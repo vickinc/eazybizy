@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   useQuery, 
   useInfiniteQuery, 
@@ -91,7 +91,20 @@ const initialFormData: CalendarEventFormData = {
   type: 'meeting',
   priority: 'medium',
   company: '',
-  participants: []
+  participants: [],
+  eventScope: 'personal'
+};
+
+// Generate smart form data based on company context
+const getSmartFormData = (selectedCompany: string | number, companies: Company[]): CalendarEventFormData => {
+  const isCompanyFiltered = selectedCompany !== 'all';
+  const selectedCompanyObj = isCompanyFiltered ? companies.find(c => c.id === selectedCompany) : null;
+  
+  return {
+    ...initialFormData,
+    eventScope: isCompanyFiltered ? 'company' : 'personal',
+    company: selectedCompanyObj?.tradingName || ''
+  };
 };
 
 const initialFilters: CalendarEventFilters = {
@@ -119,6 +132,13 @@ export const useCalendarManagementDB = (
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState<boolean>(false);
   const [formData, setFormData] = useState<CalendarEventFormData>(initialFormData);
   const [filters, setFiltersState] = useState<CalendarEventFilters>(initialFilters);
+
+  // Initialize form data with smart defaults when company context changes
+  useEffect(() => {
+    if (!editingEvent && !isDialogOpen) {
+      setFormData(getSmartFormData(selectedCompany, companies));
+    }
+  }, [selectedCompany, companies, editingEvent, isDialogOpen]);
 
   // Query Keys
   const eventsQueryKey = ['calendar', 'events', selectedCompany, filters];
@@ -241,22 +261,46 @@ export const useCalendarManagementDB = (
 
   // Form Actions
   const updateFormField = useCallback((field: keyof CalendarEventFormData, value: string | Date | string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Handle scope changes intelligently
+      if (field === 'eventScope') {
+        const isCompanyFiltered = selectedCompany !== 'all';
+        const selectedCompanyObj = isCompanyFiltered ? companies.find(c => c.id === selectedCompany) : null;
+        
+        if (value === 'personal') {
+          // Switch to personal: clear company
+          newData.company = '';
+        } else if (value === 'company') {
+          // Switch to company: auto-fill with global company if available
+          if (selectedCompanyObj) {
+            newData.company = selectedCompanyObj.tradingName;
+          }
+        }
+      }
+      
+      return newData;
+    });
+  }, [selectedCompany, companies]);
 
   // Dialog Management
   const resetDialog = useCallback(() => {
     setEditingEvent(null);
-    setFormData(initialFormData);
+    setFormData(getSmartFormData(selectedCompany, companies));
     setIsDialogOpen(false);
-  }, []);
+  }, [selectedCompany, companies]);
 
   const openDialog = useCallback(() => {
+    // Reset form to smart defaults when opening dialog
+    if (!editingEvent) {
+      setFormData(getSmartFormData(selectedCompany, companies));
+    }
     setIsDialogOpen(true);
-  }, []);
+  }, [selectedCompany, companies, editingEvent]);
 
   const closeDialog = useCallback(() => {
     resetDialog();
@@ -288,7 +332,8 @@ export const useCalendarManagementDB = (
         priority: formData.priority.toUpperCase(),
         company: formData.company,
         participants: formData.participants,
-        companyId: selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined
+        companyId: selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
+        eventScope: formData.eventScope
       };
 
       await createEventMutation.mutateAsync(eventData);
@@ -309,7 +354,8 @@ export const useCalendarManagementDB = (
       type: event.type,
       priority: event.priority,
       company: event.company || '',
-      participants: event.participants || []
+      participants: event.participants || [],
+      eventScope: event.eventScope || 'personal'
     });
     setIsDialogOpen(true);
   }, []);
@@ -333,7 +379,8 @@ export const useCalendarManagementDB = (
         priority: formData.priority.toUpperCase(),
         company: formData.company,
         participants: formData.participants,
-        companyId: selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined
+        companyId: selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
+        eventScope: formData.eventScope
       };
 
       await updateEventMutation.mutateAsync({ id: editingEvent.id, data: eventData });
