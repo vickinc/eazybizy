@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Home, Building2, Clock } from "lucide-react";
+import { Plus, Home, Building2, Clock, Calendar, FileText, Flag } from "lucide-react";
 import { Company } from '@/types';
 import { CalendarEvent, CalendarEventFormData } from '@/types/calendar.types';
 import { useUserTimezone } from '@/hooks/useUserTimezone';
@@ -52,128 +52,125 @@ export const EventDialog: React.FC<EventDialogProps> = ({
           Add Event
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-2xl font-bold">
             {editingEvent ? "Edit Event" : "Add New Event"}
           </DialogTitle>
-          <DialogDescription>
-            {editingEvent ? "Update event details below." : "Create a new event for your calendar."}
+          <DialogDescription className="text-base">
+            {editingEvent ? "Update your event details below" : "Create a new event for your calendar"}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {/* Event Scope Selection - Moved to top */}
-          <div className="grid gap-2">
-            <Label>Event Scope</Label>
-            <div className="flex space-x-4">
+        <div className="grid gap-6 py-6">
+          {/* Event Scope Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold text-gray-700">Event Type</Label>
+            <div className="grid grid-cols-2 gap-3">
               {/* Show Company Event first when company is globally selected, Personal first otherwise */}
               {isCompanyFiltered ? (
                 <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="company" 
-                      name="eventScope"
-                      value="company"
-                      checked={formData.eventScope === 'company'}
-                      onChange={() => updateFormField('eventScope', 'company')}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor="company" className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
-                      <Building2 className="h-4 w-4" />
-                      <span>Company Event</span>
-                      {selectedCompanyObj && (
-                        <span className="text-xs text-gray-500">({selectedCompanyObj.tradingName})</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="personal" 
-                      name="eventScope"
-                      value="personal"
-                      checked={formData.eventScope === 'personal'}
-                      onChange={() => updateFormField('eventScope', 'personal')}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor="personal" className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
-                      <Home className="h-4 w-4" />
-                      <span>Personal Event</span>
-                    </label>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateFormField('eventScope', 'company')}
+                    className={`relative flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      formData.eventScope === 'company'
+                        ? 'border-lime-500 bg-lime-50 text-lime-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Building2 className="h-5 w-5" />
+                    <span className="font-medium">Company</span>
+                    {selectedCompanyObj && formData.eventScope === 'company' && (
+                      <span className="absolute -bottom-5 left-0 right-0 text-xs text-gray-500 truncate px-2">
+                        {selectedCompanyObj.tradingName}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFormField('eventScope', 'personal')}
+                    className={`relative flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      formData.eventScope === 'personal'
+                        ? 'border-lime-500 bg-lime-50 text-lime-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Home className="h-5 w-5" />
+                    <span className="font-medium">Personal</span>
+                  </button>
                 </>
               ) : (
                 <>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="personal" 
-                      name="eventScope"
-                      value="personal"
-                      checked={formData.eventScope === 'personal'}
-                      onChange={() => updateFormField('eventScope', 'personal')}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor="personal" className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
-                      <Home className="h-4 w-4" />
-                      <span>Personal Event</span>
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="radio" 
-                      id="company" 
-                      name="eventScope"
-                      value="company"
-                      checked={formData.eventScope === 'company'}
-                      onChange={() => updateFormField('eventScope', 'company')}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                    />
-                    <label htmlFor="company" className="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer">
-                      <Building2 className="h-4 w-4" />
-                      <span>Company Event</span>
-                    </label>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateFormField('eventScope', 'personal')}
+                    className={`relative flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      formData.eventScope === 'personal'
+                        ? 'border-lime-500 bg-lime-50 text-lime-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Home className="h-5 w-5" />
+                    <span className="font-medium">Personal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFormField('eventScope', 'company')}
+                    className={`relative flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      formData.eventScope === 'company'
+                        ? 'border-lime-500 bg-lime-50 text-lime-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Building2 className="h-5 w-5" />
+                    <span className="font-medium">Company</span>
+                  </button>
                 </>
               )}
             </div>
-            <p className="text-xs text-gray-500">
-              {formData.eventScope === 'personal' 
-                ? "Event related to personal activities" 
-                : `Event related to ${selectedCompanyObj?.tradingName || 'company'} business`
-              }
-            </p>
           </div>
 
           {/* Company info message for filtered company */}
           {isCompanyFiltered && formData.eventScope === 'company' && (
-            <div className="grid gap-2">
-              <p className="text-xs text-gray-500">
-                Company is pre-selected based on your current filter. Switch to "Personal Event" to remove company association.
+            <div className="bg-lime-50 border border-lime-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-lime-700">
+                Using {selectedCompanyObj?.tradingName} from your current filter
               </p>
             </div>
           )}
 
           {/* Company Selection - Show right after Event Scope when all companies selected and company scope chosen */}
           {formData.eventScope === 'company' && !isCompanyFiltered && (
-            <div className="grid gap-2">
-              <Label htmlFor="company">Company</Label>
+            <div className="space-y-2">
+              <Label htmlFor="company" className="text-sm font-semibold text-gray-700">Select Company</Label>
               <Select
                 value={formData.company}
                 onValueChange={(value) => updateFormField('company', value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select company" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a company" />
                 </SelectTrigger>
                 <SelectContent>
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.tradingName}>
                       <div className="flex items-center justify-between w-full">
-                        <span>{company.tradingName}</span>
-                        <span className={`ml-2 px-2 py-1 text-xs rounded ${
+                        <div className="flex items-center space-x-2">
+                          <div className="relative w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                            {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http') || company.logo.startsWith('/')) ? (
+                              <img 
+                                src={company.logo} 
+                                alt={`${company.tradingName} logo`} 
+                                className="w-full h-full object-cover rounded"
+                              />
+                            ) : (
+                              company.tradingName.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <span>{company.tradingName}</span>
+                        </div>
+                        <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
                           company.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
+                            ? 'bg-green-100 text-green-700' 
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {company.status}
@@ -186,108 +183,176 @@ export const EventDialog: React.FC<EventDialogProps> = ({
             </div>
           )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="title">
-              Title <span className="text-red-500">*</span>
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-sm font-semibold text-gray-700">
+              Event Title <span className="text-red-500">*</span>
             </Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => updateFormField('title', e.target.value)}
-              placeholder="Event title"
+              placeholder="Enter event title"
+              className="w-full px-3 py-2 text-base"
               required
             />
           </div>
           
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+              Description
+            </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => updateFormField('description', e.target.value)}
-              placeholder="Event description"
+              placeholder="Add event details (optional)"
+              className="min-h-[80px] resize-none"
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formatDateForInput(formData.date)}
-                onChange={(e) => updateFormField('date', parseDateFromInput(e.target.value))}
-                className="[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer relative"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="time">Time</Label>
-              <Input
-                id="time"
-                type="time"
-                value={formData.time}
-                onChange={(e) => updateFormField('time', e.target.value)}
-                className="[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer relative"
-              />
-              <div className="flex items-center space-x-1 text-xs text-gray-500">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {timezoneLoading ? 'Loading timezone...' : timezoneDisplay}
-                </span>
+          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+            <Label className="text-sm font-semibold text-gray-700">Date & Time</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date" className="text-xs text-gray-600">Date</Label>
+                <div className="relative">
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formatDateForInput(formData.date)}
+                    onChange={(e) => updateFormField('date', parseDateFromInput(e.target.value))}
+                    className="w-full pl-3 pr-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="time" className="text-xs text-gray-600">Time</Label>
+                  <div className="flex items-center space-x-1 text-xs text-gray-600">
+                    <Clock className="h-3 w-3" />
+                    <span>{timezoneLoading ? 'Loading...' : timezoneDisplay}</span>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="time"
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => updateFormField('time', e.target.value)}
+                    className="w-full pl-3 pr-10"
+                  />
+                </div>
               </div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="type">Type</Label>
+            <div className="space-y-2">
+              <Label htmlFor="type" className="text-sm font-semibold text-gray-700">Event Type</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => updateFormField('type', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="renewal">Renewal</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="meeting">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      <span>Meeting</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="deadline">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full" />
+                      <span>Deadline</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="renewal">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <span>Renewal</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="other">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                      <span>Other</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="priority">Priority</Label>
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-sm font-semibold text-gray-700">Priority</Label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => updateFormField('priority', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="low">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                      <span>Low</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="medium">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+                      <span>Medium</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="high">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                      <span>High</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="critical">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-red-600 rounded-full" />
+                      <span>Critical</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           
         </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={closeDialog}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={editingEvent ? handleUpdateEvent : handleAddEvent}
-            disabled={isMutating}
-          >
-            {isMutating ? "Saving..." : (editingEvent ? "Update Event" : "Add Event")}
-          </Button>
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div className="text-xs text-gray-500">
+            {editingEvent ? "* Required field" : "* Required field"}
+          </div>
+          <div className="flex space-x-3">
+            <Button 
+              variant="outline" 
+              onClick={closeDialog}
+              className="px-6"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={editingEvent ? handleUpdateEvent : handleAddEvent}
+              disabled={isMutating || !formData.title}
+              className="px-6 bg-lime-600 hover:bg-lime-700 text-white"
+            >
+              {isMutating ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : (
+                editingEvent ? "Update Event" : "Create Event"
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
