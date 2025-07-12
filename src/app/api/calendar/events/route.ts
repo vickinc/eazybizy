@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
+    console.log('Creating calendar event with data:', JSON.stringify(body, null, 2));
     const {
       title,
       description = '',
@@ -257,12 +258,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating calendar event:', error);
-    console.error('Request body:', body);
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Request body:', JSON.stringify(body, null, 2));
     return NextResponse.json(
       { 
         error: 'Failed to create calendar event',
         details: error.message,
-        code: error.code 
+        code: error.code,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
       { status: 500 }
     );

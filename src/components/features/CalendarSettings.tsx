@@ -8,20 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, Clock, RefreshCw, Settings, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Clock, Settings, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getTimezoneOptions, detectUserTimezone, getTimezoneInfo } from '@/lib/timezone';
 
-interface GoogleCalendar {
-  id: string;
-  summary: string;
-  description?: string;
-  primary: boolean;
-  selected: boolean;
-  accessRole: string;
-  backgroundColor?: string;
-  foregroundColor?: string;
-}
 
 interface SyncStatus {
   googleSyncEnabled: boolean;
@@ -39,10 +29,7 @@ interface SyncStatus {
 }
 
 export function CalendarSettings() {
-  const [googleCalendars, setGoogleCalendars] = useState<GoogleCalendar[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [selectedTimezone, setSelectedTimezone] = useState('UTC');
   const [timezoneMode, setTimezoneMode] = useState<'device' | 'google' | 'custom'>('device');
   const [deviceTimezone, setDeviceTimezone] = useState(detectUserTimezone());
@@ -69,7 +56,6 @@ export function CalendarSettings() {
       // Refresh data after successful connection
       setTimeout(() => {
         fetchSyncStatus();
-        fetchGoogleCalendars();
       }, 1000);
     } else if (error) {
       const errorMessages = {
@@ -84,12 +70,6 @@ export function CalendarSettings() {
     }
   }, [searchParams]);
 
-  // Fetch Google calendars only when sync is enabled
-  useEffect(() => {
-    if (syncStatus?.googleSyncEnabled) {
-      fetchGoogleCalendars();
-    }
-  }, [syncStatus?.googleSyncEnabled]);
 
   const fetchSyncStatus = async () => {
     try {
@@ -118,106 +98,9 @@ export function CalendarSettings() {
     }
   };
 
-  const fetchGoogleCalendars = async () => {
-    try {
-      const response = await fetch('/api/calendar/google/calendars');
-      if (response.ok) {
-        const data = await response.json();
-        setGoogleCalendars(data.calendars || []);
-      }
-    } catch (error) {
-      console.error('Error fetching Google calendars:', error);
-    }
-  };
 
-  const handleConnectGoogle = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/auth/google');
-      if (response.ok) {
-        const data = await response.json();
-        window.location.href = data.authUrl;
-      } else {
-        toast.error('Failed to connect to Google Calendar');
-      }
-    } catch (error) {
-      toast.error('Failed to connect to Google Calendar');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleDisconnectGoogle = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/auth/google', { method: 'DELETE' });
-      if (response.ok) {
-        setSyncStatus(null);
-        setGoogleCalendars([]);
-        toast.success('Google Calendar disconnected');
-      } else {
-        toast.error('Failed to disconnect Google Calendar');
-      }
-    } catch (error) {
-      toast.error('Failed to disconnect Google Calendar');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleSyncNow = async () => {
-    setSyncing(true);
-    try {
-      const selectedCalendar = googleCalendars.find(cal => cal.selected);
-      const response = await fetch('/api/calendar/sync/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calendarId: selectedCalendar?.id || 'primary' })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const deletedMsg = data.deleted > 0 ? `, ${data.deleted} deleted` : '';
-        toast.success(`Sync completed: ${data.pushed} pushed, ${data.pulled} pulled${deletedMsg}`);
-        if (data.errors.length > 0) {
-          toast.warning(`${data.errors.length} errors occurred during sync`);
-        }
-        
-        // Refresh sync status and trigger page refresh
-        await fetchSyncStatus();
-        
-        // Trigger a page refresh to show new events
-        window.location.reload();
-      } else {
-        toast.error('Failed to sync with Google Calendar');
-      }
-    } catch (error) {
-      toast.error('Failed to sync with Google Calendar');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleSetPrimaryCalendar = async (calendarId: string) => {
-    try {
-      const response = await fetch('/api/calendar/google/calendars', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calendarId })
-      });
-
-      if (response.ok) {
-        setGoogleCalendars(prev => 
-          prev.map(cal => ({ ...cal, selected: cal.id === calendarId }))
-        );
-        toast.success('Primary calendar updated');
-      } else {
-        toast.error('Failed to update primary calendar');
-      }
-    } catch (error) {
-      toast.error('Failed to update primary calendar');
-    }
-  };
 
   const handleTimezoneChange = async (timezone: string) => {
     setSelectedTimezone(timezone);
@@ -312,144 +195,6 @@ export function CalendarSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Google Calendar Connection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Google Calendar Integration
-          </CardTitle>
-          <CardDescription>
-            Connect your Google Calendar for two-way synchronization
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {syncStatus?.googleSyncEnabled ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="font-medium text-green-800">Connected to Google Calendar</p>
-                    <p className="text-sm text-green-600">{syncStatus.googleEmail}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDisconnectGoogle}
-                  disabled={loading}
-                >
-                  Disconnect
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Last Sync</Label>
-                  <p className="text-sm text-gray-600">
-                    {syncStatus.lastGoogleSync 
-                      ? new Date(syncStatus.lastGoogleSync).toLocaleString()
-                      : 'Never'
-                    }
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Sync Statistics (24h)</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {Object.entries(syncStatus.syncStats).map(([status, count]) => (
-                      <Badge key={status} className={getSyncStatusColor(status)}>
-                        {status}: {count}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSyncNow}
-                  disabled={syncing}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Syncing...' : 'Sync Now'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Connect Google Calendar</h3>
-              <p className="text-gray-600 mb-4">
-                Sync your events with Google Calendar for seamless integration
-              </p>
-              <Button
-                onClick={handleConnectGoogle}
-                disabled={loading}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                Connect Google Calendar
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Calendar Selection */}
-      {googleCalendars.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendar Selection</CardTitle>
-            <CardDescription>
-              Choose which Google Calendar to sync with
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {googleCalendars.map((calendar) => (
-                <div
-                  key={calendar.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    calendar.selected 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => handleSetPrimaryCalendar(calendar.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-4 h-4 rounded-full border-2"
-                        style={{
-                          backgroundColor: calendar.backgroundColor || '#3b82f6',
-                          borderColor: calendar.foregroundColor || '#ffffff'
-                        }}
-                      />
-                      <div>
-                        <p className="font-medium">{calendar.summary}</p>
-                        {calendar.description && (
-                          <p className="text-sm text-gray-600">{calendar.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {calendar.primary && (
-                        <Badge variant="secondary">Primary</Badge>
-                      )}
-                      {calendar.selected && (
-                        <Badge>Selected</Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Timezone Settings */}
       <Card>
         <CardHeader>

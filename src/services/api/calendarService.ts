@@ -100,6 +100,9 @@ export interface CalendarEventCreateRequest {
   company?: string;
   participants?: string[];
   companyId?: number;
+  eventScope?: string;
+  syncEnabled?: boolean;
+  targetCalendarId?: string;
 }
 
 export interface CalendarEventUpdateRequest {
@@ -112,6 +115,9 @@ export interface CalendarEventUpdateRequest {
   company?: string;
   participants?: string[];
   companyId?: number;
+  eventScope?: string;
+  syncEnabled?: boolean;
+  targetCalendarId?: string;
 }
 
 export interface NoteCreateRequest {

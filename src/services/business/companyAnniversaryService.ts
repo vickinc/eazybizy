@@ -88,23 +88,21 @@ export class CompanyAnniversaryService {
    * Convert anniversary event data to calendar event format
    */
   static convertToCalendarEvent(anniversaryEvent: AnniversaryEventData): CalendarEvent {
-    // Create a unique numeric ID by combining company ID and year
-    const yearPart = anniversaryEvent.date.getFullYear();
-    const companyPart = anniversaryEvent.companyId;
-    const uniqueId = parseInt(`${companyPart}${yearPart}`);
-    
     return {
-      id: uniqueId,
+      id: anniversaryEvent.id, // Keep the string ID for React keys and identification
       title: anniversaryEvent.title,
       description: anniversaryEvent.description,
       date: anniversaryEvent.date,
       time: anniversaryEvent.time,
-      type: anniversaryEvent.type,
-      priority: anniversaryEvent.priority,
+      type: 'anniversary', // Will be converted to uppercase in API
+      priority: 'medium', // Will be converted to uppercase in API
+      company: anniversaryEvent.companyName, // Add company name for validation
       companyId: anniversaryEvent.companyId,
+      eventScope: 'company', // Anniversary events are always company events
+      participants: [], // Initialize as empty array
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as CalendarEvent;
   }
 
   /**

@@ -141,6 +141,8 @@ model User {
   googleSyncEnabled Boolean      @default(false)
   lastGoogleSync   DateTime?
   timezoneId       String        @default("UTC")
+  googleAutoSyncEnabled Boolean?  // Auto-sync new events to Google Calendar
+  googleDefaultCalendarId String? // Default calendar for new events
   
   // Multi-tenant relationships
   companyMemberships CompanyMembership[]
@@ -927,6 +929,7 @@ enum CalendarEventType {
   MEETING
   DEADLINE
   RENEWAL
+  ANNIVERSARY
   OTHER
 
   @@map("calendar_event_type")

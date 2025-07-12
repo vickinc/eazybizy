@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, CalendarClock, Timer, Bell, Repeat, TrendingUp, Settings } from "lucide-react";
+import { CalendarDays, CalendarClock, Timer, Bell, Repeat, TrendingUp, Settings, Calendar, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ import { EventDialog } from "@/components/features/EventDialog";
 import { EventList } from "@/components/features/EventList";
 import { CalendarStats } from "@/components/features/CalendarStats";
 import { CalendarSettings } from "@/components/features/CalendarSettings";
+import { GoogleCalendarDialog } from "@/components/features/GoogleCalendarDialog";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -29,6 +30,8 @@ const getTypeIcon = (type: string) => {
 export default function CalendarPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isGoogleCalendarOpen, setIsGoogleCalendarOpen] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ googleSyncEnabled: boolean; googleEmail?: string } | null>(null);
   
   // Clean up any old localStorage data on first load
   React.useEffect(() => {
@@ -41,6 +44,23 @@ export default function CalendarPage() {
       // Ignore storage cleanup errors
     }
   }, []);
+
+  // Fetch Google Calendar sync status
+  React.useEffect(() => {
+    fetchSyncStatus();
+  }, []);
+
+  const fetchSyncStatus = async () => {
+    try {
+      const response = await fetch('/api/calendar/sync/google');
+      if (response.ok) {
+        const data = await response.json();
+        setSyncStatus(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch sync status:', error);
+    }
+  };
   
   const {
     // Data
@@ -153,7 +173,31 @@ export default function CalendarPage() {
               </p>
             </div>
           </div>
-          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <div className="flex gap-2">
+            {syncStatus?.googleSyncEnabled ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onClick={() => setIsGoogleCalendarOpen(true)}
+              >
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="hidden sm:inline">{syncStatus.googleEmail}</span>
+                <span className="sm:hidden">Google</span>
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onClick={() => setIsGoogleCalendarOpen(true)}
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Connect Google Calendar</span>
+                <span className="sm:hidden">Google</span>
+              </Button>
+            )}
+            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -170,8 +214,21 @@ export default function CalendarPage() {
               <CalendarSettings />
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </div>
+
+      {/* Google Calendar Dialog */}
+      <GoogleCalendarDialog 
+        open={isGoogleCalendarOpen} 
+        onOpenChange={(open) => {
+          setIsGoogleCalendarOpen(open);
+          if (!open) {
+            // Refresh sync status when dialog closes
+            fetchSyncStatus();
+          }
+        }}
+      />
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
         {/* Main Content Section */}

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Home, Building2, Clock, Calendar, FileText, Flag } from "lucide-react";
+import { Plus, Home, Building2, Clock } from "lucide-react";
 import { Company } from '@/types';
 import { CalendarEvent, CalendarEventFormData } from '@/types/calendar.types';
 import { useUserTimezone } from '@/hooks/useUserTimezone';
@@ -247,83 +247,92 @@ export const EventDialog: React.FC<EventDialogProps> = ({
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-semibold text-gray-700">Event Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => updateFormField('type', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="meeting">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      <span>Meeting</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="deadline">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full" />
-                      <span>Deadline</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="renewal">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      <span>Renewal</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="other">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full" />
-                      <span>Other</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-semibold text-gray-700">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => updateFormField('priority', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                      <span>Low</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                      <span>Medium</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="high">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full" />
-                      <span>High</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="critical">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-600 rounded-full" />
-                      <span>Critical</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="type" className="text-xs text-gray-600">Event Type</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value) => updateFormField('type', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="meeting">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        <span>Meeting</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="deadline">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full" />
+                        <span>Deadline</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="renewal">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full" />
+                        <span>Renewal</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="anniversary">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                        <span>Anniversary</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="other">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                        <span>Other</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="priority" className="text-xs text-gray-600">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => updateFormField('priority', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                        <span>Low</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="medium">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+                        <span>Medium</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                        <span>High</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="critical">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-red-600 rounded-full" />
+                        <span>Critical</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
+          
           
         </div>
         <div className="flex justify-between items-center pt-4 border-t">

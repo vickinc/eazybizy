@@ -90,31 +90,27 @@ export const EventItem: React.FC<EventItemProps> = ({
                 Auto-generated
               </Badge>
             )}
-            {event.type !== 'anniversary' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEditEvent(event)}
-                  disabled={isEventDeleting}
-                >
-                  <Edit3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={isEventDeleting}
-                  className={`transition-all duration-200 ${isEventDeleting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-50 hover:text-red-600'}`}
-                >
-                  {isEventDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditEvent(event)}
+              disabled={isEventDeleting}
+            >
+              <Edit3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isEventDeleting}
+              className={`transition-all duration-200 ${isEventDeleting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-50 hover:text-red-600'}`}
+            >
+                {isEventDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
           </div>
         </div>
       </div>

@@ -229,7 +229,7 @@ export class GoogleCalendarService {
     
     return {
       id: event.googleEventId || undefined,
-      summary: event.eventScope === 'company' 
+      summary: (event.eventScope === 'company' || event.type === 'ANNIVERSARY') 
         ? `Company Event: ${event.title}`
         : `Personal Event: ${event.title}`,
       description: event.description,

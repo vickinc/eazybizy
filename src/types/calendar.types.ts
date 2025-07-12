@@ -4,11 +4,15 @@ export interface CalendarEvent {
   description: string;
   date: Date;
   time: string;
-  type: "meeting" | "deadline" | "renewal" | "other";
+  type: "meeting" | "deadline" | "renewal" | "anniversary" | "other";
   priority: "low" | "medium" | "high" | "critical";
   company?: string;
   participants?: string[];
   eventScope: "personal" | "company";
+  isSystemGenerated?: boolean;
+  companyId?: number;
+  targetCalendarId?: string; // Which Google Calendar to sync to
+  syncEnabled?: boolean; // Whether this event should be synced
 }
 
 export interface Note {
@@ -38,11 +42,13 @@ export interface CalendarEventFormData {
   description: string;
   date: Date;
   time: string;
-  type: "meeting" | "deadline" | "renewal" | "other";
+  type: "meeting" | "deadline" | "renewal" | "anniversary" | "other";
   priority: "low" | "medium" | "high" | "critical";
   company: string;
   participants: string[];
   eventScope: "personal" | "company";
+  targetCalendarId?: string; // Which Google Calendar to sync to
+  syncEnabled?: boolean; // Whether this event should be synced
 }
 
 export interface NoteFormData {
