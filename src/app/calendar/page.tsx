@@ -286,7 +286,6 @@ export default function CalendarPage() {
               handleDeleteEvent={handleDeleteEvent}
               getPriorityColor={getPriorityColor}
               getTypeIcon={getTypeIcon}
-              isDeleting={isMutating}
             />
           )}
 
@@ -304,7 +303,6 @@ export default function CalendarPage() {
             getPriorityColor={getPriorityColor}
             getTypeIcon={getTypeIcon}
             formatDate={formatDate}
-            isDeleting={isMutating}
           />
         </div>
 

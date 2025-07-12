@@ -144,6 +144,13 @@ export interface NoteUpdateRequest {
 export class CalendarService {
   private baseUrl = '/api/calendar';
 
+  // Clean up description by removing override markers for display
+  private cleanDescription(description: string): string {
+    if (!description) return description;
+    // Remove the [ANNIVERSARY_OVERRIDE:...] marker from the description for display
+    return description.replace(/\[ANNIVERSARY_OVERRIDE:[^\]]+\]\s*$/m, '').trim();
+  }
+
   // Transform API response to client format
   private transformEventResponse(event: CalendarEventResponse): CalendarEvent {
     let participants: string[] = [];
@@ -166,7 +173,8 @@ export class CalendarService {
     return {
       id: event.id,
       title: event.title,
-      description: event.description,
+      description: this.cleanDescription(event.description),
+      rawDescription: event.description, // Preserve original for logic
       date: new Date(event.date),
       time: event.time,
       type: event.type.toLowerCase() as CalendarEvent['type'],

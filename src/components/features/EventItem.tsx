@@ -15,7 +15,6 @@ interface EventItemProps {
   formatDate?: (date: Date) => string;
   showDate?: boolean;
   className?: string;
-  isDeleting?: boolean;
 }
 
 export const EventItem: React.FC<EventItemProps> = ({
@@ -27,8 +26,7 @@ export const EventItem: React.FC<EventItemProps> = ({
   getTypeIcon,
   formatDate,
   showDate = false,
-  className = "",
-  isDeleting = false
+  className = ""
 }) => {
   const [isBeingDeleted, setIsBeingDeleted] = useState(false);
 
@@ -43,7 +41,7 @@ export const EventItem: React.FC<EventItemProps> = ({
       toast.error('Failed to delete event. Please try again.');
     }
   };
-  const isEventDeleting = isDeleting || isBeingDeleted;
+  const isEventDeleting = isBeingDeleted;
 
   return (
     <div className={`p-3 bg-gray-50 rounded-lg transition-opacity ${isEventDeleting ? 'opacity-60' : ''} ${className}`}>

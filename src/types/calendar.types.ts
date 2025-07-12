@@ -2,6 +2,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description: string;
+  rawDescription?: string; // Preserves original description with override markers for logic
   date: Date;
   time: string;
   type: "meeting" | "deadline" | "renewal" | "anniversary" | "other";
