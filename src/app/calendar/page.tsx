@@ -1,21 +1,131 @@
 "use client";
 
-import React, { useState } from "react";
-import { CalendarDays, CalendarClock, Timer, Bell, Repeat, TrendingUp, Settings, Calendar, CheckCircle } from "lucide-react";
+import React, { useState, useCallback, useMemo } from "react";
+import dynamic from 'next/dynamic';
+import { 
+  CalendarDays, 
+  CalendarClock, 
+  Timer, 
+  Bell, 
+  Repeat, 
+  TrendingUp, 
+  Settings, 
+  Calendar, 
+  CheckCircle 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useCalendarManagementDB } from "@/hooks/useCalendarManagementDB";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarWidget } from "@/components/features/CalendarWidget";
-import { MobileCalendarModal } from "@/components/features/MobileCalendarModal";
-import { EventDialog } from "@/components/features/EventDialog";
+// Dynamic import for MobileCalendarModal to reduce bundle size
+const MobileCalendarModal = dynamic(
+  () => import('@/components/features/MobileCalendarModal').then(mod => ({ default: mod.MobileCalendarModal })),
+  { 
+    ssr: false, // Client-side only modal
+    loading: () => null // No loading state needed for mobile modal
+  }
+);
+// Dynamic import for EventDialog to reduce bundle size
+const EventDialog = dynamic(
+  () => import('@/components/features/EventDialog').then(mod => ({ default: mod.EventDialog })),
+  { 
+    ssr: false, // Client-side only modal
+    loading: () => <div className="animate-pulse bg-gray-200 h-8 w-8 rounded"></div>
+  }
+);
 import { EventList } from "@/components/features/EventList";
+import { VirtualizedEventList } from "@/components/features/VirtualizedEventList";
 import { CalendarStats } from "@/components/features/CalendarStats";
-import { CalendarSettings } from "@/components/features/CalendarSettings";
-import { GoogleCalendarDialog } from "@/components/features/GoogleCalendarDialog";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
+// Dynamic import for CalendarSettings to reduce bundle size
+const CalendarSettings = dynamic(
+  () => import('@/components/features/CalendarSettings').then(mod => ({ default: mod.CalendarSettings })),
+  { 
+    ssr: false, // Client-side only modal
+    loading: () => <div className="animate-pulse bg-gray-200 h-32 w-full rounded"></div>
+  }
+);
+// Dynamic import for GoogleCalendarDialog to reduce bundle size
+const GoogleCalendarDialog = dynamic(
+  () => import('@/components/features/GoogleCalendarDialog').then(mod => ({ default: mod.GoogleCalendarDialog })),
+  { 
+    ssr: false, // Client-side only modal
+    loading: () => <div className="animate-pulse bg-gray-200 h-8 w-8 rounded"></div>
+  }
+);
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+
+// Calendar Page Skeleton Component
+const CalendarPageSkeleton = () => (
+  <div className="min-h-screen bg-lime-50">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      {/* Header Skeleton */}
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="h-6 w-6 sm:h-8 sm:w-8 bg-blue-200 rounded animate-pulse"></div>
+            </div>
+            <div>
+              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+              <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        {/* Main Content Skeleton */}
+        <div className="flex-1 space-y-4 sm:space-y-6">
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Event List Skeleton */}
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="flex-1">
+                    <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Calendar Widget Skeleton */}
+        <div className="hidden lg:block flex-shrink-0 w-80">
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="grid grid-cols-7 gap-1">
+              {[...Array(35)].map((_, i) => (
+                <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -31,36 +141,44 @@ export default function CalendarPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGoogleCalendarOpen, setIsGoogleCalendarOpen] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<{ googleSyncEnabled: boolean; googleEmail?: string } | null>(null);
-  
-  // Clean up any old localStorage data on first load
-  React.useEffect(() => {
-    try {
-      localStorage.removeItem('app-events');
-      localStorage.removeItem('app-notes');
-      localStorage.removeItem('calendar-migration-completed');
-      localStorage.removeItem('calendar-selected-date');
-    } catch (error) {
-      // Ignore storage cleanup errors
-    }
-  }, []);
-
-  // Fetch Google Calendar sync status
-  React.useEffect(() => {
-    fetchSyncStatus();
-  }, []);
-
-  const fetchSyncStatus = async () => {
-    try {
+  // Use React Query for sync status with caching and deduplication
+  const { data: syncStatus, refetch: refetchSyncStatus } = useQuery({
+    queryKey: ['calendar-sync-status'],
+    queryFn: async () => {
       const response = await fetch('/api/calendar/sync/google');
-      if (response.ok) {
-        const data = await response.json();
-        setSyncStatus(data);
+      if (!response.ok) {
+        throw new Error('Failed to fetch sync status');
       }
-    } catch (error) {
-      console.error('Failed to fetch sync status:', error);
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+  
+  // Clean up any old localStorage data on first load - deferred to idle time
+  React.useEffect(() => {
+    const cleanupStorage = () => {
+      try {
+        localStorage.removeItem('app-events');
+        localStorage.removeItem('app-notes');
+        localStorage.removeItem('calendar-migration-completed');
+        localStorage.removeItem('calendar-selected-date');
+      } catch (error) {
+        // Ignore storage cleanup errors
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(cleanupStorage);
+      } else {
+        // Fallback for browsers that don't support requestIdleCallback
+        setTimeout(cleanupStorage, 100);
+      }
     }
-  };
+  }, []);
   
   const {
     // Data
@@ -115,24 +233,61 @@ export default function CalendarPage() {
   } = useCalendarManagementDB(globalSelectedCompany, companies);
 
 
-  // Get current filter info
-  const selectedCompanyObj = globalSelectedCompany !== 'all' ? companies.find(c => c.id === globalSelectedCompany) : null;
-  const isFiltered = globalSelectedCompany !== 'all';
+  // Get current filter info - memoized to prevent unnecessary re-renders
+  const selectedCompanyObj = useMemo(() => 
+    globalSelectedCompany !== 'all' ? companies.find(c => c.id === globalSelectedCompany) : null, 
+    [globalSelectedCompany, companies]
+  );
+  const isFiltered = useMemo(() => 
+    globalSelectedCompany !== 'all', 
+    [globalSelectedCompany]
+  );
 
-  const handleCalendarSelect = (date: Date | undefined) => {
+  const handleCalendarSelect = useCallback((date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
       updateFormField('date', date);
       openDialog();
     }
-  };
+  }, [setSelectedDate, updateFormField, openDialog]);
+
+  const handleGoogleCalendarChange = useCallback((open: boolean) => {
+    setIsGoogleCalendarOpen(open);
+    if (!open) {
+      // Refresh sync status when dialog closes
+      refetchSyncStatus();
+    }
+  }, [refetchSyncStatus]);
+
+  const handleOpenGoogleCalendar = useCallback(() => {
+    setIsGoogleCalendarOpen(true);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, []);
+
+  const noOpCallback = useCallback(() => {}, []);
+
+  // Pre-fetch modal data on hover/focus for better UX
+  const handleGoogleCalendarHover = useCallback(() => {
+    // Pre-warm Google Calendar sync status if not already cached
+    if (!syncStatus) {
+      refetchSyncStatus();
+    }
+  }, [syncStatus, refetchSyncStatus]);
+
+  const handleSettingsHover = useCallback(() => {
+    // Pre-warm any settings data if needed
+    // This is a placeholder for future settings data pre-fetching
+  }, []);
 
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
 
-  // Handle loading state
+  // Handle loading state with progressive skeleton
   if (showLoader) {
-    return <LoadingScreen />;
+    return <CalendarPageSkeleton />;
   }
 
   return (
@@ -179,7 +334,9 @@ export default function CalendarPage() {
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-2"
-                onClick={() => setIsGoogleCalendarOpen(true)}
+                onClick={handleOpenGoogleCalendar}
+                onMouseEnter={handleGoogleCalendarHover}
+                onFocus={handleGoogleCalendarHover}
               >
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="hidden sm:inline">{syncStatus.googleEmail}</span>
@@ -190,7 +347,9 @@ export default function CalendarPage() {
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-2"
-                onClick={() => setIsGoogleCalendarOpen(true)}
+                onClick={handleOpenGoogleCalendar}
+                onMouseEnter={handleGoogleCalendarHover}
+                onFocus={handleGoogleCalendarHover}
               >
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Connect Google Calendar</span>
@@ -199,7 +358,13 @@ export default function CalendarPage() {
             )}
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onMouseEnter={handleSettingsHover}
+                onFocus={handleSettingsHover}
+              >
                 <Settings className="h-4 w-4" />
                 Settings
               </Button>
@@ -221,13 +386,7 @@ export default function CalendarPage() {
       {/* Google Calendar Dialog */}
       <GoogleCalendarDialog 
         open={isGoogleCalendarOpen} 
-        onOpenChange={(open) => {
-          setIsGoogleCalendarOpen(open);
-          if (!open) {
-            // Refresh sync status when dialog closes
-            fetchSyncStatus();
-          }
-        }}
+        onOpenChange={handleGoogleCalendarChange}
       />
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
@@ -250,7 +409,7 @@ export default function CalendarPage() {
               isExpanded={true}
               onDateSelect={handleCalendarSelect}
               onMonthChange={setCurrentMonth}
-              onToggleExpanded={() => {}} // No-op since always expanded on mobile
+              onToggleExpanded={noOpCallback} // No-op since always expanded on mobile
               onAddEvent={openDialog}
               getEventsForDate={getEventsForDate}
               getPriorityColor={getPriorityColor}
@@ -289,8 +448,8 @@ export default function CalendarPage() {
             />
           )}
 
-          {/* Future Events List */}
-          <EventList 
+          {/* Future Events List - Virtualized for Performance */}
+          <VirtualizedEventList 
             title="All Future Events"
             description={`Upcoming events across all dates (${getUpcomingEvents().length} total)`}
             events={getUpcomingEvents()}
@@ -303,6 +462,8 @@ export default function CalendarPage() {
             getPriorityColor={getPriorityColor}
             getTypeIcon={getTypeIcon}
             formatDate={formatDate}
+            height={500} // Set a fixed height for virtualization
+            itemHeight={120} // Estimated height for events with dates
           />
         </div>
 
