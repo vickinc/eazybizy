@@ -11,6 +11,8 @@ import { useSeparateCompanyPagination } from "@/hooks/useSeparateCompanyPaginati
 import { useCompanyFilters } from "@/hooks/useCompanyFilters";
 import { useCompanyCrud } from "@/hooks/useCompanyCrud";
 import { useCompanyForm } from "@/hooks/useCompanyForm";
+import { useCompanyFilter } from "@/hooks/useCompanyFilter";
+import { CompanyFilterBar } from "@/components/features/CompanyFilterBar";
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
 import CompaniesLoading from "./loading";
 import dynamic from 'next/dynamic';
@@ -29,9 +31,10 @@ export default function CompaniesClient() {
   const router = useRouter();
   
   // Use individual hooks for better separation
-  const filters = useCompanyFilters();
+  const oldFilters = useCompanyFilters();
   const form = useCompanyForm();
   const crud = useCompanyCrud();
+  const { filters, updateFilters } = useCompanyFilter();
   
   // Use the new separate pagination hook
   const {
@@ -47,11 +50,13 @@ export default function CompaniesClient() {
     loadMorePassive,
     invalidateQueries
   } = useSeparateCompanyPagination(
-    filters.filters.searchTerm,
+    filters.searchTerm,
     'all', // We handle Active/Passive separately
-    filters.filters.industryFilter,
-    filters.sorting.sortField,
-    filters.sorting.sortDirection
+    filters.industryFilter,
+    filters.countryFilter,
+    filters.currencyFilter,
+    filters.sortField,
+    filters.sortDirection
   );
   
   // Combine data for backward compatibility
@@ -130,6 +135,14 @@ export default function CompaniesClient() {
           View Archive
         </Button>
       </div>
+
+      {/* Filter Bar */}
+      <CompanyFilterBar
+        filters={filters}
+        onFiltersChange={updateFilters}
+        totalCompanies={companies.length}
+        isLoading={isCompaniesLoading}
+      />
 
       <ApiErrorBoundary onRetry={invalidateQueries}>
         <Suspense fallback={<CompaniesLoading />}>

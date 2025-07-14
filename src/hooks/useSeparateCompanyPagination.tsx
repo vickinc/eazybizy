@@ -33,7 +33,9 @@ export function useSeparateCompanyPagination(
   searchTerm = '',
   statusFilter: 'all' | 'Active' | 'Passive' = 'all',
   industryFilter = '',
-  sortField: 'legalName' | 'tradingName' | 'industry' | 'createdAt' = 'legalName',
+  countryFilter = '',
+  currencyFilter = '',
+  sortField: 'legalName' | 'tradingName' | 'industry' | 'createdAt' | 'registrationDate' | 'countryOfRegistration' | 'baseCurrency' | 'updatedAt' = 'legalName',
   sortDirection: 'asc' | 'desc' = 'asc'
 ): SeparateCompanyPaginationHook {
   const queryClient = useQueryClient()
@@ -56,6 +58,8 @@ export function useSeparateCompanyPagination(
       'active',
       searchTerm,
       industryFilter,
+      countryFilter,
+      currencyFilter,
       pagination.active.skip,
       pagination.active.take,
       sortField,
@@ -65,6 +69,8 @@ export function useSeparateCompanyPagination(
       searchTerm,
       statusFilter: 'Active',
       industryFilter,
+      countryFilter,
+      currencyFilter,
       skip: pagination.active.skip,
       take: pagination.active.take,
       sortField,
@@ -88,6 +94,8 @@ export function useSeparateCompanyPagination(
       'passive', 
       searchTerm,
       industryFilter,
+      countryFilter,
+      currencyFilter,
       pagination.passive.skip,
       pagination.passive.take,
       sortField,
@@ -97,6 +105,8 @@ export function useSeparateCompanyPagination(
       searchTerm,
       statusFilter: 'Passive',
       industryFilter,
+      countryFilter,
+      currencyFilter,
       skip: pagination.passive.skip,
       take: pagination.passive.take,
       sortField,
@@ -155,7 +165,7 @@ export function useSeparateCompanyPagination(
     })
     setAccumulatedActive([])
     setAccumulatedPassive([])
-  }, [searchTerm, industryFilter, sortField, sortDirection])
+  }, [searchTerm, industryFilter, countryFilter, currencyFilter, sortField, sortDirection])
 
   // Pagination actions
   const loadMoreActive = useCallback(() => {

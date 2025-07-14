@@ -26,7 +26,7 @@ interface SmartCompanyListProps {
 }
 
 // Threshold for switching to virtual rendering
-const VIRTUAL_RENDERING_THRESHOLD = 50;
+const VIRTUAL_RENDERING_THRESHOLD = 200;
 
 export const SmartCompanyList: React.FC<SmartCompanyListProps> = ({
   activeCompanies,
@@ -51,25 +51,51 @@ export const SmartCompanyList: React.FC<SmartCompanyListProps> = ({
   const totalCompanies = activeCompanies.length + passiveCompanies.length;
   const shouldUseVirtualRendering = totalCompanies > VIRTUAL_RENDERING_THRESHOLD;
 
-  // Combine companies for virtual rendering
-  const allCompanies = useMemo(() => [
-    ...activeCompanies,
-    ...passiveCompanies
-  ], [activeCompanies, passiveCompanies]);
+  // Combine companies for virtual rendering with separator
+  const allCompanies = useMemo(() => {
+    const companies = [...activeCompanies];
+    
+    // Add separator if we have both active and passive companies
+    if (activeCompanies.length > 0 && passiveCompanies.length > 0) {
+      companies.push({
+        id: 'separator-passive',
+        isSeparator: true,
+        title: 'Passive Companies'
+      } as any);
+    }
+    
+    companies.push(...passiveCompanies);
+    return companies;
+  }, [activeCompanies, passiveCompanies]);
 
-  // Show performance notice when approaching threshold
-  const showPerformanceNotice = totalCompanies > VIRTUAL_RENDERING_THRESHOLD * 0.8 && !shouldUseVirtualRendering;
+
+  // Combined load more function for virtual rendering
+  const handleVirtualLoadMore = useCallback(() => {
+    // Load more active companies if available
+    if (hasMoreActive && loadMoreActive) {
+      loadMoreActive();
+    }
+    // Load more passive companies if available
+    if (hasMorePassive && loadMorePassive) {
+      loadMorePassive();
+    }
+  }, [hasMoreActive, hasMorePassive, loadMoreActive, loadMorePassive]);
 
   if (shouldUseVirtualRendering) {
     return (
       <div className="space-y-6">
-        {/* Performance notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <p className="text-sm text-blue-700">
-              <strong>Virtual Rendering Active:</strong> Displaying {totalCompanies} companies efficiently using virtual scrolling to maintain performance.
-            </p>
+        {/* Company Statistics Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="text-sm text-gray-600">
+              <span className="font-medium text-green-600">{activeCompanies.length}</span> Active Companies
+            </div>
+            <div className="text-sm text-gray-600">
+              <span className="font-medium text-gray-500">{passiveCompanies.length}</span> Passive Companies
+            </div>
+            <div className="text-sm text-gray-600">
+              <span className="font-medium text-gray-900">{totalCompanies}</span> Total
+            </div>
           </div>
         </div>
 
@@ -83,30 +109,31 @@ export const SmartCompanyList: React.FC<SmartCompanyListProps> = ({
           copyToClipboard={copyToClipboard}
           handleWebsiteClick={handleWebsiteClick}
           isLoading={!isLoaded}
-          hasNextPage={hasNextPage}
-          loadMore={loadMore || (() => {})}
-          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasMoreActive || hasMorePassive}
+          loadMore={handleVirtualLoadMore}
+          isFetchingNextPage={isLoadingActive || isLoadingPassive}
           height={800} // Taller for better UX with many companies
           viewMode="grid"
         />
+
+        {/* Manual Load More Button */}
+        {(hasMoreActive || hasMorePassive) && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleVirtualLoadMore}
+              disabled={isLoadingActive || isLoadingPassive}
+              className="px-6 py-3 bg-lime-300 text-black rounded-md hover:bg-lime-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {isLoadingActive || isLoadingPassive ? 'Loading...' : 'Load More Companies'}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Performance warning when approaching threshold */}
-      {showPerformanceNotice && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-            <p className="text-sm text-amber-700">
-              <strong>Performance Notice:</strong> You have {totalCompanies} companies loaded. 
-              At {VIRTUAL_RENDERING_THRESHOLD}+ companies, we'll automatically switch to virtual scrolling for better performance.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Regular List with Separate Pagination */}
       <CompanyList

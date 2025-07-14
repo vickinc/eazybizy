@@ -8,6 +8,8 @@ interface CompanyFilters {
   search?: string
   status?: string  
   industry?: string
+  country?: string
+  currency?: string
   sortField?: string
   sortDirection?: string
 }
@@ -40,6 +42,8 @@ export async function GET(request: NextRequest) {
       search: searchParams.get('search') || '',
       status: searchParams.get('status') || 'all',
       industry: searchParams.get('industry') || '',
+      country: searchParams.get('country') || '',
+      currency: searchParams.get('currency') || '',
       sortField: searchParams.get('sortField') || 'createdAt',
       sortDirection: searchParams.get('sortDirection') || 'desc',
     }
@@ -74,7 +78,7 @@ export async function GET(request: NextRequest) {
       } as CachedCompanyResponse
 
       // Generate ETag for cache validation
-      const etag = generateETag(responseData)
+      const etag = await generateETag(responseData)
       
       // Check if client has matching ETag (304 Not Modified)
       if (checkETag(request, etag)) {
@@ -120,6 +124,14 @@ export async function GET(request: NextRequest) {
     if (filters.industry) {
       where.industry = filters.industry
     }
+    
+    if (filters.country) {
+      where.countryOfRegistration = filters.country
+    }
+    
+    if (filters.currency) {
+      where.baseCurrency = filters.currency
+    }
 
     // Build orderBy clause
     const orderBy: Prisma.CompanyOrderByWithRelationInput = {}
@@ -132,6 +144,18 @@ export async function GET(request: NextRequest) {
         break
       case 'industry':
         orderBy.industry = filters.sortDirection as 'asc' | 'desc'
+        break
+      case 'countryOfRegistration':
+        orderBy.countryOfRegistration = filters.sortDirection as 'asc' | 'desc'
+        break
+      case 'baseCurrency':
+        orderBy.baseCurrency = filters.sortDirection as 'asc' | 'desc'
+        break
+      case 'registrationDate':
+        orderBy.registrationDate = filters.sortDirection as 'asc' | 'desc'
+        break
+      case 'updatedAt':
+        orderBy.updatedAt = filters.sortDirection as 'asc' | 'desc'
         break
       default:
         orderBy.createdAt = filters.sortDirection as 'asc' | 'desc'
@@ -230,7 +254,7 @@ export async function GET(request: NextRequest) {
     } as CachedCompanyResponse
 
     // Generate ETag for fresh data
-    const etag = generateETag(responseData)
+    const etag = await generateETag(responseData)
 
     // Return compressed response with different cache settings based on cache busting
     const cacheSettings = bustCache ? {

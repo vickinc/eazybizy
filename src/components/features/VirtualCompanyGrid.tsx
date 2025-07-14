@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { Building2 } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
 import { Card } from "@/components/ui/card";
 import { VirtualGrid, InfiniteVirtualList } from "@/components/ui/virtual-scroll";
 import { Company } from '@/types/company.types';
@@ -57,7 +57,7 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
     const availableWidth = containerWidth - 64; // Subtract padding
     
     const columnsCanFit = Math.floor((availableWidth + gap) / (minCardWidth + gap));
-    const columnCount = Math.max(1, Math.min(4, columnsCanFit)); // 1-4 columns max
+    const columnCount = Math.max(1, Math.min(3, columnsCanFit)); // 1-3 columns max
     const columnWidth = (availableWidth - (gap * (columnCount - 1))) / columnCount;
     
     return {
@@ -76,6 +76,28 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
     style: React.CSSProperties
   ) => {
     if (!company) return null;
+    
+    // Handle separator items
+    if ((company as any).isSeparator) {
+      return (
+        <div 
+          style={{
+            ...style,
+            padding: '12px',
+            boxSizing: 'border-box',
+            gridColumn: '1 / -1' // Span full width
+          }}
+        >
+          <div className="flex items-center mb-4">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <div className="px-4 py-2 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-600">{(company as any).title}</h3>
+            </div>
+            <div className="flex-1 border-t border-gray-200"></div>
+          </div>
+        </div>
+      );
+    }
     
     return (
       <div 
@@ -106,6 +128,27 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
     style: React.CSSProperties
   ) => {
     if (!company) return null;
+
+    // Handle separator items
+    if ((company as any).isSeparator) {
+      return (
+        <div 
+          style={{
+            ...style,
+            padding: '8px 16px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div className="flex items-center mb-4">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <div className="px-4 py-2 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-600">{(company as any).title}</h3>
+            </div>
+            <div className="flex-1 border-t border-gray-200"></div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div 
@@ -163,6 +206,7 @@ export const VirtualCompanyGrid: React.FC<VirtualCompanyGridProps> = ({
               onClick={() => handleEdit(company)}
               className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
               title="Edit company"
+              aria-label={`Edit company: ${company.tradingName}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

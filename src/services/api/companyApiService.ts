@@ -13,7 +13,9 @@ export interface CompanyQueryParams {
   searchTerm?: string
   statusFilter?: 'all' | 'Active' | 'Passive'
   industryFilter?: string
-  sortField?: 'legalName' | 'tradingName' | 'industry' | 'createdAt'
+  countryFilter?: string
+  currencyFilter?: string
+  sortField?: 'legalName' | 'tradingName' | 'industry' | 'createdAt' | 'registrationDate' | 'countryOfRegistration' | 'baseCurrency' | 'updatedAt'
   sortDirection?: 'asc' | 'desc'
 }
 
@@ -99,6 +101,8 @@ export class CompanyApiService {
       searchParams.set('status', params.statusFilter)
     }
     if (params.industryFilter) searchParams.set('industry', params.industryFilter)
+    if (params.countryFilter) searchParams.set('country', params.countryFilter)
+    if (params.currencyFilter) searchParams.set('currency', params.currencyFilter)
     
     // Add sorting
     if (params.sortField) searchParams.set('sortField', params.sortField)
@@ -178,8 +182,32 @@ export class CompanyApiService {
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || 'Failed to delete company')
+      let errorMessage = 'Failed to delete company'
+      
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorData.message || errorMessage
+        
+        // Handle specific error cases
+        if (response.status === 409) {
+          errorMessage = errorData.error || 'Cannot delete company with existing related data'
+        } else if (response.status === 404) {
+          errorMessage = 'Company not found'
+        } else if (response.status === 400) {
+          errorMessage = 'Invalid company ID'
+        }
+      } catch (parseError) {
+        // If we can't parse the error response, use the status-based message
+        if (response.status === 409) {
+          errorMessage = 'Cannot delete company with existing related data'
+        } else if (response.status === 404) {
+          errorMessage = 'Company not found'
+        } else if (response.status === 400) {
+          errorMessage = 'Invalid company ID'
+        }
+      }
+      
+      throw new Error(errorMessage)
     }
   }
 
