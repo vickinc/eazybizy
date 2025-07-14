@@ -28,7 +28,7 @@ interface SmartCompanyListProps {
 // Threshold for switching to virtual rendering
 const VIRTUAL_RENDERING_THRESHOLD = 200;
 
-export const SmartCompanyList: React.FC<SmartCompanyListProps> = ({
+const SmartCompanyListComponent: React.FC<SmartCompanyListProps> = ({
   activeCompanies,
   passiveCompanies,
   isLoaded,
@@ -156,3 +156,76 @@ export const SmartCompanyList: React.FC<SmartCompanyListProps> = ({
     </div>
   );
 };
+
+// Custom comparison function for optimal React.memo performance
+const arePropsEqual = (
+  prevProps: SmartCompanyListProps,
+  nextProps: SmartCompanyListProps
+): boolean => {
+  // Compare primitive props
+  if (
+    prevProps.isLoaded !== nextProps.isLoaded ||
+    prevProps.hasNextPage !== nextProps.hasNextPage ||
+    prevProps.isFetchingNextPage !== nextProps.isFetchingNextPage ||
+    prevProps.hasMoreActive !== nextProps.hasMoreActive ||
+    prevProps.hasMorePassive !== nextProps.hasMorePassive ||
+    prevProps.isLoadingActive !== nextProps.isLoadingActive ||
+    prevProps.isLoadingPassive !== nextProps.isLoadingPassive
+  ) {
+    return false;
+  }
+
+  // Compare function props (should be stable with useCallback)
+  if (
+    prevProps.handleEdit !== nextProps.handleEdit ||
+    prevProps.handleDelete !== nextProps.handleDelete ||
+    prevProps.handleArchive !== nextProps.handleArchive ||
+    prevProps.copyToClipboard !== nextProps.copyToClipboard ||
+    prevProps.handleWebsiteClick !== nextProps.handleWebsiteClick ||
+    prevProps.loadMore !== nextProps.loadMore ||
+    prevProps.loadMoreActive !== nextProps.loadMoreActive ||
+    prevProps.loadMorePassive !== nextProps.loadMorePassive
+  ) {
+    return false;
+  }
+
+  // Deep compare arrays (most expensive check, do last)
+  if (
+    prevProps.activeCompanies.length !== nextProps.activeCompanies.length ||
+    prevProps.passiveCompanies.length !== nextProps.passiveCompanies.length
+  ) {
+    return false;
+  }
+
+  // Compare company IDs for efficient array comparison
+  for (let i = 0; i < prevProps.activeCompanies.length; i++) {
+    if (prevProps.activeCompanies[i].id !== nextProps.activeCompanies[i].id) {
+      return false;
+    }
+  }
+
+  for (let i = 0; i < prevProps.passiveCompanies.length; i++) {
+    if (prevProps.passiveCompanies[i].id !== nextProps.passiveCompanies[i].id) {
+      return false;
+    }
+  }
+
+  // Shallow compare copiedFields object
+  const prevCopiedKeys = Object.keys(prevProps.copiedFields);
+  const nextCopiedKeys = Object.keys(nextProps.copiedFields);
+  
+  if (prevCopiedKeys.length !== nextCopiedKeys.length) {
+    return false;
+  }
+
+  for (const key of prevCopiedKeys) {
+    if (prevProps.copiedFields[key] !== nextProps.copiedFields[key]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+// Export memoized component with custom comparison
+export const SmartCompanyList = React.memo(SmartCompanyListComponent, arePropsEqual);

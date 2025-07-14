@@ -16,7 +16,7 @@ import { CompanyFilterBar } from "@/components/features/CompanyFilterBar";
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
 import CompaniesLoading from "./loading";
 import dynamic from 'next/dynamic';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useCallback } from 'react';
 
 // Lazy load heavy components to improve initial bundle size
 const SmartCompanyList = dynamic(
@@ -36,7 +36,7 @@ export default function CompaniesClient() {
   const crud = useCompanyCrud();
   const { filters, updateFilters } = useCompanyFilter();
   
-  // Use the new separate pagination hook
+  // Use the optimized separate pagination hook with debounced search
   const {
     activeCompanies,
     passiveCompanies,
@@ -48,9 +48,12 @@ export default function CompaniesClient() {
     hasMorePassive,
     loadMoreActive,
     loadMorePassive,
-    invalidateQueries
+    invalidateQueries,
+    searchInput,
+    setSearchInput,
+    isSearching
   } = useSeparateCompanyPagination(
-    filters.searchTerm,
+    '', // Pass empty string, we'll use hook's internal debounced search
     'all', // We handle Active/Passive separately
     filters.industryFilter,
     filters.countryFilter,
@@ -58,6 +61,13 @@ export default function CompaniesClient() {
     filters.sortField,
     filters.sortDirection
   );
+
+  // Sync external search term with internal debounced search
+  useEffect(() => {
+    if (filters.searchTerm !== searchInput) {
+      setSearchInput(filters.searchTerm);
+    }
+  }, [filters.searchTerm, searchInput, setSearchInput]);
   
   // Combine data for backward compatibility
   const companies = [...activeCompanies, ...passiveCompanies];
@@ -74,6 +84,17 @@ export default function CompaniesClient() {
   const handleViewArchive = () => {
     router.push('/companies/archive');
   };
+
+  // Memoized action handlers to prevent unnecessary re-renders
+  const handleDelete = useCallback((id: number) => {
+    if (confirm("Are you sure you want to delete this company?")) {
+      crud.deleteCompany(id.toString());
+    }
+  }, [crud.deleteCompany]);
+
+  const handleArchive = useCallback((company) => {
+    crud.archiveCompany(company.id.toString());
+  }, [crud.archiveCompany]);
 
   // Handle loading state with skeleton UI
   if (isCompaniesLoading && companies.length === 0) {
@@ -152,12 +173,8 @@ export default function CompaniesClient() {
             isLoaded={!isCompaniesLoading}
             copiedFields={form.uiState.state.copiedFields}
             handleEdit={form.handleEdit}
-            handleDelete={(id: number) => {
-              if (confirm("Are you sure you want to delete this company?")) {
-                crud.deleteCompany(id.toString());
-              }
-            }}
-            handleArchive={(company) => crud.archiveCompany(company.id.toString())}
+            handleDelete={handleDelete}
+            handleArchive={handleArchive}
             copyToClipboard={form.copyToClipboard}
             handleWebsiteClick={form.handleWebsiteClick}
             // New separate pagination props

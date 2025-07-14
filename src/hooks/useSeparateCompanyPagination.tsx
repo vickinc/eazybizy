@@ -1,12 +1,8 @@
-import React, { useState, useCallback } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Company } from '@/types/company.types'
 import { companyApiService } from '@/services/api'
-
-interface SeparatePaginationState {
-  active: { skip: number; take: number }
-  passive: { skip: number; take: number }
-}
+import { useDebouncedSearch } from './useDebouncedSearch'
 
 interface SeparateCompanyPaginationHook {
   // Data
@@ -27,7 +23,31 @@ interface SeparateCompanyPaginationHook {
   loadMoreActive: () => void
   loadMorePassive: () => void
   invalidateQueries: () => void
+  
+  // Search state
+  searchInput: string
+  setSearchInput: (value: string) => void
+  isSearching: boolean
 }
+
+// Optimized query key structure - separate stable and volatile parts
+const createQueryKey = (
+  status: 'Active' | 'Passive',
+  debouncedSearchTerm: string,
+  industryFilter: string,
+  countryFilter: string,
+  currencyFilter: string,
+  sortField: string,
+  sortDirection: string
+) => [
+  'companies-infinite',
+  status,
+  {
+    search: debouncedSearchTerm,
+    filters: { industryFilter, countryFilter, currencyFilter },
+    sort: { sortField, sortDirection }
+  }
+]
 
 export function useSeparateCompanyPagination(
   searchTerm = '',
@@ -40,188 +60,154 @@ export function useSeparateCompanyPagination(
 ): SeparateCompanyPaginationHook {
   const queryClient = useQueryClient()
   
-  // Separate pagination states
-  const [pagination, setPagination] = useState<SeparatePaginationState>({
-    active: { skip: 0, take: 6 },
-    passive: { skip: 0, take: 6 }
-  })
+  // Add debounced search optimization
+  const { 
+    searchInput, 
+    debouncedSearchTerm, 
+    isSearching, 
+    setSearchInput 
+  } = useDebouncedSearch(searchTerm, 300) // 300ms debounce for search
 
-  // Query for Active companies
+  // Optimized infinite query for Active companies
   const {
     data: activeData,
     isLoading: isLoadingActive,
     isError: isErrorActive,
-    error: errorActive
-  } = useQuery({
-    queryKey: [
-      'companies',
-      'active',
-      searchTerm,
+    error: errorActive,
+    fetchNextPage: fetchNextActivePage,
+    hasNextPage: hasMoreActive,
+    isFetchingNextPage: isFetchingNextActivePage
+  } = useInfiniteQuery({
+    queryKey: createQueryKey(
+      'Active',
+      debouncedSearchTerm,
       industryFilter,
       countryFilter,
       currencyFilter,
-      pagination.active.skip,
-      pagination.active.take,
       sortField,
       sortDirection
-    ],
-    queryFn: () => companyApiService.getCompanies({
-      searchTerm,
+    ),
+    queryFn: ({ pageParam = 0 }) => companyApiService.getCompanies({
+      searchTerm: debouncedSearchTerm,
       statusFilter: 'Active',
       industryFilter,
       countryFilter,
       currencyFilter,
-      skip: pagination.active.skip,
-      take: pagination.active.take,
+      skip: pageParam,
+      take: 6,
       sortField,
       sortDirection,
     }),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage?.pagination?.hasMore) return undefined
+      return allPages.length * 6 // Calculate next skip value
+    },
+    initialPageParam: 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes  
     retry: 2,
     refetchOnWindowFocus: false,
+    // Enable background refetching for better UX
+    refetchOnMount: 'always'
   })
 
-  // Query for Passive companies  
+  // Optimized infinite query for Passive companies
   const {
     data: passiveData,
     isLoading: isLoadingPassive,
     isError: isErrorPassive,
-    error: errorPassive
-  } = useQuery({
-    queryKey: [
-      'companies',
-      'passive', 
-      searchTerm,
+    error: errorPassive,
+    fetchNextPage: fetchNextPassivePage,
+    hasNextPage: hasMorePassive,
+    isFetchingNextPage: isFetchingNextPassivePage
+  } = useInfiniteQuery({
+    queryKey: createQueryKey(
+      'Passive',
+      debouncedSearchTerm,
       industryFilter,
       countryFilter,
       currencyFilter,
-      pagination.passive.skip,
-      pagination.passive.take,
       sortField,
       sortDirection
-    ],
-    queryFn: () => companyApiService.getCompanies({
-      searchTerm,
+    ),
+    queryFn: ({ pageParam = 0 }) => companyApiService.getCompanies({
+      searchTerm: debouncedSearchTerm,
       statusFilter: 'Passive',
       industryFilter,
       countryFilter,
       currencyFilter,
-      skip: pagination.passive.skip,
-      take: pagination.passive.take,
+      skip: pageParam,
+      take: 6,
       sortField,
       sortDirection,
     }),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage?.pagination?.hasMore) return undefined
+      return allPages.length * 6 // Calculate next skip value
+    },
+    initialPageParam: 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
+    // Enable background refetching for better UX
+    refetchOnMount: 'always'
   })
 
-  // Accumulate companies from multiple pages
-  const [accumulatedActive, setAccumulatedActive] = useState<Company[]>([])
-  const [accumulatedPassive, setAccumulatedPassive] = useState<Company[]>([])
+  // Memoized flattened company arrays - much more efficient than manual accumulation
+  const activeCompanies = useMemo(() => {
+    return activeData?.pages?.flatMap(page => page.data || []) || []
+  }, [activeData?.pages])
 
-  // Update accumulated companies when new data arrives
-  React.useEffect(() => {
-    if (!activeData) return
-    
-    const newCompanies = activeData.data || []
-    if (pagination.active.skip === 0) {
-      // Reset for new search/filter
-      setAccumulatedActive(newCompanies)
-    } else if (newCompanies.length > 0) {
-      // Append for pagination
-      setAccumulatedActive(prev => {
-        const companyMap = new Map(prev.map(comp => [comp.id, comp]))
-        newCompanies.forEach(comp => companyMap.set(comp.id, comp))
-        return Array.from(companyMap.values())
-      })
-    }
-  }, [activeData, pagination.active.skip])
+  const passiveCompanies = useMemo(() => {
+    return passiveData?.pages?.flatMap(page => page.data || []) || []
+  }, [passiveData?.pages])
 
-  React.useEffect(() => {
-    if (!passiveData) return
-    
-    const newCompanies = passiveData.data || []
-    if (pagination.passive.skip === 0) {
-      // Reset for new search/filter
-      setAccumulatedPassive(newCompanies)
-    } else if (newCompanies.length > 0) {
-      // Append for pagination
-      setAccumulatedPassive(prev => {
-        const companyMap = new Map(prev.map(comp => [comp.id, comp]))
-        newCompanies.forEach(comp => companyMap.set(comp.id, comp))
-        return Array.from(companyMap.values())
-      })
-    }
-  }, [passiveData, pagination.passive.skip])
-
-  // Reset pagination when filters change
-  React.useEffect(() => {
-    setPagination({
-      active: { skip: 0, take: 6 },
-      passive: { skip: 0, take: 6 }
-    })
-    setAccumulatedActive([])
-    setAccumulatedPassive([])
-  }, [searchTerm, industryFilter, countryFilter, currencyFilter, sortField, sortDirection])
-
-  // Pagination actions
+  // Optimized load more functions with loading states
   const loadMoreActive = useCallback(() => {
-    const currentHasMore = activeData?.pagination?.hasMore || false
-    if (currentHasMore) {
-      setPagination(prev => ({
-        ...prev,
-        active: {
-          ...prev.active,
-          skip: prev.active.skip + prev.active.take
-        }
-      }))
+    if (hasMoreActive && !isFetchingNextActivePage) {
+      fetchNextActivePage()
     }
-  }, [activeData?.pagination?.hasMore])
+  }, [hasMoreActive, isFetchingNextActivePage, fetchNextActivePage])
 
   const loadMorePassive = useCallback(() => {
-    const currentHasMore = passiveData?.pagination?.hasMore || false
-    if (currentHasMore) {
-      setPagination(prev => ({
-        ...prev,
-        passive: {
-          ...prev.passive,
-          skip: prev.passive.skip + prev.passive.take
-        }
-      }))
+    if (hasMorePassive && !isFetchingNextPassivePage) {
+      fetchNextPassivePage()
     }
-  }, [passiveData?.pagination?.hasMore])
+  }, [hasMorePassive, isFetchingNextPassivePage, fetchNextPassivePage])
 
+  // More targeted cache invalidation
   const invalidateQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['companies'], exact: false })
-    setPagination({
-      active: { skip: 0, take: 6 },
-      passive: { skip: 0, take: 6 }
+    // Only invalidate company-related infinite queries
+    queryClient.invalidateQueries({ 
+      queryKey: ['companies-infinite'], 
+      exact: false 
     })
-    setAccumulatedActive([])
-    setAccumulatedPassive([])
   }, [queryClient])
 
   return {
-    // Data
-    activeCompanies: accumulatedActive.length > 0 ? accumulatedActive : (activeData?.data || []),
-    passiveCompanies: accumulatedPassive.length > 0 ? accumulatedPassive : (passiveData?.data || []),
+    // Data - using React Query's built-in infinite data handling
+    activeCompanies,
+    passiveCompanies,
     
-    // Loading states
-    isLoadingActive,
-    isLoadingPassive,
+    // Loading states - includes fetching next page states
+    isLoadingActive: isLoadingActive || isFetchingNextActivePage,
+    isLoadingPassive: isLoadingPassive || isFetchingNextPassivePage,
     isError: isErrorActive || isErrorPassive,
     error: (errorActive || errorPassive) as Error | null,
     
-    // Pagination info
-    hasMoreActive: activeData?.pagination?.hasMore || false,
-    hasMorePassive: passiveData?.pagination?.hasMore || false,
+    // Pagination info from React Query's infinite query
+    hasMoreActive: hasMoreActive || false,
+    hasMorePassive: hasMorePassive || false,
     
     // Actions
     loadMoreActive,
     loadMorePassive,
     invalidateQueries,
+    
+    // Search state for UI binding
+    searchInput,
+    setSearchInput,
+    isSearching
   }
 }
