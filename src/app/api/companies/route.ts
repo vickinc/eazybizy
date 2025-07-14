@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client'
 import { CompanyBusinessService } from '@/services/business/companyBusinessService'
 import { invalidateCompanyStatistics } from '@/services/cache/companyStatisticsCache'
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
+import { AnniversaryEventService } from '@/services/business/anniversaryEventService'
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,6 +60,9 @@ export async function GET(request: NextRequest) {
         break
       case 'industry':
         orderBy.industry = sortDirection as 'asc' | 'desc'
+        break
+      case 'updatedAt':
+        orderBy.updatedAt = sortDirection as 'asc' | 'desc'
         break
       default:
         orderBy.createdAt = sortDirection as 'asc' | 'desc'
@@ -147,84 +151,56 @@ export async function POST(request: NextRequest) {
     // Validate and fix logo before creation
     const validatedLogo = CompanyBusinessService.validateAndFixLogo(logo, tradingName);
 
-    // Use transaction to create company with shareholders and representatives
-    const company = await prisma.$transaction(async (tx) => {
-      // Create the company first
-      const newCompany = await tx.company.create({
-        data: {
-          legalName,
-          tradingName,
-          registrationNo,
-          registrationDate: new Date(registrationDate),
-          countryOfRegistration,
-          baseCurrency,
-          businessLicenseNr,
-          vatNumber,
-          industry,
-          address,
-          phone,
-          email,
-          website,
-          status,
-          logo: validatedLogo,
-          facebookUrl,
-          instagramUrl,
-          xUrl,
-          youtubeUrl,
-          whatsappNumber,
-          telegramNumber,
-          mainContactEmail: mainContactPerson?.email,
-          mainContactType: mainContactPerson?.type,
-        },
-      });
-
-      // Create shareholders if provided
-      if (shareholders && shareholders.length > 0) {
-        await tx.shareholder.createMany({
-          data: shareholders.map((shareholder: any) => ({
-            companyId: newCompany.id,
-            firstName: shareholder.firstName,
-            lastName: shareholder.lastName,
-            dateOfBirth: new Date(shareholder.dateOfBirth),
-            nationality: shareholder.nationality || '',
-            countryOfResidence: shareholder.countryOfResidence || '',
-            email: shareholder.email,
-            phoneNumber: shareholder.phoneNumber || '',
-            ownershipPercent: shareholder.ownershipPercent,
-          })),
-        });
-      }
-
-      // Create representatives if provided
-      if (representatives && representatives.length > 0) {
-        await tx.representative.createMany({
-          data: representatives.map((rep: any) => ({
-            companyId: newCompany.id,
-            firstName: rep.firstName,
-            lastName: rep.lastName,
-            dateOfBirth: new Date(rep.dateOfBirth),
-            nationality: rep.nationality || '',
-            countryOfResidence: rep.countryOfResidence || '',
-            email: rep.email,
-            phoneNumber: rep.phoneNumber || '',
-            role: rep.role,
-            customRole: rep.customRole || null,
-          })),
-        });
-      }
-
-      // Return company with related data
-      return await tx.company.findUnique({
-        where: { id: newCompany.id },
-        include: {
-          shareholders: true,
-          representatives: true,
-        },
-      });
+    // Create company (simplified without transaction for now)
+    const company = await prisma.company.create({
+      data: {
+        legalName,
+        tradingName,
+        registrationNo,
+        registrationDate: new Date(registrationDate),
+        countryOfRegistration,
+        baseCurrency,
+        businessLicenseNr,
+        vatNumber,
+        industry,
+        address,
+        phone,
+        email,
+        website,
+        status,
+        logo: validatedLogo,
+        facebookUrl,
+        instagramUrl,
+        xUrl,
+        youtubeUrl,
+        whatsappNumber,
+        telegramNumber,
+        mainContactEmail: mainContactPerson?.email,
+        mainContactType: mainContactPerson?.type,
+      },
     });
 
     if (!company) {
       throw new Error('Failed to create company');
+    }
+    
+    // Generate anniversary events for the new company
+    try {
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + 2); // Generate events for next 2 years
+      
+      await AnniversaryEventService.generateAndStoreAnniversaryEvents(
+        company.id,
+        startDate,
+        endDate,
+        undefined // userId - let the service handle auth
+      );
+      
+      console.log(`Generated anniversary events for new company: ${company.tradingName} (ID: ${company.id})`);
+    } catch (anniversaryError) {
+      // Don't fail company creation if anniversary generation fails
+      console.warn(`Failed to generate anniversary events for company ${company.id}:`, anniversaryError);
     }
     
     // Invalidate statistics cache after creating a company
@@ -232,6 +208,18 @@ export async function POST(request: NextRequest) {
     
     // Smart cache invalidation for all related caches
     await CacheInvalidationService.invalidateOnCompanyMutation(company.id)
+    
+    // Invalidate calendar cache so anniversary events appear immediately
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/calendar/events/fast?pattern=calendar:*`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        console.log('Calendar cache invalidated successfully');
+      }
+    } catch (cacheError) {
+      console.warn('Failed to invalidate calendar cache:', cacheError);
+    }
     
     return NextResponse.json(company, { status: 201 })
   } catch (error) {
