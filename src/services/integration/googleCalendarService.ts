@@ -301,7 +301,7 @@ export class GoogleCalendarService {
       googleEventId: googleEvent.id,
       googleCalendarId: 'primary', // Default calendar
       googleEtag: googleEvent.etag,
-      syncStatus: SyncStatus.SYNCED,
+      syncStatus: 'SYNCED',
       lastSyncedAt: new Date()
     };
   }
@@ -338,32 +338,123 @@ export class GoogleCalendarService {
     }
   }
 
-  // Sync events bidirectionally
-  async syncEvents(calendarId: string = 'primary'): Promise<{
+  // Unified sync function that handles all types of sync operations
+  async unifiedSync(options: {
+    calendarId?: string;
+    syncType?: 'all' | 'regular' | 'auto-generated';
+    timeMin?: Date;
+    timeMax?: Date;
+    includeAnniversaryEvents?: boolean;
+  } = {}): Promise<{
     pushed: number;
     pulled: number;
     deleted: number;
     errors: string[];
+    syncType: string;
   }> {
-    const result = { pushed: 0, pulled: 0, deleted: 0, errors: [] };
+    const {
+      calendarId = 'primary',
+      syncType = 'all',
+      timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Default: last 30 days
+      timeMax = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000), // Default: next 180 days
+      includeAnniversaryEvents = true
+    } = options;
+
+    const result = { pushed: 0, pulled: 0, deleted: 0, errors: [], syncType };
     
     try {
-      console.log('GoogleCalendarService: Starting sync for user:', this.userId);
-      console.log('GoogleCalendarService: Initializing auth...');
-      await this.initializeAuth();
-      console.log('GoogleCalendarService: Auth initialized successfully');
+      console.log('GoogleCalendarService: Starting unified sync for user:', this.userId, 'syncType:', syncType);
       
-      // Get local events that need to be pushed
-      console.log('GoogleCalendarService: Fetching local events to push...');
+      // === INITIALIZATION PHASE ===
+      try {
+        console.log('GoogleCalendarService: Initializing auth...');
+        await this.initializeAuth();
+        console.log('GoogleCalendarService: Auth initialized successfully');
+      } catch (authError) {
+        console.error('GoogleCalendarService: Auth initialization failed:', authError);
+        const errorMessage = authError instanceof Error ? authError.message : String(authError);
+        result.errors.push(`Authentication error: ${errorMessage}`);
+        return result; // Return early if auth fails
+      }
+      
+      // === PUSH PHASE ===
+      try {
+        console.log('GoogleCalendarService: Starting push phase...');
+        await this.pushEventsToGoogle(result, calendarId, syncType, timeMin, timeMax, includeAnniversaryEvents);
+        console.log('GoogleCalendarService: Push phase completed');
+      } catch (pushError) {
+        console.error('GoogleCalendarService: Push phase failed:', pushError);
+        const errorMessage = pushError instanceof Error ? pushError.message : String(pushError);
+        result.errors.push(`Push phase error: ${errorMessage}`);
+      }
+      
+      // === PULL PHASE ===
+      try {
+        console.log('GoogleCalendarService: Starting pull phase...');
+        await this.pullEventsFromGoogle_Internal(result, calendarId, timeMin, timeMax);
+        console.log('GoogleCalendarService: Pull phase completed');
+      } catch (pullError) {
+        console.error('GoogleCalendarService: Pull phase failed:', pullError);
+        const errorMessage = pullError instanceof Error ? pullError.message : String(pullError);
+        result.errors.push(`Pull phase error: ${errorMessage}`);
+      }
+      
+      // === CLEANUP PHASE ===
+      try {
+        console.log('GoogleCalendarService: Starting cleanup phase...');
+        await this.cleanupDeletedEvents(result, calendarId, timeMin, timeMax);
+        console.log('GoogleCalendarService: Cleanup phase completed');
+      } catch (cleanupError) {
+        console.error('GoogleCalendarService: Cleanup phase failed:', cleanupError);
+        const errorMessage = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        result.errors.push(`Cleanup phase error: ${errorMessage}`);
+      }
+
+      // Update user's last sync time (even if there were some errors)
+      try {
+        await prisma.user.update({
+          where: { id: this.userId },
+          data: { lastGoogleSync: new Date() }
+        });
+        console.log('GoogleCalendarService: Last sync time updated successfully');
+      } catch (updateError) {
+        console.error('GoogleCalendarService: Failed to update last sync time:', updateError);
+        const errorMessage = updateError instanceof Error ? updateError.message : String(updateError);
+        result.errors.push(`Failed to update last sync time: ${errorMessage}`);
+      }
+
+    } catch (error) {
+      console.error('GoogleCalendarService: Unexpected unified sync error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Unexpected sync error: ${errorMessage}`);
+    }
+
+    return result;
+  }
+
+  // Push events to Google Calendar based on sync type
+  private async pushEventsToGoogle(
+    result: any,
+    calendarId: string,
+    syncType: string,
+    timeMin: Date,
+    timeMax: Date,
+    includeAnniversaryEvents: boolean
+  ): Promise<void> {
+    console.log('GoogleCalendarService: Starting push phase...');
+    
+    // Get regular database events
+    if (syncType === 'all' || syncType === 'regular') {
       const localEvents = await prisma.calendarEvent.findMany({
         where: {
           createdByUserId: this.userId,
-          syncStatus: { in: [SyncStatus.LOCAL, SyncStatus.PENDING] }
+          syncStatus: { in: ['LOCAL', 'PENDING'] },
+          date: { gte: timeMin, lte: timeMax }
         }
       });
-      console.log(`GoogleCalendarService: Found ${localEvents.length} local events to push`);
-
-      // Push local events to Google
+      
+      console.log(`GoogleCalendarService: Found ${localEvents.length} regular events to push`);
+      
       for (const event of localEvents) {
         try {
           const syncResult = await this.pushEventToGoogle(event, calendarId);
@@ -373,7 +464,7 @@ export class GoogleCalendarService {
               data: {
                 googleEventId: syncResult.eventId,
                 googleCalendarId: calendarId,
-                syncStatus: SyncStatus.SYNCED,
+                syncStatus: 'SYNCED',
                 lastSyncedAt: new Date()
               }
             });
@@ -385,127 +476,121 @@ export class GoogleCalendarService {
           result.errors.push(`Error pushing event "${event.title}": ${error}`);
         }
       }
+    }
 
-      // Pull events from Google
-      console.log('GoogleCalendarService: Starting to pull events from Google...');
-      const timeMin = new Date();
-      timeMin.setMonth(timeMin.getMonth() - 1); // Pull events from last month
-      const timeMax = new Date();
-      timeMax.setMonth(timeMax.getMonth() + 6); // Pull events up to 6 months ahead
-      
-      console.log('GoogleCalendarService: Date range for pulling:', { timeMin, timeMax });
+    // Get and sync anniversary events
+    if (includeAnniversaryEvents && (syncType === 'all' || syncType === 'auto-generated')) {
+      await this.syncAnniversaryEvents(result, calendarId, timeMin, timeMax);
+    }
+  }
+
+  // Sync anniversary events specifically
+  private async syncAnniversaryEvents(
+    result: any,
+    calendarId: string,
+    timeMin: Date,
+    timeMax: Date
+  ): Promise<void> {
+    console.log('GoogleCalendarService: Starting anniversary events sync...');
+    
+    // Get companies for anniversary generation
+    const companies = await prisma.company.findMany({
+      select: {
+        id: true,
+        tradingName: true,
+        registrationDate: true,
+        status: true
+      }
+    });
+
+    if (companies.length === 0) {
+      console.log('GoogleCalendarService: No companies found for anniversary events');
+      return;
+    }
+
+    // Generate anniversary events
+    const { CompanyAnniversaryService } = await import('@/services/business/companyAnniversaryService');
+    const anniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
+      companies as any[], // Cast to avoid type issues
+      timeMin,
+      timeMax
+    );
+
+    console.log(`GoogleCalendarService: Generated ${anniversaryEvents.length} anniversary events`);
+
+    // Get deleted anniversary event IDs to filter out
+    const deletedEventIds = await prisma.autoGeneratedEventSync.findMany({
+      where: {
+        userId: this.userId,
+        isDeleted: true
+      },
+      select: { originalEventId: true }
+    });
+    
+    const deletedEventIdsSet = new Set(deletedEventIds.map(e => e.originalEventId));
+
+    // Get already synced anniversary events
+    const syncedAnniversaryEvents = await prisma.autoGeneratedEventSync.findMany({
+      where: {
+        userId: this.userId,
+        isDeleted: false,
+        date: { gte: timeMin, lte: timeMax }
+      }
+    });
+    
+    const syncedEventIdsSet = new Set(syncedAnniversaryEvents.map(e => e.originalEventId));
+
+    // Filter and convert events to sync
+    const eventsToSync = anniversaryEvents
+      .filter(event => !deletedEventIdsSet.has(event.id) && !syncedEventIdsSet.has(event.id))
+      .map(event => CompanyAnniversaryService.convertToCalendarEvent(event));
+
+    console.log(`GoogleCalendarService: Found ${eventsToSync.length} new anniversary events to sync`);
+
+    // Sync anniversary events
+    for (const event of eventsToSync) {
+      try {
+        const syncResult = await this.pushEventToGoogle(event as any, calendarId);
+        if (syncResult.success && syncResult.eventId) {
+          // Create sync tracking record
+          await prisma.autoGeneratedEventSync.create({
+            data: {
+              originalEventId: event.id,
+              googleEventId: syncResult.eventId,
+              userId: this.userId,
+              title: event.title,
+              date: event.date,
+              syncedAt: new Date()
+            }
+          });
+          result.pushed++;
+          console.log(`GoogleCalendarService: Successfully synced anniversary event: ${event.title}`);
+        } else {
+          result.errors.push(`Failed to sync anniversary event "${event.title}": ${syncResult.error}`);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        result.errors.push(`Error syncing anniversary event "${event.title}": ${errorMessage}`);
+      }
+    }
+  }
+
+  // Pull events from Google Calendar (internal method to avoid naming conflicts)
+  private async pullEventsFromGoogle_Internal(
+    result: any,
+    calendarId: string,
+    timeMin: Date,
+    timeMax: Date
+  ): Promise<void> {
+    console.log('GoogleCalendarService: Starting pull phase...');
+    
+    try {
       const googleEvents = await this.pullEventsFromGoogle(calendarId, timeMin, timeMax);
       console.log(`GoogleCalendarService: Found ${googleEvents.length} Google events to process`);
-      
-      // Get all existing synced events in our database within the date range
-      const existingSyncedEvents = await prisma.calendarEvent.findMany({
-        where: {
-          createdByUserId: this.userId,
-          googleEventId: { not: null },
-          date: {
-            gte: timeMin,
-            lte: timeMax
-          }
-        },
-        select: {
-          id: true,
-          googleEventId: true,
-          title: true
-        }
-      });
-      
-      // Create a set of Google event IDs that currently exist
-      const currentGoogleEventIds = new Set(
-        googleEvents
-          .filter(e => e.googleEventId)
-          .map(e => e.googleEventId as string)
-      );
-      
-      // Check for deleted events (events in our DB that are no longer in Google)
-      for (const localEvent of existingSyncedEvents) {
-        if (localEvent.googleEventId && !currentGoogleEventIds.has(localEvent.googleEventId)) {
-          try {
-            console.log('GoogleCalendarService: Detected deleted event in Google, removing locally:', {
-              id: localEvent.id,
-              title: localEvent.title,
-              googleEventId: localEvent.googleEventId
-            });
-            
-            // Delete the event from our database
-            await prisma.calendarEvent.delete({
-              where: { id: localEvent.id }
-            });
-            
-            // Log the deletion sync
-            await this.logSyncActivity(
-              localEvent.id,
-              SyncType.PULL,
-              SyncStatus.SYNCED,
-              'Event deleted from Google Calendar'
-            );
-            
-            result.deleted++;
-            console.log('GoogleCalendarService: Successfully removed deleted event');
-          } catch (error) {
-            console.error('GoogleCalendarService: Error deleting event:', error);
-            result.errors.push(`Error deleting event "${localEvent.title}": ${error}`);
-          }
-        }
-      }
-      
-      // Check for deleted auto-generated events (anniversary events)
-      const syncedAutoGeneratedEvents = await prisma.autoGeneratedEventSync.findMany({
-        where: {
-          userId: this.userId,
-          isDeleted: false,
-          googleEventId: { not: '' }, // Only events that were actually synced to Google
-          date: {
-            gte: timeMin,
-            lte: timeMax
-          }
-        }
-      });
-      
-      for (const autoEvent of syncedAutoGeneratedEvents) {
-        if (!currentGoogleEventIds.has(autoEvent.googleEventId)) {
-          try {
-            console.log('GoogleCalendarService: Detected deleted auto-generated event in Google, marking as deleted:', {
-              originalEventId: autoEvent.originalEventId,
-              title: autoEvent.title,
-              googleEventId: autoEvent.googleEventId
-            });
-            
-            // Mark the auto-generated event as deleted
-            await prisma.autoGeneratedEventSync.update({
-              where: { id: autoEvent.id },
-              data: { isDeleted: true }
-            });
-            
-            // Log the deletion sync
-            await this.logSyncActivity(
-              autoEvent.originalEventId,
-              SyncType.PULL,
-              SyncStatus.SYNCED,
-              'Auto-generated event deleted from Google Calendar'
-            );
-            
-            result.deleted++;
-            console.log('GoogleCalendarService: Successfully marked auto-generated event as deleted');
-          } catch (error) {
-            console.error('GoogleCalendarService: Error marking auto-generated event as deleted:', error);
-            result.errors.push(`Error deleting auto-generated event "${autoEvent.title}": ${error}`);
-          }
-        }
-      }
       
       // Process events from Google (create or update)
       for (const googleEventData of googleEvents) {
         try {
-          console.log('GoogleCalendarService: Processing Google event:', { 
-            title: googleEventData.title, 
-            googleEventId: googleEventData.googleEventId 
-          });
-          
           if (!googleEventData.googleEventId) {
             console.log('GoogleCalendarService: Skipping event without googleEventId');
             continue;
@@ -517,51 +602,149 @@ export class GoogleCalendarService {
           });
 
           if (existingEvent) {
-            console.log('GoogleCalendarService: Updating existing event:', existingEvent.id);
             // Update existing event
             await prisma.calendarEvent.update({
               where: { id: existingEvent.id },
               data: {
                 ...googleEventData,
-                syncStatus: SyncStatus.SYNCED,
+                syncStatus: 'SYNCED',
                 lastSyncedAt: new Date()
               }
             });
           } else {
-            console.log('GoogleCalendarService: Creating new event from Google');
             // Create new event
             await prisma.calendarEvent.create({
               data: {
                 ...googleEventData,
                 createdByUserId: this.userId,
-                syncStatus: SyncStatus.SYNCED,
+                syncStatus: 'SYNCED',
                 lastSyncedAt: new Date(),
-                type: 'OTHER', // Default type
-                priority: 'MEDIUM', // Default priority
-                company: '', // Default company
+                type: 'OTHER',
+                priority: 'MEDIUM',
+                company: '',
                 participants: googleEventData.participants || '[]'
               } as any
             });
             result.pulled++;
-            console.log('GoogleCalendarService: Successfully created event');
           }
         } catch (error) {
           console.error('GoogleCalendarService: Error processing event:', error);
           result.errors.push(`Error pulling event: ${error}`);
         }
       }
-
-      // Update user's last sync time
-      await prisma.user.update({
-        where: { id: this.userId },
-        data: { lastGoogleSync: new Date() }
-      });
-
     } catch (error) {
-      result.errors.push(`Sync error: ${error}`);
+      console.error('GoogleCalendarService: Error in pull phase:', error);
+      result.errors.push(`Error pulling events: ${error}`);
     }
+  }
 
-    return result;
+  // Clean up deleted events
+  private async cleanupDeletedEvents(
+    result: any,
+    calendarId: string,
+    timeMin: Date,
+    timeMax: Date
+  ): Promise<void> {
+    console.log('GoogleCalendarService: Starting cleanup phase...');
+    
+    try {
+      // Get current Google events to check for deletions
+      const googleEvents = await this.pullEventsFromGoogle(calendarId, timeMin, timeMax);
+      const currentGoogleEventIds = new Set(
+        googleEvents
+          .filter(e => e.googleEventId)
+          .map(e => e.googleEventId as string)
+      );
+
+      // Check for deleted regular events
+      const existingSyncedEvents = await prisma.calendarEvent.findMany({
+        where: {
+          createdByUserId: this.userId,
+          googleEventId: { not: null },
+          date: { gte: timeMin, lte: timeMax }
+        },
+        select: { id: true, googleEventId: true, title: true }
+      });
+      
+      for (const localEvent of existingSyncedEvents) {
+        if (localEvent.googleEventId && !currentGoogleEventIds.has(localEvent.googleEventId)) {
+          try {
+            // Log sync activity BEFORE deleting the event
+            await this.logSyncActivity(
+              localEvent.id,
+              'PULL',
+              'SYNCED',
+              'Event deleted from Google Calendar'
+            );
+            
+            await prisma.calendarEvent.delete({
+              where: { id: localEvent.id }
+            });
+            
+            result.deleted++;
+          } catch (error) {
+            result.errors.push(`Error deleting event "${localEvent.title}": ${error}`);
+          }
+        }
+      }
+
+      // Check for deleted auto-generated events
+      const syncedAutoGeneratedEvents = await prisma.autoGeneratedEventSync.findMany({
+        where: {
+          userId: this.userId,
+          isDeleted: false,
+          googleEventId: { not: '' },
+          date: { gte: timeMin, lte: timeMax }
+        }
+      });
+      
+      for (const autoEvent of syncedAutoGeneratedEvents) {
+        if (!currentGoogleEventIds.has(autoEvent.googleEventId)) {
+          try {
+            // Log sync activity BEFORE marking as deleted
+            await this.logSyncActivity(
+              autoEvent.originalEventId,
+              'PULL',
+              'SYNCED',
+              'Auto-generated event deleted from Google Calendar'
+            );
+            
+            await prisma.autoGeneratedEventSync.update({
+              where: { id: autoEvent.id },
+              data: { isDeleted: true }
+            });
+            
+            result.deleted++;
+          } catch (error) {
+            result.errors.push(`Error deleting auto-generated event "${autoEvent.title}": ${error}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('GoogleCalendarService: Error in cleanup phase:', error);
+      result.errors.push(`Error in cleanup phase: ${error}`);
+    }
+  }
+
+  // Legacy method for backward compatibility
+  async syncEvents(calendarId: string = 'primary'): Promise<{
+    pushed: number;
+    pulled: number;
+    deleted: number;
+    errors: string[];
+  }> {
+    const result = await this.unifiedSync({
+      calendarId,
+      syncType: 'all',
+      includeAnniversaryEvents: true
+    });
+    
+    return {
+      pushed: result.pushed,
+      pulled: result.pulled,
+      deleted: result.deleted,
+      errors: result.errors
+    };
   }
 
   // Utility method to combine date and time with proper timezone handling
@@ -578,16 +761,34 @@ export class GoogleCalendarService {
   }
 
   // Log sync activity
-  private async logSyncActivity(eventId: string | null, syncType: SyncType, syncStatus: SyncStatus, errorMessage?: string) {
-    await prisma.googleCalendarSync.create({
-      data: {
-        userId: this.userId,
-        eventId,
-        syncType,
-        syncStatus,
-        errorMessage
+  private async logSyncActivity(eventId: string | null, syncType: string, syncStatus: string, errorMessage?: string) {
+    try {
+      await prisma.googleCalendarSync.create({
+        data: {
+          userId: this.userId,
+          eventId,
+          syncType: syncType as any,
+          syncStatus: syncStatus as any,
+          errorMessage
+        }
+      });
+    } catch (error) {
+      // If foreign key constraint fails (event was deleted), log without eventId
+      console.warn('Failed to log sync activity with eventId, retrying without eventId:', error);
+      try {
+        await prisma.googleCalendarSync.create({
+          data: {
+            userId: this.userId,
+            eventId: null, // Don't reference the deleted event
+            syncType: syncType as any,
+            syncStatus: syncStatus as any,
+            errorMessage: errorMessage || `Sync log for deleted event: ${eventId}`
+          }
+        });
+      } catch (retryError) {
+        console.error('Failed to log sync activity even without eventId:', retryError);
       }
-    });
+    }
   }
 
   // Safe parse participants JSON

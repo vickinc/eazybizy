@@ -83,11 +83,6 @@ export const EventDialog: React.FC<EventDialogProps> = ({
                   >
                     <Building2 className="h-5 w-5" />
                     <span className="font-medium">Company</span>
-                    {selectedCompanyObj && formData.eventScope === 'company' && (
-                      <span className="absolute -bottom-5 left-0 right-0 text-xs text-gray-500 truncate px-2">
-                        {selectedCompanyObj.tradingName}
-                      </span>
-                    )}
                   </button>
                   <button
                     type="button"
@@ -136,9 +131,22 @@ export const EventDialog: React.FC<EventDialogProps> = ({
           {/* Company info message for filtered company */}
           {isCompanyFiltered && formData.eventScope === 'company' && (
             <div className="bg-lime-50 border border-lime-200 rounded-lg px-3 py-2">
-              <p className="text-sm text-lime-700">
-                Using {selectedCompanyObj?.tradingName} from your current filter
-              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                  {selectedCompanyObj?.logo && (selectedCompanyObj.logo.startsWith('data:') || selectedCompanyObj.logo.includes('http') || selectedCompanyObj.logo.startsWith('/')) ? (
+                    <img 
+                      src={selectedCompanyObj.logo} 
+                      alt={`${selectedCompanyObj.tradingName} logo`} 
+                      className="w-full h-full object-cover rounded"
+                    />
+                  ) : (
+                    selectedCompanyObj?.tradingName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <p className="text-sm text-lime-700">
+                  Using <span className="font-medium">{selectedCompanyObj?.tradingName}</span> from your current filter
+                </p>
+              </div>
             </div>
           )}
 
@@ -338,7 +346,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
           
           
         </div>
-        <div className="flex justify-between items-center pt-4 border-t">
+        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
           <div className="text-xs text-gray-500">
             {editingEvent ? "* Required field" : "* Required field"}
           </div>
@@ -346,14 +354,14 @@ export const EventDialog: React.FC<EventDialogProps> = ({
             <Button 
               variant="outline" 
               onClick={closeDialog}
-              className="px-6"
+              className="px-4 py-2 h-auto"
             >
               Cancel
             </Button>
             <Button 
               onClick={editingEvent ? handleUpdateEvent : handleAddEvent}
               disabled={isMutating || !formData.title}
-              className="px-6 bg-lime-600 hover:bg-lime-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 h-auto font-medium"
             >
               {isMutating ? (
                 <div className="flex items-center space-x-2">

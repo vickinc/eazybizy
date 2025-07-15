@@ -220,6 +220,15 @@ export async function POST(request: NextRequest) {
     // Invalidate calendar caches after creation
     await CacheInvalidationService.invalidateCalendar();
     
+    // Invalidate dashboard cache to reflect immediate changes
+    try {
+      const { CacheService } = await import('@/lib/redis');
+      await CacheService.del('dashboard:summary');
+      console.log('Dashboard cache invalidated after event creation');
+    } catch (cacheError) {
+      console.warn('Failed to invalidate dashboard cache:', cacheError);
+    }
+    
     // Also invalidate company-related caches if this event is linked to a company
     if (companyId) {
       await CacheInvalidationService.invalidateOnCompanyMutation(companyId);

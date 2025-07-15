@@ -448,6 +448,53 @@ export default function PageName() {
 - [ ] No custom spacing patterns that deviate from standard
 - [ ] Responsive design works correctly on all screen sizes
 
+## Button Loading State Rules
+
+### Smooth User Experience
+- **Immediate visual feedback** when button is clicked
+- **Consistent styling** with existing component theme
+- **Graceful error handling** with automatic loading state reset
+
+### How It Works
+1. User clicks button → Loading state becomes true
+2. Loading UI appears → Spinner + "Loading..." text
+3. Button becomes disabled → Prevents multiple clicks
+4. Operation executes → Navigation/API call/etc.
+5. Loading state clears → When operation completes or component unmounts
+
+### Visual Elements
+- **Spinner**: Theme-colored rotating border animation matching component colors
+- **Layout**: Flexbox with spinner and text side-by-side
+- **Spacing**: Consistent 8px gap between spinner and text (`space-x-2`)
+- **Accessibility**: Button properly disabled during loading
+
+### Implementation Pattern
+```tsx
+const [isLoading, setIsLoading] = useState(false);
+
+const handleAction = async () => {
+  setIsLoading(true);
+  try {
+    await performOperation();
+  } catch (error) {
+    console.error('Operation error:', error);
+    setIsLoading(false); // Reset on error
+  }
+};
+
+// In JSX
+<Button onClick={handleAction} disabled={isLoading}>
+  {isLoading ? (
+    <div className="flex items-center space-x-2">
+      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+      <span>Loading...</span>
+    </div>
+  ) : (
+    "Button Text"
+  )}
+</Button>
+```
+
 ---
 
 *These rules should be followed consistently across all projects to maintain code quality, readability, and maintainability.*

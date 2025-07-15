@@ -16,7 +16,6 @@ import {
 } from '@/services/api/calendarService';
 import { CalendarValidationService } from '@/services/business/calendarValidationService';
 import { CalendarBusinessService } from '@/services/business/calendarBusinessService';
-import { CompanyAnniversaryService } from '@/services/business/companyAnniversaryService';
 
 export interface CalendarManagementDBHook {
   // Data
@@ -382,46 +381,43 @@ export const useCalendarManagementDB = (
   
   const notes = notesData?.notes || [];
 
-  // Generate anniversary events for current month and upcoming events
+  // Fetch anniversary events from the Calendar API
+  const { 
+    data: anniversaryData, 
+    isLoading: anniversaryLoading, 
+    error: anniversaryError 
+  } = useQuery({
+    queryKey: ['calendar', 'anniversary-events', 'upcoming', selectedCompany, currentMonth],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        days: '60'
+      });
+      
+      if (selectedCompany !== 'all') {
+        params.append('companyId', selectedCompany.toString());
+      }
+      
+      const response = await fetch(`/api/calendar/anniversary-events/upcoming?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch anniversary events');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: companies.length > 0 && !deletedEventIdsLoading
+  });
+
   const anniversaryEvents = useMemo(() => {
-    // Wait for deleted event IDs to be loaded before generating anniversary events
-    if (!companies || companies.length === 0 || deletedEventIdsLoading) return [];
+    if (!anniversaryData?.events) return [];
     
-    // Generate anniversary events for a broader range to cover both month and upcoming
-    const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 60); // Next 60 days
-    
-    const filteredCompanies = selectedCompany !== 'all' 
-      ? companies.filter(c => c.id === selectedCompany)
-      : companies;
-    
-    const anniversaryEventsData = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
-      filteredCompanies,
-      startDate,
-      endDate,
-      deletedEventIds
-    );
-    
-    // Debug logging for July 30th events
-    const july30Events = anniversaryEventsData.filter(event => {
-      const eventDate = new Date(event.date);
-      return eventDate.getMonth() === 6 && eventDate.getDate() === 30; // July is month 6
+    console.log('Calendar: Fetched anniversary events from API:', {
+      anniversaryEventsCount: anniversaryData.events.length,
+      deletedEventIdsCount: deletedEventIds.length,
+      selectedCompany: selectedCompany
     });
     
-    if (july30Events.length > 0) {
-      console.log('July 30th anniversary events:', {
-        events: july30Events.map(e => ({ id: e.id, title: e.title, date: e.date })),
-        deletedEventIds: deletedEventIds,
-        shouldBeFiltered: july30Events.map(e => deletedEventIds.includes(e.id)),
-        deletedEventIdsLoading: deletedEventIdsLoading
-      });
-    }
-    
-    return anniversaryEventsData.map(event => 
-      CompanyAnniversaryService.convertToCalendarEvent(event)
-    );
-  }, [companies, selectedCompany, currentMonth, deletedEventIds, deletedEventIdsLoading]);
+    return anniversaryData.events;
+  }, [anniversaryData, deletedEventIds, selectedCompany]);
 
   // Combine all events for backward compatibility (avoiding duplicates)
   const allEvents = useMemo(() => {

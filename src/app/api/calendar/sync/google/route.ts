@@ -42,13 +42,32 @@ export async function POST(request: NextRequest) {
     console.log('Initializing Google Calendar sync for user:', user.id);
     const googleCalendarService = new GoogleCalendarService(user.id, user.timezoneId);
     
-    console.log('Starting sync with calendarId:', calendarId || 'primary');
-    const syncResult = await googleCalendarService.syncEvents(calendarId || 'primary');
+    console.log('Starting unified sync with calendarId:', calendarId || 'primary');
+    const syncResult = await googleCalendarService.unifiedSync({
+      calendarId: calendarId || 'primary',
+      syncType: 'all',
+      includeAnniversaryEvents: true
+    });
     
     console.log('Sync completed:', syncResult);
+    console.log('Sync errors (if any):', syncResult.errors);
+    
+    // Invalidate dashboard cache after sync to ensure fresh data
+    try {
+      const { CacheService } = await import('@/lib/redis');
+      await CacheService.del('dashboard:summary');
+      console.log('Dashboard cache invalidated after sync');
+    } catch (cacheError) {
+      console.warn('Failed to invalidate dashboard cache:', cacheError);
+    }
+    
     return NextResponse.json({
       success: true,
-      ...syncResult
+      pushed: syncResult.pushed,
+      pulled: syncResult.pulled,
+      deleted: syncResult.deleted,
+      errors: syncResult.errors || [],
+      syncType: syncResult.syncType
     });
   } catch (error) {
     console.error('Google Calendar sync error:', error);

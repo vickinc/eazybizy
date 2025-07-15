@@ -10,6 +10,8 @@ export async function DELETE(request: NextRequest) {
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { eventId } = await request.json();
+    
+    console.log('DEBUG: Deleting anniversary event:', { eventId, userEmail: currentUser.email });
 
     if (!eventId) {
       return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
@@ -33,6 +35,15 @@ export async function DELETE(request: NextRequest) {
     );
 
     if (result.deleted) {
+      // Invalidate dashboard cache to reflect immediate changes
+      try {
+        const { CacheService } = await import('@/lib/redis');
+        await CacheService.del('dashboard:summary');
+        console.log('Dashboard cache invalidated after auto-generated event deletion');
+      } catch (cacheError) {
+        console.warn('Failed to invalidate dashboard cache:', cacheError);
+      }
+      
       return NextResponse.json({ success: true });
     } else {
       return NextResponse.json({ error: result.error || 'Failed to delete event' }, { status: 500 });

@@ -290,27 +290,27 @@ export default function OptimizedDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <Card className="bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer" onClick={handleAddCompany}>
+          <Card className="bg-lime-100 border-lime-200 hover:bg-lime-200 transition-colors cursor-pointer" onClick={handleAddCompany}>
             <CardContent className="p-6 text-center">
-              <Plus className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <p className="font-medium text-blue-900">Add Company</p>
-              <p className="text-sm text-blue-600">Create a new company profile</p>
+              <Plus className="h-8 w-8 text-lime-600 mx-auto mb-2" />
+              <p className="font-medium text-lime-900">Add Company</p>
+              <p className="text-sm text-lime-600">Create a new company profile</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-green-50 border-green-200 hover:bg-green-100 transition-colors cursor-pointer" onClick={handleViewCalendar}>
+          <Card className="bg-lime-100 border-lime-200 hover:bg-lime-200 transition-colors cursor-pointer" onClick={handleViewCalendar}>
             <CardContent className="p-6 text-center">
-              <Calendar className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <p className="font-medium text-green-900">View Calendar</p>
-              <p className="text-sm text-green-600">Manage your events</p>
+              <Calendar className="h-8 w-8 text-lime-600 mx-auto mb-2" />
+              <p className="font-medium text-lime-900">View Calendar</p>
+              <p className="text-sm text-lime-600">Manage your events</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-orange-50 border-orange-200 hover:bg-orange-100 transition-colors cursor-pointer" onClick={handleViewCompanies}>
+          <Card className="bg-lime-100 border-lime-200 hover:bg-lime-200 transition-colors cursor-pointer" onClick={handleViewCompanies}>
             <CardContent className="p-6 text-center">
-              <Building2 className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-              <p className="font-medium text-orange-900">Manage Companies</p>
-              <p className="text-sm text-orange-600">View all companies</p>
+              <Building2 className="h-8 w-8 text-lime-600 mx-auto mb-2" />
+              <p className="font-medium text-lime-900">Manage Companies</p>
+              <p className="text-sm text-lime-600">View all companies</p>
             </CardContent>
           </Card>
         </div>

@@ -179,6 +179,15 @@ export async function PUT(
     // Invalidate calendar caches after update
     await CacheInvalidationService.invalidateCalendar();
     
+    // Invalidate dashboard cache to reflect immediate changes
+    try {
+      const { CacheService } = await import('@/lib/redis');
+      await CacheService.del('dashboard:summary');
+      console.log('Dashboard cache invalidated after event update');
+    } catch (cacheError) {
+      console.warn('Failed to invalidate dashboard cache:', cacheError);
+    }
+    
     // Invalidate company-related caches for both old and new company associations
     if (existingEvent.companyId) {
       await CacheInvalidationService.invalidateOnCompanyMutation(existingEvent.companyId);
@@ -295,6 +304,15 @@ export async function DELETE(
     
     // Also invalidate notes caches since notes are cascade deleted
     await CacheInvalidationService.invalidateNotes();
+    
+    // Invalidate dashboard cache to reflect immediate changes
+    try {
+      const { CacheService } = await import('@/lib/redis');
+      await CacheService.del('dashboard:summary');
+      console.log('Dashboard cache invalidated after event deletion');
+    } catch (cacheError) {
+      console.warn('Failed to invalidate dashboard cache:', cacheError);
+    }
     
     // Invalidate company-related caches if this event was linked to a company
     if (existingEvent.companyId) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +8,7 @@ import CreditCard from "lucide-react/dist/esm/icons/credit-card";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Users from "lucide-react/dist/esm/icons/users";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBusinessCardsManagementDB } from "@/hooks/useBusinessCardsManagementDB";
 import { CreateCardDialog } from "@/components/features/CreateCardDialog";
@@ -19,6 +20,10 @@ import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 export default function BusinessCardsPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
+  const router = useRouter();
+  
+  // Loading state for navigation
+  const [isNavigatingToProfile, setIsNavigatingToProfile] = useState(false);
   
   // Clean up any old localStorage data on first load
   React.useEffect(() => {
@@ -92,6 +97,17 @@ export default function BusinessCardsPage() {
 
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
+
+  // Handle navigation to company profile
+  const handleNavigateToProfile = async () => {
+    setIsNavigatingToProfile(true);
+    try {
+      router.push(`/companies/company-onboarding?edit=${selectedCompanyObj?.id}&step=owners`);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      setIsNavigatingToProfile(false);
+    }
+  };
 
   // Handle loading state
   if (showLoader) {
@@ -184,11 +200,21 @@ export default function BusinessCardsPage() {
                 <h3 className="text-amber-800 font-semibold">Add Company Representatives and Shareholders Required</h3>
                 <p className="text-amber-700 text-sm mt-1">Before creating business cards, please add company representatives and/or shareholders to your company profile.</p>
               </div>
-              <Link href={`/companies/company-onboarding?edit=${selectedCompanyObj?.id}&step=owners`}>
-                <Button variant="outline" className="bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100">
-                  Go to Company Profile
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100"
+                onClick={handleNavigateToProfile}
+                disabled={isNavigatingToProfile}
+              >
+                {isNavigatingToProfile ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-amber-800 border-t-transparent rounded-full animate-spin" />
+                    <span>Loading...</span>
+                  </div>
+                ) : (
+                  "Go to Company Profile"
+                )}
+              </Button>
             </div>
           </div>
         </div>

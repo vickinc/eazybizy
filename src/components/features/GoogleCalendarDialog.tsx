@@ -239,31 +239,47 @@ export function GoogleCalendarDialog({ open, onOpenChange }: GoogleCalendarDialo
     }
   };
 
-  const handleSyncNow = async () => {
+  const handleUnifiedSync = async () => {
     setSyncing(true);
     try {
       const selectedCalendar = googleCalendars.find(cal => cal.selected);
+      console.log('Starting sync with calendar:', selectedCalendar?.id || 'primary');
+      
       const response = await fetch('/api/calendar/sync/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ calendarId: selectedCalendar?.id || 'primary' })
       });
 
+      console.log('Sync response status:', response.status);
+      const data = await response.json();
+      console.log('Sync response data:', data);
+
       if (response.ok) {
-        const data = await response.json();
         const deletedMsg = data.deleted > 0 ? `, ${data.deleted} deleted` : '';
         toast.success(`Sync completed: ${data.pushed} pushed, ${data.pulled} pulled${deletedMsg}`);
-        if (data.errors.length > 0) {
+        
+        // Show detailed error information if there are errors
+        if (data.errors && data.errors.length > 0) {
+          console.error('Sync errors:', data.errors);
           toast.warning(`${data.errors.length} errors occurred during sync`);
+          
+          // Log first few errors for debugging
+          data.errors.slice(0, 3).forEach((error: string, index: number) => {
+            console.error(`Sync error ${index + 1}:`, error);
+          });
         }
         
         // Refresh sync status
         await fetchSyncStatus();
         
-        // Trigger a page refresh to show new events
-        window.location.reload();
+        // Only refresh page if sync was successful without critical errors
+        if (!data.errors || data.errors.length === 0) {
+          window.location.reload();
+        }
       } else {
-        toast.error('Failed to sync with Google Calendar');
+        console.error('Sync failed with response:', data);
+        toast.error(`Failed to sync with Google Calendar: ${data.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to sync calendar:', error);
@@ -294,32 +310,6 @@ export function GoogleCalendarDialog({ open, onOpenChange }: GoogleCalendarDialo
     }
   };
 
-  const handleBulkSync = async (syncType: 'all' | 'auto-generated') => {
-    setSyncing(true);
-    try {
-      const response = await fetch('/api/calendar/sync/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          syncType,
-          targetCalendarId: googleCalendars.find(cal => cal.selected)?.id || 'primary'
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(`Bulk sync completed: ${data.synced} events synced`);
-        await fetchSyncStatus();
-      } else {
-        toast.error('Failed to perform bulk sync');
-      }
-    } catch (error) {
-      console.error('Failed to bulk sync:', error);
-      toast.error('Failed to perform bulk sync');
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const getSyncStatusColor = (status: string) => {
     switch (status) {
@@ -401,12 +391,12 @@ export function GoogleCalendarDialog({ open, onOpenChange }: GoogleCalendarDialo
 
                 <div className="flex gap-2">
                   <Button
-                    onClick={handleSyncNow}
+                    onClick={() => handleUnifiedSync()}
                     disabled={syncing}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                    {syncing ? 'Syncing...' : 'Sync Now'}
+                    {syncing ? 'Syncing...' : 'Sync All Events'}
                   </Button>
                 </div>
                 
@@ -470,35 +460,15 @@ export function GoogleCalendarDialog({ open, onOpenChange }: GoogleCalendarDialo
                   </>
                 ) : null}
                 
-                {/* Bulk Sync Options */}
+                {/* Sync Options */}
                 <Separator />
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-lg font-medium flex items-center gap-2">
                       <Zap className="h-5 w-5" />
-                      Bulk Sync Options
+                      Sync Options
                     </h4>
-                    <p className="text-sm text-gray-600">Manage sync settings for all events</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleBulkSync('all')}
-                      disabled={syncing}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                      {syncing ? 'Syncing...' : 'Sync All Events'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleBulkSync('auto-generated')}
-                      disabled={syncing}
-                      className="flex items-center gap-2"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      {syncing ? 'Syncing...' : 'Sync Auto-Generated Only'}
-                    </Button>
+                    <p className="text-sm text-gray-600">The sync button above will sync all events including regular events, anniversary events, and auto-generated events</p>
                   </div>
                   
                   <div className="space-y-3">
