@@ -263,16 +263,24 @@ export function useNotesManagementDB(
   
   // Actions
   const openDialog = useCallback(() => {
-    setFormData(initialFormData);
+    const formDataWithCompany = {
+      ...initialFormData,
+      companyId: selectedCompany !== 'all' ? selectedCompany.toString() : 'none'
+    };
+    setFormData(formDataWithCompany);
     setEditingNote(null);
     setIsDialogOpen(true);
-  }, []);
+  }, [selectedCompany]);
   
   const closeDialog = useCallback(() => {
     setIsDialogOpen(false);
     setEditingNote(null);
-    setFormData(initialFormData);
-  }, []);
+    const formDataWithCompany = {
+      ...initialFormData,
+      companyId: selectedCompany !== 'all' ? selectedCompany.toString() : 'none'
+    };
+    setFormData(formDataWithCompany);
+  }, [selectedCompany]);
   
   const openDetailsDialog = useCallback((note: Note) => {
     setSelectedNote(note);

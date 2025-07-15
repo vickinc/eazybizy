@@ -316,6 +316,7 @@ export default function Notes() {
                   handleSelectChange={handleSelectChangeWrapper}
                   handleSubmit={handleSubmit}
                   closeDialog={handleCloseDialog}
+                  selectedCompany={globalSelectedCompany}
                 />
               </Dialog>
             )}
