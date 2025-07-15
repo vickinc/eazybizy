@@ -6,7 +6,10 @@
  */
 
 import React from 'react';
-import { Loader2, RefreshCw, Download, Upload } from 'lucide-react';
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Download from "lucide-react/dist/esm/icons/download";
+import Upload from "lucide-react/dist/esm/icons/upload";
 import { cn } from '@/utils/cn';
 
 /**

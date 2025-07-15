@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ChevronDown } from 'lucide-react';
+import Search from "lucide-react/dist/esm/icons/search";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import { BookkeepingEntry, Invoice, Product, Company } from '@/types';
 
 interface Vendor {

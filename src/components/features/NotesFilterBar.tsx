@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { startTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch';
 
 interface NotesFilterBarProps {
   searchTerm: string;
@@ -26,6 +27,34 @@ export const NotesFilterBar: React.FC<NotesFilterBarProps> = ({
   sortBy,
   setSortBy
 }) => {
+  // Use debounced search for input responsiveness
+  const { searchInput, debouncedSearchTerm, isSearching, setSearchInput } = useDebouncedSearch(searchTerm, 150);
+  
+  // Sync debounced term with external state
+  React.useEffect(() => {
+    if (debouncedSearchTerm !== searchTerm) {
+      setSearchTerm(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, searchTerm, setSearchTerm]);
+  
+  // Handle filter changes with transitions for heavy operations
+  const handleFilterTypeChange = (value: "all" | "standalone" | "event-related") => {
+    startTransition(() => {
+      setFilterType(value);
+    });
+  };
+  
+  const handleFilterPriorityChange = (value: string) => {
+    startTransition(() => {
+      setFilterPriority(value);
+    });
+  };
+  
+  const handleSortByChange = (value: "event-soon" | "last-updated" | "last-created" | "first-created" | "event-first" | "standalone-first") => {
+    startTransition(() => {
+      setSortBy(value);
+    });
+  };
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -36,12 +65,16 @@ export const NotesFilterBar: React.FC<NotesFilterBarProps> = ({
           <div>
             <Label htmlFor="search" className="text-sm font-medium">Search</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              {isSearching ? (
+                <Loader2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 animate-spin" />
+              ) : (
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              )}
               <Input
                 id="search"
                 placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -49,7 +82,7 @@ export const NotesFilterBar: React.FC<NotesFilterBarProps> = ({
           
           <div>
             <Label htmlFor="filterType" className="text-sm font-medium">Type</Label>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterType} onValueChange={handleFilterTypeChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -63,7 +96,7 @@ export const NotesFilterBar: React.FC<NotesFilterBarProps> = ({
 
           <div>
             <Label htmlFor="filterPriority" className="text-sm font-medium">Priority</Label>
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
+            <Select value={filterPriority} onValueChange={handleFilterPriorityChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -79,7 +112,7 @@ export const NotesFilterBar: React.FC<NotesFilterBarProps> = ({
 
           <div>
             <Label htmlFor="sortBy" className="text-sm font-medium">Sort By</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={handleSortByChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

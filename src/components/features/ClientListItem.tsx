@@ -8,22 +8,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Edit,
-  Trash2,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  DollarSign,
-  ChevronDown,
-  ChevronUp,
-  Globe,
-  MoreHorizontal,
-  Copy,
-  Archive,
-  RotateCcw
-} from "lucide-react";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 import { FormattedClient } from "@/types/client.types";
 
 interface ClientListItemProps {

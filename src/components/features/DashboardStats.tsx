@@ -1,7 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Building2, Calendar, StickyNote, CreditCard } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
 
 interface DashboardStatsProps {
   stats: {

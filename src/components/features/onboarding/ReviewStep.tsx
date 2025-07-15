@@ -4,24 +4,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  CheckCircle, 
-  ArrowLeft, 
-  Building2, 
-  Mail, 
-  Phone, 
-  Globe, 
-  MapPin, 
-  Edit,
-  AlertTriangle,
-  Loader2,
-  Hash,
-  Calendar,
-  FileText,
-  Users,
-  UserCheck,
-  User
-} from 'lucide-react';
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import Hash from "lucide-react/dist/esm/icons/hash";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Users from "lucide-react/dist/esm/icons/users";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import User from "lucide-react/dist/esm/icons/user";
 import { CompanyFormData } from '@/services/business/companyValidationService';
 
 interface ReviewStepProps {

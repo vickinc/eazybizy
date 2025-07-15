@@ -6,27 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { 
-  FolderOpenIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  AlertTriangleIcon,
-  PieChartIcon,
-  BarChart3Icon,
-  DollarSignIcon,
-  GlobeIcon,
-  BuildingIcon,
-  Users2Icon,
-  TargetIcon,
-  ShieldIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  MinusIcon,
-  ExternalLinkIcon,
-  RefreshCwIcon,
-  DownloadIcon,
-  SettingsIcon
-} from 'lucide-react';
+import FolderOpenIcon from "lucide-react/dist/esm/icons/folder-open";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import PieChartIcon from "lucide-react/dist/esm/icons/pie-chart";
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import DollarSignIcon from "lucide-react/dist/esm/icons/dollar-sign";
+import GlobeIcon from "lucide-react/dist/esm/icons/globe";
+import BuildingIcon from "lucide-react/dist/esm/icons/building";
+import Users2Icon from "lucide-react/dist/esm/icons/users-2";
+import TargetIcon from "lucide-react/dist/esm/icons/target";
+import ShieldIcon from "lucide-react/dist/esm/icons/shield";
+import ArrowUpIcon from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDownIcon from "lucide-react/dist/esm/icons/arrow-down";
+import MinusIcon from "lucide-react/dist/esm/icons/minus";
+import ExternalLinkIcon from "lucide-react/dist/esm/icons/external-link";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
 import { 
   VirtualHolding, 
   ConsolidatedFinancials, 

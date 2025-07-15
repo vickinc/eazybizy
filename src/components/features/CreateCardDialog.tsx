@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BusinessCardFormData, PersonOption } from '@/types/businessCards.types';
 import { Company } from '@/types';
-import { Mail, Globe, Phone } from "lucide-react";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Phone from "lucide-react/dist/esm/icons/phone";
 import { isImageLogo } from "@/utils/logoUtils";
 
 interface CreateCardDialogProps {
@@ -27,6 +29,13 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
 }) => {
   // Get selected person details for preview
   const selectedPerson = personOptions.find(p => p.id === formData.personId);
+
+  // Auto-adjust QR type if company has no website and current type is website
+  React.useEffect(() => {
+    if (formData.qrType === "website" && selectedCompany && !selectedCompany.website) {
+      handleSelectChange("qrType", "email");
+    }
+  }, [formData.qrType, selectedCompany, handleSelectChange]);
 
   // Get template styles for preview
   const getTemplateStyles = (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => {
@@ -112,7 +121,9 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="website">Website</SelectItem>
+                {selectedCompany?.website && (
+                  <SelectItem value="website">Website</SelectItem>
+                )}
                 <SelectItem value="email">Email</SelectItem>
               </SelectContent>
             </Select>
@@ -186,10 +197,12 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
                     <Mail className="w-3 h-3 flex-shrink-0 opacity-75" />
                     <span className="truncate">{selectedPerson.email}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Globe className="w-3 h-3 flex-shrink-0 opacity-75" />
-                    <span className="truncate">{selectedCompany.website}</span>
-                  </div>
+                  {selectedCompany.website && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Globe className="w-3 h-3 flex-shrink-0 opacity-75" />
+                      <span className="truncate">{selectedCompany.website}</span>
+                    </div>
+                  )}
                   {selectedPerson.phoneNumber && (
                     <div className="flex items-center gap-2 text-xs">
                       <Phone className="w-3 h-3 flex-shrink-0 opacity-75" />

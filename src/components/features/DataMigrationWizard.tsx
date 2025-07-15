@@ -8,19 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Database, 
-  ArrowRight, 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle,
-  RefreshCw,
-  FileText,
-  DollarSign,
-  Calendar,
-  Building2,
-  Trash2
-} from 'lucide-react';
+import Database from "lucide-react/dist/esm/icons/database";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import XCircle from "lucide-react/dist/esm/icons/circle";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
 import { DataMigrationBusinessService, MigrationOptions, MigrationResult } from '@/services/business/dataMigrationBusinessService';
 import { Company } from '@/types';
 

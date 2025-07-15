@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         where: { status: { in: ['Active', 'Passive'] } }
       }),
       
-      // Recent active companies (last 5, essential fields only)
+      // Recent active companies (last 3, essential fields only)
       prisma.company.findMany({
         where: { status: 'Active' },
         select: {
@@ -87,13 +87,14 @@ export async function GET(request: NextRequest) {
           tradingName: true,
           logo: true,
           status: true,
-          createdAt: true
+          createdAt: true,
+          updatedAt: true
         },
-        orderBy: { createdAt: 'desc' },
-        take: 5
+        orderBy: { updatedAt: 'desc' },
+        take: 3
       }),
       
-      // Next upcoming events (next 5, essential fields only)
+      // Next upcoming events (next 3, essential fields only)
       prisma.calendarEvent.findMany({
         where: {
           date: { 
@@ -115,10 +116,10 @@ export async function GET(request: NextRequest) {
           { date: 'asc' },
           { time: 'asc' }
         ],
-        take: 5
+        take: 3
       }),
       
-      // Active notes (last 5, essential fields only)
+      // Active notes (last 2, essential fields only)
       prisma.note.findMany({
         where: { isCompleted: false },
         select: {
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest) {
           companyId: true
         },
         orderBy: { createdAt: 'desc' },
-        take: 5
+        take: 2
       }),
       
       // Business cards stats
@@ -204,7 +205,7 @@ export async function GET(request: NextRequest) {
       }))
     ]
 
-    // Sort by date and take top 5
+    // Sort by date and take top 3
     const sortedEvents = combinedEvents
       .sort((a, b) => {
         const dateA = new Date(a.date)
@@ -214,7 +215,7 @@ export async function GET(request: NextRequest) {
         }
         return dateA.getTime() - dateB.getTime()
       })
-      .slice(0, 5)
+      .slice(0, 3)
 
     const dashboardData: DashboardSummary = {
       stats: {

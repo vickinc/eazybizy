@@ -1,11 +1,10 @@
 "use client"
 
 import * as React from "react"
-import {
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "lucide-react"
+import ChevronDownIcon from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronLeftIcon from "lucide-react/dist/esm/icons/chevron-left";
+import ChevronRightIcon from "lucide-react/dist/esm/icons/chevron-right";
+import HelpCircleIcon from "lucide-react/dist/esm/icons/help-circle";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
 
 import { cn } from "@/utils/index"

@@ -15,15 +15,13 @@ import { UserSelector } from '@/components/features/UserSelector';
 import { formatDateForDisplay } from '@/utils';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
-import { 
-  Plus, 
-  Maximize2, 
-  Minimize2,
-  Trash2,
-  CheckSquare,
-  Square,
-  BookOpen
-} from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
 
 export default function JournalEntriesPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();

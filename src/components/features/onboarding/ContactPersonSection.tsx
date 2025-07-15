@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, User, UserCheck } from 'lucide-react';
+import Mail from "lucide-react/dist/esm/icons/mail";
+import User from "lucide-react/dist/esm/icons/user";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
 import { Shareholder, Representative, ContactPerson } from '@/types/company.types';
 
 interface ContactPersonSectionProps {

@@ -3,7 +3,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator, FileText, Plus, TrendingUp, DollarSign, Clock, Package } from "lucide-react";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Package from "lucide-react/dist/esm/icons/package";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";

@@ -1,4 +1,5 @@
 import { Company } from '@/types/company.types';
+import { CalendarEvent, Note } from '@/types/calendar.types';
 
 export interface DashboardStats {
   totalCompanies: number;
@@ -10,7 +11,51 @@ export interface DashboardStats {
   archivedBusinessCardsCount: number;
 }
 
+export interface DashboardSummary {
+  stats: DashboardStats;
+  recentActiveCompanies: Array<{
+    id: number;
+    legalName: string;
+    tradingName: string;
+    logo: string;
+    status: string;
+    createdAt: Date;
+  }>;
+  nextUpcomingEvents: Array<{
+    id: string;
+    title: string;
+    date: Date;
+    time: string;
+    type: string;
+    priority: string;
+    company: string;
+    companyId: number;
+    isSystemGenerated?: boolean;
+  }>;
+  activeNotes: Array<{
+    id: string;
+    title: string;
+    content: string;
+    priority: string;
+    isCompleted: boolean;
+    createdAt: Date;
+    companyId: number;
+  }>;
+  cached: boolean;
+  responseTime: number;
+}
+
 export class DashboardApiService {
+  /**
+   * Fetch optimized dashboard summary data
+   */
+  async getDashboardSummary(): Promise<DashboardSummary> {
+    const response = await fetch('/api/dashboard/summary');
+    if (!response.ok) {
+      throw new Error('Failed to fetch dashboard summary');
+    }
+    return response.json();
+  }
   /**
    * Fetch complete company details including shareholders and representatives
    */

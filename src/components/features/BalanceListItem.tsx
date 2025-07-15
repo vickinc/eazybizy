@@ -3,17 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  CreditCard, 
-  Wallet, 
-  Building, 
-  TrendingUp, 
-  TrendingDown, 
-  Edit2,
-  Calendar,
-  DollarSign,
-  Info
-} from "lucide-react";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import Building from "lucide-react/dist/esm/icons/building";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import Edit2 from "lucide-react/dist/esm/icons/edit-2";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Info from "lucide-react/dist/esm/icons/info";
 import { AccountBalance } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 

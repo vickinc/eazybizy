@@ -1,7 +1,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Archive, AlertCircle } from "lucide-react";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import { Company } from '@/types/company.types';
 
 interface ArchiveCompanyDialogProps {

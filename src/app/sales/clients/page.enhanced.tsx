@@ -8,7 +8,14 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { Plus, Search, Users, Building, User, Mail, Phone, Globe } from 'lucide-react';
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Search from "lucide-react/dist/esm/icons/search";
+import Users from "lucide-react/dist/esm/icons/users";
+import Building from "lucide-react/dist/esm/icons/building";
+import User from "lucide-react/dist/esm/icons/user";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Globe from "lucide-react/dist/esm/icons/globe";
 import { ErrorBoundary, ApiErrorBoundary } from '@/components/ui/error-boundary';
 import { 
   LoadingSpinner, 

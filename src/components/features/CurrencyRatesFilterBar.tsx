@@ -1,7 +1,10 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, RefreshCw, Globe, Bitcoin } from "lucide-react";
+import Save from "lucide-react/dist/esm/icons/save";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Bitcoin from "lucide-react/dist/esm/icons/bitcoin";
 import { CurrencyRatesSummary } from '@/services/business/currencyRatesBusinessService';
 
 interface CurrencyRatesFilterBarProps {

@@ -4,15 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { formatDateForDisplay } from '@/utils';
 import { IncomeEntryCard } from './IncomeEntryCard';
 import { ExpenseEntryCard } from './ExpenseEntryCard';
-import { 
-  CheckSquare,
-  Square,
-  Edit,
-  ChevronDown,
-  FolderOpen,
-  Folder,
-  Link
-} from 'lucide-react';
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import Link from "lucide-react/dist/esm/icons/link";
 
 interface EnhancedBookkeepingEntry {
   id: string;

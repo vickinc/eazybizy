@@ -2,7 +2,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Banknote } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBanksWalletsManagementDB } from "@/hooks/useBanksWalletsManagementDB";
 import { BanksWalletsFilterBar } from "@/components/features/BanksWalletsFilterBar";

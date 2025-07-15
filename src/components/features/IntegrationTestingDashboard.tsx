@@ -7,22 +7,20 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  CheckCircleIcon,
-  XCircleIcon,
-  AlertTriangleIcon,
-  PlayIcon,
-  RefreshCwIcon,
-  BarChart3Icon,
-  FileTextIcon,
-  ShieldCheckIcon,
-  ClockIcon,
-  TrendingUpIcon,
-  AlertCircleIcon,
-  InfoIcon,
-  BugIcon,
-  TargetIcon
-} from 'lucide-react';
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import XCircleIcon from "lucide-react/dist/esm/icons/circle";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import PlayIcon from "lucide-react/dist/esm/icons/play";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import FileTextIcon from "lucide-react/dist/esm/icons/file-text";
+import ShieldCheckIcon from "lucide-react/dist/esm/icons/shield-check";
+import ClockIcon from "lucide-react/dist/esm/icons/clock";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import BugIcon from "lucide-react/dist/esm/icons/bug";
+import TargetIcon from "lucide-react/dist/esm/icons/target";
 import {
   IntegratedFinancialStatements,
   ValidationResults,

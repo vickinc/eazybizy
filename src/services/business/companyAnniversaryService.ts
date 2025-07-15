@@ -69,7 +69,8 @@ export class CompanyAnniversaryService {
   static generateAnniversaryEventsForCompanies(
     companies: Company[],
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    deletedEventIds: string[] = []
   ): AnniversaryEventData[] {
     const allEvents: AnniversaryEventData[] = [];
 
@@ -80,8 +81,13 @@ export class CompanyAnniversaryService {
       }
     }
 
+    // Filter out deleted events
+    const filteredEvents = allEvents.filter(event => 
+      !deletedEventIds.includes(event.id)
+    );
+
     // Sort by date
-    return allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return filteredEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   /**
@@ -100,31 +106,32 @@ export class CompanyAnniversaryService {
       companyId: anniversaryEvent.companyId,
       eventScope: 'company', // Anniversary events are always company events
       participants: [], // Initialize as empty array
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as CalendarEvent;
+      isSystemGenerated: true, // Mark as system generated
+      syncEnabled: true, // Enable sync by default
+      targetCalendarId: 'primary' // Default calendar
+    };
   }
 
   /**
    * Get anniversary events for the current year
    */
-  static getCurrentYearAnniversaryEvents(companies: Company[]): AnniversaryEventData[] {
+  static getCurrentYearAnniversaryEvents(companies: Company[], deletedEventIds: string[] = []): AnniversaryEventData[] {
     const currentYear = new Date().getFullYear();
     const startDate = new Date(currentYear, 0, 1); // January 1st
     const endDate = new Date(currentYear, 11, 31); // December 31st
 
-    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate);
+    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate, deletedEventIds);
   }
 
   /**
    * Get upcoming anniversary events (next 30 days)
    */
-  static getUpcomingAnniversaryEvents(companies: Company[]): AnniversaryEventData[] {
+  static getUpcomingAnniversaryEvents(companies: Company[], deletedEventIds: string[] = []): AnniversaryEventData[] {
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 30); // Next 30 days
 
-    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate);
+    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate, deletedEventIds);
   }
 
   /**
@@ -133,12 +140,13 @@ export class CompanyAnniversaryService {
   static getMonthlyAnniversaryEvents(
     companies: Company[], 
     year: number, 
-    month: number
+    month: number,
+    deletedEventIds: string[] = []
   ): AnniversaryEventData[] {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0); // Last day of month
 
-    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate);
+    return this.generateAnniversaryEventsForCompanies(companies, startDate, endDate, deletedEventIds);
   }
 
   /**

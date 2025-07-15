@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/hooks/useAuth'
 import { UserRole } from '@/types/user.types'
-import { Loader2 } from 'lucide-react'
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 
 export default function SignupPage() {
   const router = useRouter()

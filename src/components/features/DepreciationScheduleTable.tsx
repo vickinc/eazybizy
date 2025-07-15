@@ -16,7 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, TrendingDown, DollarSign } from 'lucide-react';
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 import {
   FixedAsset,
   DepreciationScheduleEntry

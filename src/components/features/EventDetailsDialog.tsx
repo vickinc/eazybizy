@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
 import { CalendarEvent } from '@/types/calendar.types';
 
 interface EventDetailsDialogProps {

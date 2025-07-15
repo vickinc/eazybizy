@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { CacheService } from '@/lib/redis';
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService';
 
 // GET /api/notes - Get notes with basic pagination
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 1000);
     const eventId = searchParams.get('eventId');
     const companyId = searchParams.get('companyId');
     const priority = searchParams.get('priority');
@@ -104,6 +105,33 @@ export async function GET(request: NextRequest) {
 // POST /api/notes - Create new note
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 notes per minute per IP
+    const clientIP = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     request.ip || 
+                     'unknown';
+    
+    const rateLimitKey = `notes:ratelimit:${clientIP}`;
+    const currentCount = await CacheService.get<number>(rateLimitKey) || 0;
+    
+    if (currentCount >= 5) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded. You can only create 5 notes per minute.',
+          retryAfter: 60 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': '60'
+          }
+        }
+      );
+    }
+    
+    // Increment rate limit counter (expires in 60 seconds)
+    await CacheService.set(rateLimitKey, currentCount + 1, 60);
+
     const body = await request.json();
     const {
       title,

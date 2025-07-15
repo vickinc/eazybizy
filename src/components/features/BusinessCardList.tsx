@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Building2, QrCode } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import QrCode from "lucide-react/dist/esm/icons/qr-code";
 import { BusinessCard } from './BusinessCard';
 import { FormattedBusinessCard } from "@/types/businessCards.types";
 import { Company } from '@/types';
@@ -22,7 +23,7 @@ interface BusinessCardListProps {
   setHoveredButton: (buttonId: string | null) => void;
 }
 
-export const BusinessCardList: React.FC<BusinessCardListProps> = ({
+export const BusinessCardList: React.FC<BusinessCardListProps> = React.memo(({
   visibleCards,
   companies,
   handleShareCard,
@@ -64,4 +65,4 @@ export const BusinessCardList: React.FC<BusinessCardListProps> = ({
       )}
     </>
   );
-};
+});

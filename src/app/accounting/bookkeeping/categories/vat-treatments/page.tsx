@@ -2,7 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
-import { Calculator, Plus, Download, FileText, ArrowLeft, BookOpen } from "lucide-react";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Download from "lucide-react/dist/esm/icons/download";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
 import { Button } from "@/components/ui/button";
 import { useVATTreatmentManagement } from '@/hooks/useVATTreatmentManagement';
 import { VATTreatmentDialog } from '@/components/features/VATTreatmentDialog';

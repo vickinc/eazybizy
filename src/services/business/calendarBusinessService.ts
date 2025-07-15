@@ -73,9 +73,13 @@ export class CalendarBusinessService {
    * Gets events for a specific date
    */
   static getEventsForDate(events: CalendarEvent[], date: Date): CalendarEvent[] {
-    return events.filter(event => 
-      event.date.toDateString() === date.toDateString()
-    ).sort((a, b) => a.time.localeCompare(b.time));
+    return events.filter(event => {
+      // Ensure we're working with Date objects (handle both string and Date inputs)
+      const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
+      const selectedDate = date instanceof Date ? date : new Date(date);
+      
+      return eventDate.toDateString() === selectedDate.toDateString();
+    }).sort((a, b) => a.time.localeCompare(b.time));
   }
 
   /**
@@ -89,15 +93,21 @@ export class CalendarBusinessService {
   /**
    * Gets upcoming events (after today)
    */
-  static getUpcomingEvents(events: CalendarEvent[], limit: number = 10): CalendarEvent[] {
+  static getUpcomingEvents(events: CalendarEvent[], limit?: number): CalendarEvent[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return events.filter(event => {
-      const eventDate = new Date(event.date);
+    const sortedEvents = events.filter(event => {
+      const eventDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
       eventDate.setHours(0, 0, 0, 0);
       return eventDate > today;
-    }).sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, limit);
+    }).sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+      const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    return limit ? sortedEvents.slice(0, limit) : sortedEvents;
   }
 
   /**
@@ -118,7 +128,7 @@ export class CalendarBusinessService {
     endOfWeek.setHours(23, 59, 59, 999);
     
     return events.filter(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
       return eventDate >= startOfWeek && eventDate <= endOfWeek;
     });
   }
@@ -222,7 +232,7 @@ export class CalendarBusinessService {
         return false;
       }
 
-      const eventDateTime = new Date(event.date);
+      const eventDateTime = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
       const [eventHours, eventMinutes] = event.time.split(':').map(Number);
       eventDateTime.setHours(eventHours, eventMinutes, 0, 0);
 

@@ -82,8 +82,8 @@ export class CompanySSRService {
       searchTerm = '',
       statusFilter = 'all',
       industryFilter = '',
-      sortField = 'legalName',
-      sortDirection = 'asc'
+      sortField = 'updatedAt',
+      sortDirection = 'desc'
     } = params
 
     // Generate cache key for this specific query
@@ -132,6 +132,9 @@ export class CompanySSRService {
           break
         case 'industry':
           orderBy.industry = sortDirection
+          break
+        case 'updatedAt':
+          orderBy.updatedAt = sortDirection
           break
         default:
           orderBy.createdAt = sortDirection
@@ -295,8 +298,8 @@ export class CompanySSRService {
       searchTerm = '',
       statusFilter = 'all',
       industryFilter = '',
-      sortField = 'legalName',
-      sortDirection = 'asc'
+      sortField = 'updatedAt',
+      sortDirection = 'desc'
     } = params
 
     // Generate cache key for cursor pagination
@@ -345,6 +348,9 @@ export class CompanySSRService {
           break
         case 'industry':
           orderBy.industry = sortDirection
+          break
+        case 'updatedAt':
+          orderBy.updatedAt = sortDirection
           break
         default:
           orderBy.createdAt = sortDirection

@@ -3,7 +3,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Download, RefreshCw, Shield } from "lucide-react";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Download from "lucide-react/dist/esm/icons/download";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Shield from "lucide-react/dist/esm/icons/shield";
 import { DataRecoveryService } from '@/services/recovery/dataRecoveryService';
 import { BookkeepingStorageService } from '@/services/storage/bookkeepingStorageService';
 

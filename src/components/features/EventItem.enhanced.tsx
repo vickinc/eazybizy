@@ -1,7 +1,10 @@
 import React, { memo, useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Edit3, Trash2, StickyNote } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Edit3 from "lucide-react/dist/esm/icons/edit-3";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
 import { CalendarEvent, Note } from '@/types/calendar.types';
 import { cn } from '@/utils/cn';
 
@@ -82,6 +85,11 @@ const EventItemEnhanced: React.FC<EventItemProps> = memo(({
             <Badge className={cn("text-xs", priorityColorClass)}>
               {event.priority}
             </Badge>
+            {event.type === 'anniversary' && (
+              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                Auto-generated
+              </Badge>
+            )}
           </div>
           <div className="flex items-center space-x-2 text-xs text-gray-600">
             <span>{formattedDateTime}</span>
@@ -108,14 +116,16 @@ const EventItemEnhanced: React.FC<EventItemProps> = memo(({
         
         {/* Actions (shown on hover) */}
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleEdit}
-            className="h-8 w-8 p-0"
-          >
-            <Edit3 className="h-3 w-3" />
-          </Button>
+          {event.type !== 'anniversary' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEdit}
+              className="h-8 w-8 p-0"
+            >
+              <Edit3 className="h-3 w-3" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -171,15 +181,22 @@ const EventItemEnhanced: React.FC<EventItemProps> = memo(({
           <Badge className={priorityColorClass}>
             {event.priority}
           </Badge>
+          {event.type === 'anniversary' && (
+            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+              Auto-generated
+            </Badge>
+          )}
           <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleEdit}
-              className="h-8 w-8 p-0"
-            >
-              <Edit3 className="h-4 w-4" />
-            </Button>
+            {event.type !== 'anniversary' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleEdit}
+                className="h-8 w-8 p-0"
+              >
+                <Edit3 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

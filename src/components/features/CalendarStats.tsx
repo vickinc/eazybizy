@@ -1,7 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CalendarDays, Clock, AlertCircle, TrendingUp } from "lucide-react";
+import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
 import { CalendarEvent } from '@/types/calendar.types';
 
 interface CalendarStatsProps {

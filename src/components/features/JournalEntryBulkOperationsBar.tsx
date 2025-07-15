@@ -3,16 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Trash2, 
-  Copy, 
-  FileEdit, 
-  BookOpen, 
-  Archive, 
-  CheckCircle, 
-  XCircle,
-  AlertTriangle
-} from 'lucide-react';
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import FileEdit from "lucide-react/dist/esm/icons/file-edit";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import XCircle from "lucide-react/dist/esm/icons/circle";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
 import { JournalEntry } from '@/types';
 
 interface JournalEntryBulkOperationsBarProps {

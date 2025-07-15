@@ -3,7 +3,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Building2, UserCheck, TrendingUp, Calendar } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
 import { VendorStatistics } from "@/types/vendor.types";
 
 interface VendorStatsProps {

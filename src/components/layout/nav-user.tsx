@@ -1,14 +1,12 @@
 "use client"
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-  User,
-} from "lucide-react"
+import BadgeCheck from "lucide-react/dist/esm/icons/badge-check";
+import Bell from "lucide-react/dist/esm/icons/bell";
+import ChevronsUpDown from "lucide-react/dist/esm/icons/chevrons-up-down";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import LogOut from "lucide-react/dist/esm/icons/log-out";
+import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import User from "lucide-react/dist/esm/icons/user";
 
 import {
   Avatar,

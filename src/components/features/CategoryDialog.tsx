@@ -29,7 +29,7 @@ import {
 } from "@/types/chartOfAccounts.types";
 import { VATTypesIntegrationService } from "@/services/business/vatTypesIntegrationService";
 import { Badge } from "@/components/ui/badge";
-import { InfoIcon } from "lucide-react";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
 
 interface CategoryDialogProps {
   isOpen: boolean;

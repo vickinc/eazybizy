@@ -2,7 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
-import { TrendingUp, Building, Banknote, Scale, FileText, ArrowRight } from "lucide-react";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Building from "lucide-react/dist/esm/icons/building";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
+import Scale from "lucide-react/dist/esm/icons/scale";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";

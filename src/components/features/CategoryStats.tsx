@@ -1,12 +1,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Building2, 
-  CreditCard, 
-  TrendingUp, 
-  TrendingDown,
-  BarChart3
-} from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
 import { ChartOfAccountsStats } from "@/types/chartOfAccounts.types";
 import { cn } from "@/utils/cn";
 

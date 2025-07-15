@@ -3,64 +3,73 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Plus, Home, AlertCircle, Calendar } from "lucide-react";
-import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
-import { useDashboardManagement } from "@/hooks/useDashboardManagement";
-import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Home from "lucide-react/dist/esm/icons/home";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
+import { useOptimizedDashboard } from "@/hooks/useOptimizedDashboard";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { CompanyDetailsDialog } from "@/components/features/CompanyDetailsDialog";
-import { EventDetailsDialog } from "@/components/features/EventDetailsDialog";
-import { DashboardStats } from "@/components/features/DashboardStats";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import { dashboardApiService } from "@/services/api/dashboardApiService";
+import { toast } from "sonner";
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 
-export default function Dashboard() {
-  const { selectedCompany: globalSelectedCompany } = useCompanyFilter();
+export default function OptimizedDashboard() {
+  const router = useRouter();
+  const [copiedFields, setCopiedFields] = useState<Record<string, boolean>>({});
   
-  // Use dashboard management hook
-  const {
-    // Data
-    companies,
-    activeCompanies,
-    recentActiveCompanies,
-    nextUpcomingEvents,
-    stats,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    
-    // UI State
-    selectedCompany,
-    isCompanyDialogOpen,
-    selectedEvent,
-    isEventDialogOpen,
-    copiedFields,
-    
-    // Handlers
-    handleAddCompany,
-    handleViewCompanies,
-    handleViewCalendar,
-    handleViewCalendarWithDate,
-    handleCompanyClick,
-    handleEventClick,
-    setIsCompanyDialogOpen,
-    setIsEventDialogOpen,
-    copyToClipboard,
-    formatEventDate,
-    getPriorityColor,
-    getTypeIcon,
-  } = useDashboardManagement(globalSelectedCompany);
+  const { data, isLoading, isError, error, refetch } = useOptimizedDashboard();
+  const showLoading = useDelayedLoading(isLoading);
 
-  // Use delayed loading to prevent flash for cached data
-  const showLoader = useDelayedLoading(isLoading);
+  // Navigation handlers
+  const handleAddCompany = useCallback(() => {
+    router.push('/companies/company-onboarding');
+  }, [router]);
 
-  // Get current filter info
-  const selectedCompanyObj = globalSelectedCompany !== 'all' ? companies.find(c => c.id === globalSelectedCompany) : null;
-  const isFiltered = globalSelectedCompany !== 'all';
+  const handleViewCompanies = useCallback(() => {
+    router.push('/companies');
+  }, [router]);
 
+  const handleViewCalendar = useCallback(() => {
+    router.push('/calendar');
+  }, [router]);
 
-  // Handle loading state
-  if (showLoader) {
+  const handleViewCalendarWithDate = useCallback((date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    router.push(`/calendar?date=${dateString}`);
+  }, [router]);
+
+  const handleViewNotes = useCallback(() => {
+    router.push('/notes');
+  }, [router]);
+
+  // Utility functions
+  const copyToClipboard = useCallback(async (text: string, fieldName: string, companyId: number) => {
+    const success = await dashboardApiService.copyToClipboard(text);
+    if (success) {
+      setCopiedFields(prev => ({ ...prev, [`${companyId}-${fieldName}`]: true }));
+      toast.success(`${fieldName} copied to clipboard`);
+      setTimeout(() => {
+        setCopiedFields(prev => ({ ...prev, [`${companyId}-${fieldName}`]: false }));
+      }, 2000);
+    } else {
+      toast.error(`Failed to copy ${fieldName}`);
+    }
+  }, []);
+
+  const formatEventDate = useCallback((date: Date) => {
+    return dashboardApiService.formatEventDate(date);
+  }, []);
+
+  const getPriorityColor = useCallback((priority: string) => {
+    return dashboardApiService.getPriorityColor(priority);
+  }, []);
+
+  // Show loading screen
+  if (showLoading) {
     return <LoadingScreen />;
   }
 
@@ -84,219 +93,227 @@ export default function Dashboard() {
     );
   }
 
+  // Extract data with defaults
+  const {
+    stats = {
+      totalCompanies: 0,
+      activeCompaniesCount: 0,
+      passiveCompaniesCount: 0,
+      upcomingEventsCount: 0,
+      activeNotesCount: 0,
+      activeBusinessCardsCount: 0,
+      archivedBusinessCardsCount: 0
+    },
+    recentActiveCompanies = [],
+    nextUpcomingEvents = [],
+    activeNotes = [],
+    cached = false,
+    responseTime = 0
+  } = data || {};
+
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Home className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">Welcome to your business management platform</p>
+        <div className="mb-8">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Home className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-2">
+                Welcome to your business management platform
+                {cached && <span className="text-green-600 ml-2">(cached · {responseTime}ms)</span>}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Quick Stats */}
-      <DashboardStats stats={stats} isLoading={isLoading} />
 
-      {/* Recent Activity & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Companies or Start Here Card */}
-        {activeCompanies.length === 0 && !isLoading ? (
-          <Card 
-            className="bg-lime-100 hover:bg-lime-200 transition-colors cursor-pointer"
-            onClick={handleAddCompany}
-          >
-            <CardContent className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-              <p className="text-2xl font-bold text-gray-900 mb-2">Start here!</p>
-              <p className="text-gray-600">Set up your first company</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {isFiltered ? `${selectedCompanyObj?.tradingName || 'Selected Company'}` : 'Your Companies'}
-              </CardTitle>
-              <CardDescription>
-                {isFiltered ? 'Filtered view' : 'Manage your business portfolio'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg animate-pulse">
-                      <div className="w-10 h-10 bg-gray-300 rounded-lg"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
-                        <div className="h-3 bg-gray-300 rounded w-24"></div>
+        {/* Recent Activity & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Companies or Start Here Card */}
+          {recentActiveCompanies.length === 0 ? (
+            <Card 
+              className="bg-lime-100 hover:bg-lime-200 transition-colors cursor-pointer"
+              onClick={handleAddCompany}
+            >
+              <CardContent className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                <p className="text-2xl font-bold text-gray-900 mb-2">Start here!</p>
+                <p className="text-gray-600">Set up your first company</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Recent Companies</CardTitle>
+                    <CardDescription>Your latest active companies</CardDescription>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleViewCompanies}
+                  >
+                    View All
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentActiveCompanies.map((company) => (
+                    <div key={company.id} className="flex items-center space-x-3 p-2 border rounded-lg hover:bg-lime-50 transition-colors">
+                      <div className="flex-shrink-0">
+                        {isImageLogo(company.logo) ? (
+                          <img 
+                            src={company.logo} 
+                            alt={`${company.tradingName} logo`}
+                            className="h-8 w-8 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 bg-blue-100 rounded flex items-center justify-center">
+                            <Building2 className="h-4 w-4 text-blue-600" />
+                          </div>
+                        )}
                       </div>
-                      <div className="w-16 h-6 bg-gray-300 rounded"></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {company.tradingName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {company.legalName}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {company.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
-              ) : activeCompanies.length > 0 ? (
-                <div className="space-y-4">
-                  {recentActiveCompanies.map((company, index) => {
-                    const colors = ['bg-blue-600', 'bg-green-600', 'bg-purple-600', 'bg-orange-600', 'bg-red-600'];
-                    const bgColor = colors[index % colors.length];
-                    
-                    return (
-                      <div 
-                        key={company.id} 
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => handleCompanyClick(company)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden ${
-                            isImageLogo(company.logo)
-                              ? '' 
-                              : bgColor
-                          }`}>
-                            {isImageLogo(company.logo) ? (
-                              <img 
-                                src={company.logo} 
-                                alt={`${company.tradingName} logo`} 
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-white font-bold text-sm">{validateLogo(company.logo, company.tradingName)}</span>
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">{company.tradingName}</p>
-                            <p className="text-sm text-gray-600">{company.registrationNo}</p>
-                          </div>
-                        </div>
-                        <Badge 
-                          variant="secondary" 
-                          className="bg-green-100 text-green-800"
-                        >
-                          Active
-                        </Badge>
-                      </div>
-                    );
-                  })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Upcoming Events */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">
+                    Upcoming Events <span className="text-sm font-normal text-gray-500">(Next 30 days)</span>
+                  </CardTitle>
+                  <CardDescription>Your next scheduled events</CardDescription>
                 </div>
-              ) : companies.length > 0 ? (
-                <div className="text-center py-8">
-                  <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-4">No active companies</p>
-                  <p className="text-sm text-gray-500">All your companies are currently passive</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleViewCalendar}
+                >
+                  View Calendar
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {nextUpcomingEvents.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>No upcoming events</p>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Building2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-4">No companies added yet</p>
-                  <p className="text-sm text-gray-500">Get started by adding your first company</p>
+                <div className="space-y-3">
+                  {nextUpcomingEvents.map((event) => (
+                    <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-lime-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{event.title}</p>
+                        <p className="text-sm text-gray-500">{event.company}</p>
+                        <p className="text-xs text-gray-400">
+                          {formatEventDate(new Date(event.date))} at {event.time}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className={getPriorityColor(event.priority)}>
+                          {event.priority}
+                        </Badge>
+                        <Badge variant="secondary">
+                          {event.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Button className="flex-1" variant="outline" onClick={handleAddCompany}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Company
+        {/* Active Notes */}
+        {activeNotes.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Active Notes</CardTitle>
+                  <CardDescription>Your recent notes and tasks</CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleViewNotes}
+                >
+                  View All Notes
                 </Button>
-                <Button className="flex-1" variant="outline" onClick={handleViewCompanies}>
-                  View All
-                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeNotes.map((note) => (
+                  <div key={note.id} className="p-4 border rounded-lg hover:bg-lime-50 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">{note.title}</h4>
+                      <Badge variant="outline" className={getPriorityColor(note.priority)}>
+                        {note.priority}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                      {note.content}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Upcoming Events */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {isFiltered ? `${selectedCompanyObj?.tradingName || 'Selected Company'} Events` : 'Upcoming Events'}
-            </CardTitle>
-            <CardDescription>
-              {isFiltered ? 'Events for selected company' : 'Don\'t miss important deadlines'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg animate-pulse">
-                    <div className="w-5 h-5 bg-gray-300 rounded mt-0.5"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-300 rounded w-40 mb-2"></div>
-                      <div className="h-3 bg-gray-300 rounded w-24"></div>
-                    </div>
-                  </div>
-                ))}
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <Card className="bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer" onClick={handleAddCompany}>
+            <CardContent className="p-6 text-center">
+              <Plus className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+              <p className="font-medium text-blue-900">Add Company</p>
+              <p className="text-sm text-blue-600">Create a new company profile</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-green-50 border-green-200 hover:bg-green-100 transition-colors cursor-pointer" onClick={handleViewCalendar}>
+            <CardContent className="p-6 text-center">
+              <Calendar className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <p className="font-medium text-green-900">View Calendar</p>
+              <p className="text-sm text-green-600">Manage your events</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-orange-50 border-orange-200 hover:bg-orange-100 transition-colors cursor-pointer" onClick={handleViewCompanies}>
+            <CardContent className="p-6 text-center">
+              <Building2 className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+              <p className="font-medium text-orange-900">Manage Companies</p>
+              <p className="text-sm text-orange-600">View all companies</p>
+            </CardContent>
+          </Card>
         </div>
-            ) : nextUpcomingEvents.length > 0 ? (
-              <div className="space-y-4">
-                {nextUpcomingEvents.map((event) => (
-                  <div 
-                    key={event.id} 
-                    className={`flex items-start space-x-3 p-3 border rounded-lg cursor-pointer hover:shadow-md transition-shadow ${getPriorityColor(event.priority)}`}
-                    onClick={() => handleEventClick(event)}
-                  >
-                    <div className="mt-0.5">
-                      {getTypeIcon(event.type)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-sm text-gray-900 mb-1">
-                        {formatEventDate(event.date)}, {event.time}
-                      </p>
-                      <div className="flex items-center space-x-2 mb-1">
-                        <p className="font-medium">
-                          {event.title}
-                          {event.company && (
-                            <span className="text-sm font-normal"> - {event.company}</span>
-                          )}
-                        </p>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {event.type}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-4">No upcoming events</p>
-                <p className="text-sm text-gray-500">Stay organized by adding events to your calendar</p>
-              </div>
-            )}
-
-            <Button className="w-full mt-4" variant="outline" onClick={handleViewCalendar}>
-              <Calendar className="w-4 h-4 mr-2" />
-              View Full Calendar
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Event Details Dialog */}
-      <EventDetailsDialog
-        event={selectedEvent}
-        isOpen={isEventDialogOpen}
-        onOpenChange={setIsEventDialogOpen}
-        onViewInCalendar={handleViewCalendarWithDate}
-        formatEventDate={formatEventDate}
-        getPriorityColor={getPriorityColor}
-        getTypeIcon={getTypeIcon}
-      />
-
-      {/* Company Details Dialog */}
-      <CompanyDetailsDialog
-        company={selectedCompany}
-        isOpen={isCompanyDialogOpen}
-        onOpenChange={setIsCompanyDialogOpen}
-        copiedFields={copiedFields}
-        onCopyToClipboard={copyToClipboard}
-      />
       </div>
     </div>
   );

@@ -60,7 +60,30 @@ export async function POST(request: NextRequest) {
         errors: syncResult.errors
       });
     } else {
-      // For auto-generated events, we need to generate anniversary events and sync them
+      // For auto-generated events, prioritize database events with override markers
+      const currentDate = new Date();
+      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+      const endDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate());
+      
+      // First, get all database events that are anniversary overrides or regular anniversary events
+      const databaseAnniversaryEvents = await prisma.calendarEvent.findMany({
+        where: {
+          createdByUserId: user.id,
+          OR: [
+            // Events with anniversary override markers in description
+            { description: { contains: '[ANNIVERSARY_OVERRIDE:' } },
+            // Regular anniversary events
+            { type: 'ANNIVERSARY' }
+          ],
+          date: {
+            gte: startDate,
+            lte: endDate
+          },
+          syncStatus: { in: ['LOCAL', 'PENDING'] } // Only sync events that need syncing
+        }
+      });
+
+      // Generate original anniversary events from companies
       const companies = await prisma.company.findMany({
         select: {
           id: true,
@@ -70,24 +93,38 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Generate anniversary events for the next year
-      const currentDate = new Date();
-      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-      const endDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), currentDate.getDate());
-      
-      // Import the anniversary service
       const { CompanyAnniversaryService } = await import('@/services/business/companyAnniversaryService');
-      const anniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
+      const originalAnniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
         companies,
         startDate,
         endDate
       );
 
+      // Get overridden anniversary IDs from database events
+      const overriddenAnniversaryIds = new Set<string>();
+      databaseAnniversaryEvents.forEach(event => {
+        const overrideMatch = event.description?.match(/\[ANNIVERSARY_OVERRIDE:([^\]]+)\]/);
+        if (overrideMatch) {
+          overriddenAnniversaryIds.add(overrideMatch[1]);
+        }
+      });
+
+      // Filter out original anniversary events that have been overridden
+      const nonOverriddenAnniversaryEvents = originalAnniversaryEvents.filter(
+        event => !overriddenAnniversaryIds.has(event.id)
+      );
+
+      // Combine database events and non-overridden anniversary events
+      const eventsToSync = [
+        ...databaseAnniversaryEvents,
+        ...nonOverriddenAnniversaryEvents.map(event => CompanyAnniversaryService.convertToCalendarEvent(event))
+      ];
+
       let syncedCount = 0;
       let skippedCount = 0;
       const errors: string[] = [];
 
-      console.log(`Found ${anniversaryEvents.length} anniversary events to sync`);
+      console.log(`Found ${eventsToSync.length} anniversary events to sync (${databaseAnniversaryEvents.length} database, ${nonOverriddenAnniversaryEvents.length} original)`);
 
       // Get existing events from Google Calendar to avoid duplicates
       const existingGoogleEvents = await googleCalendarService.listEvents(
@@ -96,14 +133,24 @@ export async function POST(request: NextRequest) {
         endDate
       );
 
-      for (const anniversaryEvent of anniversaryEvents) {
+      for (const eventToSync of eventsToSync) {
         try {
-          // Convert anniversary event to calendar event format
-          const calendarEvent = CompanyAnniversaryService.convertToCalendarEvent(anniversaryEvent);
+          // Use the event directly if it's already a CalendarEvent (database event)
+          // Otherwise convert it from anniversary event format
+          const calendarEvent = eventToSync.id ? eventToSync : CompanyAnniversaryService.convertToCalendarEvent(eventToSync);
           
           // Check if this event already exists in Google Calendar
-          const eventTitle = `Company Event: ${calendarEvent.title}`;
+          const eventTitle = (calendarEvent.type === 'ANNIVERSARY' || calendarEvent.type === 'anniversary') 
+            ? calendarEvent.title  // Keep original title for anniversary events
+            : `Company Event: ${calendarEvent.title}`;
           const eventDate = calendarEvent.date.toISOString().split('T')[0];
+          
+          // Skip if event already has a googleEventId (already synced)
+          if (calendarEvent.googleEventId) {
+            console.log(`Skipping already synced event: ${calendarEvent.title}`);
+            skippedCount++;
+            continue;
+          }
           
           const existingEvent = existingGoogleEvents.find(gEvent => {
             const titleMatches = gEvent.summary === eventTitle;
@@ -122,36 +169,44 @@ export async function POST(request: NextRequest) {
             continue;
           }
           
-          console.log(`Syncing anniversary event: ${calendarEvent.title}`);
+          console.log(`Syncing event: ${calendarEvent.title}`);
           
           // Initialize auth before creating event
           await googleCalendarService.initializeAuth();
           
-          // Convert to Google event format and create directly
-          const googleEventData = {
-            summary: `Company Event: ${calendarEvent.title}`,
-            description: calendarEvent.description,
-            start: {
-              dateTime: `${calendarEvent.date.toISOString().split('T')[0]}T${calendarEvent.time}:00`,
-              timeZone: user.timezoneId || 'UTC'
-            },
-            end: {
-              dateTime: `${calendarEvent.date.toISOString().split('T')[0]}T${calendarEvent.time}:00`,
-              timeZone: user.timezoneId || 'UTC'
+          // For database events, use the proper sync method
+          if (calendarEvent.id && calendarEvent.id.length > 20) { // Database events have long IDs
+            const result = await googleCalendarService.pushEventToGoogle(calendarEvent, targetCalendarId || 'primary');
+            
+            if (result.success) {
+              // Update the database event with Google event ID
+              await prisma.calendarEvent.update({
+                where: { id: calendarEvent.id },
+                data: {
+                  googleEventId: result.eventId,
+                  syncStatus: 'SYNCED',
+                  lastSyncedAt: new Date()
+                }
+              });
+              syncedCount++;
+              console.log(`Successfully synced database event: ${calendarEvent.title}`);
+            } else {
+              errors.push(`Database event "${calendarEvent.title}": ${result.error || 'Unknown error'}`);
             }
-          };
-          
-          const result = await googleCalendarService.createEvent(targetCalendarId || 'primary', googleEventData);
-          
-          if (result.success) {
-            syncedCount++;
-            console.log(`Successfully synced: ${calendarEvent.title}`);
           } else {
-            errors.push(`Event "${calendarEvent.title}": ${result.error || 'Unknown error'}`);
+            // For anniversary events, use the proper sync method instead of manual creation
+            const result = await googleCalendarService.pushEventToGoogle(calendarEvent, targetCalendarId || 'primary');
+            
+            if (result.success) {
+              syncedCount++;
+              console.log(`Successfully synced anniversary event: ${calendarEvent.title}`);
+            } else {
+              errors.push(`Anniversary event "${calendarEvent.title}": ${result.error || 'Unknown error'}`);
+            }
           }
         } catch (error) {
-          console.error(`Failed to sync anniversary event:`, error);
-          errors.push(`Anniversary event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          console.error(`Failed to sync event:`, error);
+          errors.push(`Event sync error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
@@ -159,7 +214,7 @@ export async function POST(request: NextRequest) {
         success: true,
         synced: syncedCount,
         skipped: skippedCount,
-        total: anniversaryEvents.length,
+        total: eventsToSync.length,
         errors: errors
       });
     }

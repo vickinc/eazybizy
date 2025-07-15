@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { 
   useQuery, 
   useInfiniteQuery, 
@@ -16,8 +16,7 @@ import {
 } from '@/services/api/calendarService';
 import { CalendarValidationService } from '@/services/business/calendarValidationService';
 import { CalendarBusinessService } from '@/services/business/calendarBusinessService';
-// Note: Anniversary events are now generated on the backend and stored in the database
-import { useAuth } from '@/hooks/useAuth';
+import { CompanyAnniversaryService } from '@/services/business/companyAnniversaryService';
 
 export interface CalendarManagementDBHook {
   // Data
@@ -43,10 +42,6 @@ export interface CalendarManagementDBHook {
   error: Error | null;
   isMutating: boolean;
   
-  // Infinite Query States
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => void;
   
   // Actions
   setSelectedDate: (date: Date | undefined) => void;
@@ -54,7 +49,7 @@ export interface CalendarManagementDBHook {
   handleAddEvent: () => Promise<void>;
   handleEditEvent: (event: CalendarEvent) => void;
   handleUpdateEvent: () => Promise<void>;
-  handleDeleteEvent: (eventId: string) => Promise<void>;
+  handleDeleteEvent: (eventId: string, onConfirm?: () => void) => Promise<void>;
   resetDialog: () => void;
   openDialog: () => void;
   closeDialog: () => void;
@@ -68,16 +63,24 @@ export interface CalendarManagementDBHook {
   setFilters: (filters: CalendarEventFilters) => void;
   resetFilters: () => void;
   
-  // Utility Functions
+  // Utility Functions (sync versions for backward compatibility)
   getEventsForDate: (date: Date) => CalendarEvent[];
   getTodaysEvents: () => CalendarEvent[];
   getUpcomingEvents: () => CalendarEvent[];
   getThisWeekEvents: () => CalendarEvent[];
+  getMonthEvents: () => CalendarEvent[];
   getNotesForEvent: (eventId: string) => Note[];
   getPriorityColor: (priority: string) => string;
   formatDate: (date: Date) => string;
   formatDateForInput: (date: Date) => string;
   parseDateFromInput: (dateString: string) => Date;
+  
+  // Backend-optimized async versions (performance optimized)
+  getEventsForDateOptimized: (date: Date) => Promise<CalendarEvent[]>;
+  getTodaysEventsOptimized: () => Promise<CalendarEvent[]>;
+  getUpcomingEventsOptimized: () => Promise<CalendarEvent[]>;
+  getThisWeekEventsOptimized: () => Promise<CalendarEvent[]>;
+  getFilteredEventsOptimized: (customFilters?: CalendarEventFilters) => Promise<{ events: CalendarEvent[]; pagination: any }>;
   
   // Data Refresh
   refetch: () => void;
@@ -98,19 +101,7 @@ const initialFormData: CalendarEventFormData = {
   targetCalendarId: 'primary'
 };
 
-// Generate smart form data based on company context
-const getSmartFormData = (selectedCompany: string | number, companies: Company[]): CalendarEventFormData => {
-  const isCompanyFiltered = selectedCompany !== 'all';
-  const selectedCompanyObj = isCompanyFiltered ? companies.find(c => c.id === selectedCompany) : null;
-  
-  return {
-    ...initialFormData,
-    eventScope: isCompanyFiltered ? 'company' : 'personal',
-    company: selectedCompanyObj?.tradingName || '',
-    syncEnabled: true,
-    targetCalendarId: 'primary'
-  };
-};
+// Generate smart form data based on company context - moved inside hook for memoization
 
 const initialFilters: CalendarEventFilters = {
   companyId: 'all',
@@ -127,7 +118,6 @@ export const useCalendarManagementDB = (
 ): CalendarManagementDBHook => {
   const queryClient = useQueryClient();
   const calendarService = new CalendarService();
-  const { user } = useAuth();
   
   // UI State
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -139,71 +129,120 @@ export const useCalendarManagementDB = (
   const [formData, setFormData] = useState<CalendarEventFormData>(initialFormData);
   const [filters, setFiltersState] = useState<CalendarEventFilters>(initialFilters);
   
-
-  // Initialize anniversary events on first load
-  useEffect(() => {
-    const initializeAnniversaryEvents = async () => {
-      if (user?.id) {
-        try {
-          const response = await fetch('/api/calendar/anniversary-events/init', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            if (!result.alreadyInitialized && result.created > 0) {
-              console.log(`Initialized ${result.created} anniversary events`);
-              // Invalidate calendar cache to refresh with new events
-              queryClient.invalidateQueries({ queryKey: ['calendar'] });
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to initialize anniversary events:', error);
-        }
-      }
+  // Memoize getSmartFormData to prevent recreating objects
+  const getSmartFormData = useCallback((selectedCompany: string | number, companies: Company[]): CalendarEventFormData => {
+    const isCompanyFiltered = selectedCompany !== 'all';
+    const selectedCompanyObj = isCompanyFiltered ? companies.find(c => c.id === selectedCompany) : null;
+    
+    return {
+      ...initialFormData,
+      eventScope: isCompanyFiltered ? 'company' : 'personal',
+      company: selectedCompanyObj?.tradingName || '',
+      syncEnabled: true,
+      targetCalendarId: 'primary'
     };
+  }, []);
 
-    initializeAnniversaryEvents();
-  }, [user?.id, queryClient]);
+  // Memoize state setters for consistency and better dependency tracking
+  const setSelectedDateMemoized = useCallback((date: Date | undefined) => {
+    setSelectedDate(date);
+  }, []);
+
+  const setCurrentMonthMemoized = useCallback((date: Date) => {
+    setCurrentMonth(date);
+  }, []);
+
 
   // Initialize form data with smart defaults when company context changes
   useEffect(() => {
     if (!editingEvent && !isDialogOpen) {
       setFormData(getSmartFormData(selectedCompany, companies));
     }
-  }, [selectedCompany, companies, editingEvent, isDialogOpen]);
+  }, [selectedCompany, companies, editingEvent, isDialogOpen, getSmartFormData]);
 
   // Query Keys
   const eventsQueryKey = ['calendar', 'events', selectedCompany, filters];
   const notesQueryKey = ['calendar', 'notes', selectedCompany];
   const statisticsQueryKey = ['calendar', 'statistics', selectedCompany];
 
-  // Events Query with Infinite Scroll
+  // Fetch deleted anniversary event IDs
   const {
-    data: eventsData,
+    data: deletedEventIdsData,
+    isLoading: deletedEventIdsLoading,
+    isError: deletedEventIdsError,
+    error: deletedEventIdsErrorObj,
+    refetch: refetchDeletedEventIds
+  } = useQuery({
+    queryKey: ['calendar', 'deleted-anniversary-events'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/calendar/auto-generated/deleted');
+        if (!response.ok) {
+          throw new Error('Failed to fetch deleted anniversary events');
+        }
+        const data = await response.json();
+        const deletedIds = data.deletedEventIds || [];
+        console.log('Fetched deleted event IDs:', deletedIds);
+        return deletedIds;
+      } catch (error) {
+        console.warn('Could not fetch deleted anniversary events:', error);
+        return [];
+      }
+    },
+    staleTime: 0, // Always refetch when invalidated
+    gcTime: 0, // No garbage collection time - always fresh
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: false // No automatic refetch
+  });
+
+  const deletedEventIds = deletedEventIdsData || [];
+
+  // Monthly Events Query - Fetch events for current month
+  const {
+    data: monthEventsData,
     isLoading,
     isError,
     error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-    refetch: refetchEvents
-  } = useInfiniteQuery({
-    queryKey: eventsQueryKey,
-    queryFn: ({ pageParam }) => calendarService.getEventsWithCursor(
-      pageParam,
-      20,
-      'desc',
-      {
-        ...filters,
-        companyId: selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
-      }
-    ),
-    getNextPageParam: (lastPage) => lastPage.pagination.nextCursor,
-    initialPageParam: undefined as string | undefined,
-    staleTime: 30000, // 30 seconds
-    gcTime: 300000 // 5 minutes
+    refetch: refetchMonthEvents
+  } = useQuery({
+    queryKey: ['calendar', 'events', 'month', currentMonth.getFullYear(), currentMonth.getMonth(), selectedCompany],
+    queryFn: () => {
+      const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      
+      return calendarService.getEvents(1, 200, {
+        dateFrom: startOfMonth.toISOString().split('T')[0],
+        dateTo: endOfMonth.toISOString().split('T')[0],
+        companyId: selectedCompany !== 'all' ? selectedCompany?.toString() : undefined,
+        sortBy: 'date',
+        sortOrder: 'asc'
+      });
+    },
+    staleTime: 0, // Always refetch when invalidated
+    gcTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
+  });
+
+
+  // Upcoming Events Query - Fetch all upcoming events (no limit)
+  const {
+    data: upcomingEventsData,
+    refetch: refetchUpcomingEvents
+  } = useQuery({
+    queryKey: ['calendar', 'events', 'upcoming', selectedCompany],
+    queryFn: () => calendarService.getEvents(1, 5000, { // Increased limit to 5000 to get all upcoming events
+      dateRange: 'upcoming',
+      companyId: selectedCompany !== 'all' ? selectedCompany?.toString() : undefined,
+      sortBy: 'date',
+      sortOrder: 'asc'
+    }),
+    staleTime: 0, // Always refetch when invalidated
+    gcTime: 0, // No garbage collection time - always fresh
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: false // No automatic refetch
   });
 
   // Notes Query
@@ -229,7 +268,10 @@ export const useCalendarManagementDB = (
     mutationFn: (eventData: CalendarEventCreateRequest) => 
       calendarService.createEvent(eventData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      // Invalidate specific queries that might contain the new event
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'month'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'statistics'] });
       // Optionally invalidate statistics cache (don't throw if it fails)
       calendarService.invalidateStatistics().catch(err => 
         console.warn('Failed to invalidate statistics cache:', err.message)
@@ -244,7 +286,15 @@ export const useCalendarManagementDB = (
     mutationFn: ({ id, data }: { id: string; data: CalendarEventUpdateRequest }) => 
       calendarService.updateEvent(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      // Invalidate and refetch specific queries that might contain the updated event
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'month'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'statistics'] });
+      
+      // Force refetch to ensure immediate UI update
+      refetchMonthEvents();
+      refetchUpcomingEvents();
+      
       // Optionally invalidate statistics cache (don't throw if it fails)
       calendarService.invalidateStatistics().catch(err => 
         console.warn('Failed to invalidate statistics cache:', err.message)
@@ -256,26 +306,157 @@ export const useCalendarManagementDB = (
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: (id: string) => calendarService.deleteEvent(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+    mutationFn: (id: string) => {
+      console.log('deleteEventMutation: Starting deletion for event ID:', id);
+      return calendarService.deleteEvent(id);
+    },
+    onSuccess: (data, variables) => {
+      console.log('deleteEventMutation: Successfully deleted event:', variables);
+      console.log('deleteEventMutation: Delete response:', data);
+      
+      // Immediately update the cache to remove the deleted event
+      const monthQueryKey = ['calendar', 'events', 'month', currentMonth.getFullYear(), currentMonth.getMonth(), selectedCompany];
+      const upcomingQueryKey = ['calendar', 'events', 'upcoming', selectedCompany];
+      
+      // Update month events cache
+      queryClient.setQueryData(monthQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          events: oldData.events.filter((event: any) => event.id !== variables)
+        };
+      });
+      
+      // Update upcoming events cache
+      queryClient.setQueryData(upcomingQueryKey, (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          events: oldData.events.filter((event: any) => event.id !== variables)
+        };
+      });
+      
+      // Invalidate and refetch specific queries that might contain the deleted event
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'month'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'events', 'upcoming'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar', 'statistics'] });
+      
+      // Force refetch to ensure immediate UI update
+      refetchMonthEvents();
+      refetchUpcomingEvents();
+      
       // Optionally invalidate statistics cache (don't throw if it fails)
       calendarService.invalidateStatistics().catch(err => 
         console.warn('Failed to invalidate statistics cache:', err.message)
       );
     },
-    onError: (error: unknown) => {
-      console.error('Delete event failed:', error);
+    onError: (error: unknown, variables) => {
+      console.error('Delete event failed for ID:', variables);
+      console.error('Delete error details:', error);
       // Don't throw - let the UI handle this gracefully
     }
   });
 
-  // Extract events from infinite query data - now includes auto-generated anniversary events from database
-  const events = eventsData?.pages.flatMap(page => page.events) || [];
+  // Extract events from targeted queries and filter out ALL deleted events
+  const monthEvents = useMemo(() => {
+    const rawEvents = monthEventsData?.events || [];
+    return rawEvents.filter(event => {
+      // Filter out ALL deleted events (both anniversary and regular database events)
+      if (deletedEventIds.includes(event.id)) {
+        return false;
+      }
+      return true;
+    });
+  }, [monthEventsData?.events, deletedEventIds]);
+  
+  const upcomingEvents = useMemo(() => {
+    const rawEvents = upcomingEventsData?.events || [];
+    return rawEvents.filter(event => {
+      // Filter out ALL deleted events (both anniversary and regular database events)
+      if (deletedEventIds.includes(event.id)) {
+        return false;
+      }
+      return true;
+    });
+  }, [upcomingEventsData?.events, deletedEventIds]);
+  
   const notes = notesData?.notes || [];
 
-  // Filter events based on selected company (additional client-side filtering)
-  const filteredEvents = CalendarBusinessService.filterEventsByCompany(events, selectedCompany, companies);
+  // Generate anniversary events for current month and upcoming events
+  const anniversaryEvents = useMemo(() => {
+    // Wait for deleted event IDs to be loaded before generating anniversary events
+    if (!companies || companies.length === 0 || deletedEventIdsLoading) return [];
+    
+    // Generate anniversary events for a broader range to cover both month and upcoming
+    const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 60); // Next 60 days
+    
+    const filteredCompanies = selectedCompany !== 'all' 
+      ? companies.filter(c => c.id === selectedCompany)
+      : companies;
+    
+    const anniversaryEventsData = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
+      filteredCompanies,
+      startDate,
+      endDate,
+      deletedEventIds
+    );
+    
+    // Debug logging for July 30th events
+    const july30Events = anniversaryEventsData.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getMonth() === 6 && eventDate.getDate() === 30; // July is month 6
+    });
+    
+    if (july30Events.length > 0) {
+      console.log('July 30th anniversary events:', {
+        events: july30Events.map(e => ({ id: e.id, title: e.title, date: e.date })),
+        deletedEventIds: deletedEventIds,
+        shouldBeFiltered: july30Events.map(e => deletedEventIds.includes(e.id)),
+        deletedEventIdsLoading: deletedEventIdsLoading
+      });
+    }
+    
+    return anniversaryEventsData.map(event => 
+      CompanyAnniversaryService.convertToCalendarEvent(event)
+    );
+  }, [companies, selectedCompany, currentMonth, deletedEventIds, deletedEventIdsLoading]);
+
+  // Combine all events for backward compatibility (avoiding duplicates)
+  const allEvents = useMemo(() => {
+    const eventMap = new Map<string, CalendarEvent>();
+    
+    // Add month events
+    monthEvents.forEach(event => eventMap.set(event.id, event));
+    
+    // Add upcoming events (may overlap with month events)
+    upcomingEvents.forEach(event => eventMap.set(event.id, event));
+    
+    // Add anniversary events
+    anniversaryEvents.forEach(event => eventMap.set(event.id, event));
+    
+    const result = Array.from(eventMap.values());
+    console.log('allEvents computed:', { 
+      monthEventsCount: monthEvents.length, 
+      upcomingEventsCount: upcomingEvents.length,
+      anniversaryEventsCount: anniversaryEvents.length,
+      totalEvents: result.length,
+      allEventIds: result.map(e => e.id),
+      deletedEventIds: deletedEventIds,
+      deletedEventIdsCount: deletedEventIds.length,
+      filteredAnniversaryEvents: anniversaryEvents.filter(e => !deletedEventIds.includes(e.id)).length,
+      timestamp: new Date().toISOString()
+    });
+    
+    return result;
+  }, [monthEvents, upcomingEvents, anniversaryEvents, deletedEventIds]);
+
+  // Memoize filtered events to prevent unnecessary recalculations
+  const filteredEvents = useMemo(() => 
+    CalendarBusinessService.filterEventsByCompany(allEvents, selectedCompany, companies),
+    [allEvents, selectedCompany, companies]
+  );
 
   // Form Actions
   const updateFormField = useCallback((field: keyof CalendarEventFormData, value: string | Date | string[]) => {
@@ -303,14 +484,14 @@ export const useCalendarManagementDB = (
       
       return newData;
     });
-  }, [selectedCompany, companies]);
+  }, [selectedCompany, companies, getSmartFormData]);
 
   // Dialog Management
   const resetDialog = useCallback(() => {
     setEditingEvent(null);
     setFormData(getSmartFormData(selectedCompany, companies));
     setIsDialogOpen(false);
-  }, [selectedCompany, companies]);
+  }, [selectedCompany, companies, getSmartFormData]);
 
   const openDialog = useCallback(() => {
     // Reset form to smart defaults when opening dialog
@@ -318,7 +499,7 @@ export const useCalendarManagementDB = (
       setFormData(getSmartFormData(selectedCompany, companies));
     }
     setIsDialogOpen(true);
-  }, [selectedCompany, companies, editingEvent]);
+  }, [selectedCompany, companies, editingEvent, getSmartFormData]);
 
   const closeDialog = useCallback(() => {
     resetDialog();
@@ -364,24 +545,18 @@ export const useCalendarManagementDB = (
     }
   }, [formData, createEventMutation, resetDialog, selectedCompany]);
 
-  // Helper function to clean description for editing
-  const cleanDescriptionForEdit = useCallback((description: string): string => {
-    if (!description) return description;
-    // Remove the [ANNIVERSARY_OVERRIDE:...] marker from the description for editing
-    return description.replace(/(\n+)?\[ANNIVERSARY_OVERRIDE:[^\]]+\]\s*$/, '').trim();
-  }, []);
 
   const handleEditEvent = useCallback((event: CalendarEvent) => {
-    // Prevent editing of auto-generated anniversary events
+    // Prevent editing of auto-generated events
     if (event.isAutoGenerated) {
-      console.warn('Cannot edit auto-generated anniversary events');
+      console.warn('Cannot edit auto-generated events');
       return;
     }
     
     setEditingEvent(event);
     setFormData({
       title: event.title,
-      description: cleanDescriptionForEdit(event.description),
+      description: event.description,
       date: event.date,
       time: event.time,
       type: event.type,
@@ -393,7 +568,7 @@ export const useCalendarManagementDB = (
       targetCalendarId: event.targetCalendarId
     });
     setIsDialogOpen(true);
-  }, [cleanDescriptionForEdit]);
+  }, []);
 
   const handleUpdateEvent = useCallback(async () => {
     if (!editingEvent) return;
@@ -405,66 +580,23 @@ export const useCalendarManagementDB = (
         throw new Error(validation.errors.join(', '));
       }
 
-      // Check if this is an auto-generated event
-      const isAutoGenerated = editingEvent.isAutoGenerated;
-      const isConvertedAnniversary = editingEvent.rawDescription?.includes('[ANNIVERSARY_OVERRIDE:');
-      
-      if (isAutoGenerated && !isConvertedAnniversary) {
-        // For auto-generated events, create a regular database event and track the anniversary ID
-        const originalAnniversaryId = editingEvent.id;
-        const eventData: CalendarEventCreateRequest = {
-          title: formData.title,
-          description: `${formData.description}\n\n[ANNIVERSARY_OVERRIDE:${originalAnniversaryId}]`,
-          date: formData.date.toISOString(),
-          time: formData.time,
-          type: formData.type.toUpperCase(),
-          priority: formData.priority.toUpperCase(),
-          company: formData.company,
-          participants: formData.participants,
-          companyId: formData.eventScope === 'company' && selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
-          eventScope: formData.eventScope,
-          syncEnabled: formData.syncEnabled,
-          targetCalendarId: formData.targetCalendarId
-        };
-        
-        await createEventMutation.mutateAsync(eventData);
-      } else if (isConvertedAnniversary) {
-        // For already-converted anniversary events, update the existing database event
-        const eventData: CalendarEventUpdateRequest = {
-          title: formData.title,
-          description: `${formData.description}\n\n${editingEvent.rawDescription?.match(/\[ANNIVERSARY_OVERRIDE:[^\]]+\]/)?.[0] || ''}`,
-          date: formData.date.toISOString(),
-          time: formData.time,
-          type: formData.type.toUpperCase(),
-          priority: formData.priority.toUpperCase(),
-          company: formData.company,
-          participants: formData.participants,
-          companyId: formData.eventScope === 'company' && selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
-          eventScope: formData.eventScope,
-          syncEnabled: formData.syncEnabled,
-          targetCalendarId: formData.targetCalendarId
-        };
+      // For regular events, update in database
+      const eventData: CalendarEventUpdateRequest = {
+        title: formData.title,
+        description: formData.description,
+        date: formData.date.toISOString(),
+        time: formData.time,
+        type: formData.type.toUpperCase(),
+        priority: formData.priority.toUpperCase(),
+        company: formData.company,
+        participants: formData.participants,
+        companyId: formData.eventScope === 'company' && selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
+        eventScope: formData.eventScope,
+        syncEnabled: formData.syncEnabled,
+        targetCalendarId: formData.targetCalendarId
+      };
 
-        await updateEventMutation.mutateAsync({ id: editingEvent.id, data: eventData });
-      } else {
-        // For regular events, update in database as normal
-        const eventData: CalendarEventUpdateRequest = {
-          title: formData.title,
-          description: formData.description,
-          date: formData.date.toISOString(),
-          time: formData.time,
-          type: formData.type.toUpperCase(),
-          priority: formData.priority.toUpperCase(),
-          company: formData.company,
-          participants: formData.participants,
-          companyId: formData.eventScope === 'company' && selectedCompany && selectedCompany !== 'all' ? Number(selectedCompany) : undefined,
-          eventScope: formData.eventScope,
-          syncEnabled: formData.syncEnabled,
-          targetCalendarId: formData.targetCalendarId
-        };
-
-        await updateEventMutation.mutateAsync({ id: editingEvent.id, data: eventData });
-      }
+      await updateEventMutation.mutateAsync({ id: editingEvent.id, data: eventData });
       resetDialog();
     } catch (error) {
       console.error('Failed to update event:', error);
@@ -472,40 +604,192 @@ export const useCalendarManagementDB = (
     }
   }, [editingEvent, formData, updateEventMutation, resetDialog, selectedCompany]);
 
-  const handleDeleteEvent = useCallback(async (eventId: string) => {
+  const handleDeleteEvent = useCallback(async (eventId: string, onConfirm?: () => void) => {
     try {
       // Find the event to check if it's auto-generated
-      const event = events.find(e => e.id === eventId);
-      const isAutoGenerated = event?.isAutoGenerated || eventId.startsWith('anniversary-');
+      const event = allEvents.find(e => e.id === eventId);
+      
+      console.log('handleDeleteEvent called:', { 
+        eventId, 
+        event: event ? {
+          id: event.id,
+          title: event.title,
+          type: event.type,
+          isAutoGenerated: event.isAutoGenerated
+        } : null,
+        allEventsCount: allEvents.length
+      });
+      
+      if (!event) {
+        console.error('Event not found in allEvents:', eventId);
+        throw new Error('Event not found');
+      }
+      
+      // Call the confirmation callback if provided
+      if (onConfirm) {
+        onConfirm();
+      }
+      
+      const isAutoGenerated = event?.isAutoGenerated || event?.type === 'ANNIVERSARY';
+      console.log('Event classification:', { 
+        isAutoGenerated, 
+        eventType: event.type, 
+        eventIsAutoGenerated: event.isAutoGenerated,
+        eventId: event.id,
+        eventTitle: event.title
+      });
       
       if (isAutoGenerated) {
         // For auto-generated events, call the deletion API
-        if (user?.id) {
-          const response = await fetch('/api/calendar/auto-generated/delete', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventId })
+        console.log('Deleting auto-generated event:', { eventId, eventTitle: event.title, eventType: event.type });
+        const response = await fetch('/api/calendar/auto-generated/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId })
+        });
+        
+        console.log('Auto-generated deletion response:', response.status, response.statusText);
+        
+        if (response.ok) {
+          console.log('Auto-generated event deleted successfully');
+          
+          // Debug: Log the deletion details
+          console.log('Deletion details:', {
+            deletedEventId: eventId,
+            eventTitle: event.title,
+            eventDate: event.date,
+            eventType: event.type,
+            currentDeletedEventIds: deletedEventIds
           });
           
-          if (response.ok) {
-            // Invalidate cache to refresh the UI
+          // Wait a bit to see the response body
+          const responseData = await response.json();
+          console.log('Delete response data:', responseData);
+          
+          // Immediate cache update - add the deleted event ID to the cache
+          const currentDeletedIds = queryClient.getQueryData(['calendar', 'deleted-anniversary-events']) || [];
+          const newDeletedIds = [...currentDeletedIds, eventId];
+          queryClient.setQueryData(['calendar', 'deleted-anniversary-events'], newDeletedIds);
+          console.log('Updated deleted event IDs in cache:', newDeletedIds);
+          
+          // Immediate cache invalidation and removal
+          queryClient.removeQueries({ queryKey: ['calendar'] });
+          queryClient.invalidateQueries({ queryKey: ['calendar'] });
+          queryClient.resetQueries({ queryKey: ['calendar'] });
+          
+          // Also invalidate the deleted event IDs query so home dashboard updates
+          queryClient.invalidateQueries({ queryKey: ['calendar', 'deleted-anniversary-events'] });
+          
+          // Force immediate refetch and wait for completion
+          console.log('Auto-generated event: Starting refetch after deletion');
+          const refetchPromises = [
+            refetchMonthEvents(),
+            refetchUpcomingEvents(),
+            refetchDeletedEventIds()
+          ];
+          
+          await Promise.all(refetchPromises);
+          console.log('Auto-generated event: Refetch completed');
+          
+          // Additional aggressive cache clearing
+          setTimeout(() => {
+            queryClient.removeQueries({ queryKey: ['calendar'] });
             queryClient.invalidateQueries({ queryKey: ['calendar'] });
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete anniversary event');
-          }
+            queryClient.invalidateQueries({ queryKey: ['calendar', 'deleted-anniversary-events'] });
+          }, 10);
+          
+          // Final refetch to ensure UI is updated
+          setTimeout(async () => {
+            await Promise.all([
+              refetchMonthEvents(),
+              refetchUpcomingEvents(),
+              refetchDeletedEventIds()
+            ]);
+          }, 100);
         } else {
-          throw new Error('User not authenticated');
+          const errorData = await response.json();
+          console.log('Auto-generated deletion failed:', errorData);
+          throw new Error(errorData.error || 'Failed to delete auto-generated event');
         }
       } else {
-        // For regular database events, delete normally
-        await deleteEventMutation.mutateAsync(eventId);
+        // For regular database events, try to delete normally
+        console.log('Deleting regular database event:', { eventId, eventTitle: event.title, eventType: event.type });
+        try {
+          console.log('Calling deleteEventMutation.mutateAsync with:', eventId);
+          const result = await deleteEventMutation.mutateAsync(eventId);
+          console.log('Regular database deletion successful:', result);
+          
+          // Add the deleted event ID to the cache so it gets filtered out immediately
+          const currentDeletedIds = queryClient.getQueryData(['calendar', 'deleted-anniversary-events']) || [];
+          const newDeletedIds = [...currentDeletedIds, eventId];
+          queryClient.setQueryData(['calendar', 'deleted-anniversary-events'], newDeletedIds);
+          console.log('Added regular event to deleted IDs cache:', newDeletedIds);
+          
+        } catch (deleteError) {
+          console.error('Regular database deletion failed:', deleteError);
+          // If regular deletion fails with 404, try auto-generated deletion as fallback
+          if (deleteError.message.includes('Calendar event not found')) {
+            const response = await fetch('/api/calendar/auto-generated/delete', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ eventId })
+            });
+            
+            if (response.ok) {
+              // Immediate cache update - add the deleted event ID to the cache
+              const currentDeletedIds = queryClient.getQueryData(['calendar', 'deleted-anniversary-events']) || [];
+              const newDeletedIds = [...currentDeletedIds, eventId];
+              queryClient.setQueryData(['calendar', 'deleted-anniversary-events'], newDeletedIds);
+              console.log('Fallback: Updated deleted event IDs in cache:', newDeletedIds);
+              
+              // Immediate cache invalidation and removal
+              queryClient.removeQueries({ queryKey: ['calendar'] });
+              queryClient.invalidateQueries({ queryKey: ['calendar'] });
+              queryClient.resetQueries({ queryKey: ['calendar'] });
+              
+              // Also invalidate the deleted event IDs query so home dashboard updates
+              queryClient.invalidateQueries({ queryKey: ['calendar', 'deleted-anniversary-events'] });
+              
+              // Force immediate refetch and wait for completion
+              console.log('Fallback deletion: Starting refetch after deletion');
+              const refetchPromises = [
+                refetchMonthEvents(),
+                refetchUpcomingEvents(),
+                refetchDeletedEventIds()
+              ];
+              
+              await Promise.all(refetchPromises);
+              console.log('Fallback deletion: Refetch completed');
+              
+              // Additional aggressive cache clearing
+              setTimeout(() => {
+                queryClient.removeQueries({ queryKey: ['calendar'] });
+                queryClient.invalidateQueries({ queryKey: ['calendar'] });
+                queryClient.invalidateQueries({ queryKey: ['calendar', 'deleted-anniversary-events'] });
+              }, 10);
+              
+              // Final refetch to ensure UI is updated
+              setTimeout(async () => {
+                await Promise.all([
+                  refetchMonthEvents(),
+                  refetchUpcomingEvents(),
+                  refetchDeletedEventIds()
+                ]);
+              }, 100);
+            } else {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to delete event');
+            }
+          } else {
+            throw deleteError;
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to delete event:', error);
-      // Error handling is already managed by React Query mutation or thrown above
+      throw error; // Re-throw to let the caller handle the error
     }
-  }, [deleteEventMutation, user?.id, queryClient, events]);
+  }, [deleteEventMutation, queryClient, allEvents, refetchMonthEvents, refetchUpcomingEvents]);
 
   // Filter Actions
   const setFilters = useCallback((newFilters: CalendarEventFilters) => {
@@ -516,22 +800,104 @@ export const useCalendarManagementDB = (
     setFiltersState(initialFilters);
   }, []);
 
-  // Utility Functions
+  // Optimized utility functions using targeted data
   const getEventsForDate = useCallback((date: Date) => {
+    // Always use filteredEvents for consistency - it contains all events including anniversary events
     return CalendarBusinessService.getEventsForDate(filteredEvents, date);
   }, [filteredEvents]);
 
   const getTodaysEvents = useCallback(() => {
-    return CalendarBusinessService.getTodaysEvents(filteredEvents);
-  }, [filteredEvents]);
+    const today = new Date();
+    return getEventsForDate(today);
+  }, [getEventsForDate]);
 
   const getUpcomingEvents = useCallback(() => {
-    return CalendarBusinessService.getUpcomingEvents(filteredEvents);
-  }, [filteredEvents]);
+    // Use upcoming events data directly (already filtered by company in the query)
+    return CalendarBusinessService.filterEventsByCompany(upcomingEvents, selectedCompany, companies);
+  }, [upcomingEvents, selectedCompany, companies]);
 
   const getThisWeekEvents = useCallback(() => {
     return CalendarBusinessService.getThisWeekEvents(filteredEvents);
   }, [filteredEvents]);
+
+  const getMonthEvents = useCallback(() => {
+    return CalendarBusinessService.filterEventsByCompany(monthEvents, selectedCompany, companies);
+  }, [monthEvents, selectedCompany, companies]);
+
+  // Backend-optimized async versions (performance optimized)
+  const getEventsForDateOptimized = useCallback(async (date: Date) => {
+    try {
+      const result = await calendarService.getEventsForDate(
+        date,
+        selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
+      );
+      return result.events;
+    } catch (error) {
+      console.warn('Backend date filtering failed, falling back to client-side:', error);
+      return CalendarBusinessService.getEventsForDate(filteredEvents, date);
+    }
+  }, [calendarService, selectedCompany, filteredEvents]);
+
+  const getTodaysEventsOptimized = useCallback(async () => {
+    try {
+      const result = await calendarService.getTodaysEvents(
+        selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
+      );
+      return result.events;
+    } catch (error) {
+      console.warn('Backend today filtering failed, falling back to client-side:', error);
+      return CalendarBusinessService.getTodaysEvents(filteredEvents);
+    }
+  }, [calendarService, selectedCompany, filteredEvents]);
+
+  const getUpcomingEventsOptimized = useCallback(async () => {
+    try {
+      const result = await calendarService.getUpcomingEvents(
+        selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
+      );
+      return result.events;
+    } catch (error) {
+      console.warn('Backend upcoming filtering failed, falling back to client-side:', error);
+      return CalendarBusinessService.getUpcomingEvents(filteredEvents);
+    }
+  }, [calendarService, selectedCompany, filteredEvents]);
+
+  const getThisWeekEventsOptimized = useCallback(async () => {
+    try {
+      const result = await calendarService.getThisWeekEvents(
+        selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
+      );
+      return result.events;
+    } catch (error) {
+      console.warn('Backend week filtering failed, falling back to client-side:', error);
+      return CalendarBusinessService.getThisWeekEvents(filteredEvents);
+    }
+  }, [calendarService, selectedCompany, filteredEvents]);
+
+  // Comprehensive backend-filtered event fetching
+  const getFilteredEventsOptimized = useCallback(async (customFilters?: CalendarEventFilters) => {
+    try {
+      const mergedFilters = {
+        ...filters,
+        ...customFilters,
+        companyId: selectedCompany !== 'all' ? selectedCompany?.toString() : undefined
+      };
+
+      const result = await calendarService.getFilteredEvents(mergedFilters);
+      return result;
+    } catch (error) {
+      console.warn('Backend filtered events failed, falling back to current data:', error);
+      return {
+        events: filteredEvents,
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+          limit: filteredEvents.length,
+          count: filteredEvents.length
+        }
+      };
+    }
+  }, [calendarService, filters, selectedCompany, filteredEvents]);
 
   const getNotesForEvent = useCallback((eventId: string) => {
     return CalendarBusinessService.getNotesForEvent(notes, eventId);
@@ -555,8 +921,10 @@ export const useCalendarManagementDB = (
 
   // Data Refresh
   const refetch = useCallback(() => {
-    refetchEvents();
-  }, [refetchEvents]);
+    refetchMonthEvents();
+    refetchUpcomingEvents();
+    refetchDeletedEventIds();
+  }, [refetchMonthEvents, refetchUpcomingEvents, refetchDeletedEventIds]);
 
   const invalidateCache = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['calendar'] });
@@ -567,9 +935,14 @@ export const useCalendarManagementDB = (
                      updateEventMutation.isPending || 
                      deleteEventMutation.isPending;
 
+  // Update loading states to include deleted event IDs
+  const isLoadingCombined = isLoading || deletedEventIdsLoading;
+  const isErrorCombined = isError || deletedEventIdsError;
+  const errorCombined = error || deletedEventIdsErrorObj;
+
   return {
     // Data
-    events,
+    events: allEvents,
     notes,
     filteredEvents,
     statistics,
@@ -586,19 +959,14 @@ export const useCalendarManagementDB = (
     formData,
     
     // Loading & Error States
-    isLoading,
-    isError,
-    error: error as Error | null,
+    isLoading: isLoadingCombined,
+    isError: isErrorCombined,
+    error: errorCombined as Error | null,
     isMutating,
     
-    // Infinite Query States
-    hasNextPage: hasNextPage || false,
-    isFetchingNextPage,
-    fetchNextPage,
-    
     // Actions
-    setSelectedDate,
-    setCurrentMonth,
+    setSelectedDate: setSelectedDateMemoized,
+    setCurrentMonth: setCurrentMonthMemoized,
     handleAddEvent,
     handleEditEvent,
     handleUpdateEvent,
@@ -621,11 +989,19 @@ export const useCalendarManagementDB = (
     getTodaysEvents,
     getUpcomingEvents,
     getThisWeekEvents,
+    getMonthEvents,
     getNotesForEvent,
     getPriorityColor,
     formatDate,
     formatDateForInput,
     parseDateFromInput,
+    
+    // Backend-optimized async versions
+    getEventsForDateOptimized,
+    getTodaysEventsOptimized,
+    getUpcomingEventsOptimized,
+    getThisWeekEventsOptimized,
+    getFilteredEventsOptimized,
     
     // Data Refresh
     refetch,

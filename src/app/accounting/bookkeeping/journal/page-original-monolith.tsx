@@ -15,31 +15,29 @@ import { getLocalDateString, formatDateForDisplay } from '@/utils';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { useBookkeepingEntriesManagement } from '@/hooks/useBookkeepingEntriesManagement';
 import { IncomeEntryCard } from '@/components/features/IncomeEntryCard';
-import { 
-  Plus, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  Edit, 
-  ChevronDown, 
-  ChevronUp, 
-  Maximize2, 
-  Minimize2,
-  Search,
-  TrendingUp,
-  Calculator,
-  Receipt,
-  Calendar,
-  Filter,
-  FolderOpen,
-  Folder,
-  DollarSign,
-  Trash2,
-  Copy,
-  CheckSquare,
-  Square,
-  AlertTriangle,
-  Link
-} from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Search from "lucide-react/dist/esm/icons/search";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import Receipt from "lucide-react/dist/esm/icons/receipt";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import Link from "lucide-react/dist/esm/icons/link";
 
 // Categories (copy from bookkeeping/page.tsx)
 const INCOME_CATEGORIES = [

@@ -2,13 +2,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateForDisplay } from '@/utils';
-import { 
-  CheckSquare,
-  Square,
-  Edit,
-  Trash2,
-  ChevronUp
-} from 'lucide-react';
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
 
 interface IncomeEntryCardProps {
   // Core data

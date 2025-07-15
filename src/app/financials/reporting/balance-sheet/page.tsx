@@ -5,15 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2Icon, 
-  DownloadIcon, 
-  RefreshCwIcon, 
-  SettingsIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
-  LoaderIcon
-} from 'lucide-react';
+import Building2Icon from "lucide-react/dist/esm/icons/building-2";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
 import { BalanceSheetStatement } from '@/components/features/BalanceSheetStatement';
 import { FinancialPeriodSelector } from '@/components/features/FinancialPeriodSelector';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';

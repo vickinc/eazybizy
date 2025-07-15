@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, startTransition } from 'react';
 import { 
   useQuery, 
   useMutation, 
@@ -19,7 +19,7 @@ export interface NoteFormData {
   eventId: string;
   companyId: string;
   tags: string; // Changed from string[] to string for form input
-  priority: 'low' | 'medium' | 'high';
+  priority: 'low' | 'medium' | 'high' | 'critical';
   isStandalone: boolean;
 }
 
@@ -195,26 +195,31 @@ export function useNotesManagementDB(
     }
   });
   
-  // Filtered Notes
+  // Filtered Notes with performance optimizations
   const filteredNotes = useMemo(() => {
+    // Early return if no notes
+    if (!notes || notes.length === 0) return [];
+    
     const filtered = notes.filter(note => {
-      // Archive filter
+      // Archive filter (most selective first)
       if (showArchived && !note.isCompleted) return false;
       if (!showArchived && note.isCompleted) return false;
       
-      // Search filter
-      if (searchTerm && !note.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !note.content.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
+      // Search filter with early termination
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const titleMatch = note.title.toLowerCase().includes(searchLower);
+        const contentMatch = !titleMatch && note.content.toLowerCase().includes(searchLower);
+        if (!titleMatch && !contentMatch) return false;
       }
       
-      // Type filter
+      // Type filter (more selective than priority)
       if (filterType !== 'all') {
         if (filterType === 'standalone' && !note.isStandalone) return false;
         if (filterType === 'linked' && note.isStandalone) return false;
       }
       
-      // Priority filter
+      // Priority filter (least selective)
       if (filterPriority !== 'all' && note.priority !== filterPriority) {
         return false;
       }
@@ -222,7 +227,7 @@ export function useNotesManagementDB(
       return true;
     });
     
-    // Sort
+    // Sort with optimized comparisons
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'created':
@@ -232,8 +237,8 @@ export function useNotesManagementDB(
         case 'title':
           return a.title.localeCompare(b.title);
         case 'priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
+          const priorityOrder: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
         default:
           return 0;
       }

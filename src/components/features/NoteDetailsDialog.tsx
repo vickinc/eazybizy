@@ -2,7 +2,13 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StickyNote, Calendar, Building2, Edit, Trash2, Check, RotateCcw } from "lucide-react";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Check from "lucide-react/dist/esm/icons/check";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 import { Note } from '@/types/calendar.types';
 
 interface FormattedEvent {

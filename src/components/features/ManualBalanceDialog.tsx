@@ -14,15 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  DollarSign, 
-  CreditCard, 
-  Wallet, 
-  Building, 
-  AlertCircle,
-  Save,
-  X
-} from "lucide-react";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import Building from "lucide-react/dist/esm/icons/building";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import Save from "lucide-react/dist/esm/icons/save";
+import X from "lucide-react/dist/esm/icons/x";
 import { AccountBalance, InitialBalance } from '@/types/balance.types';
 import { balanceStorageService } from '@/services/storage/balanceStorageService';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';

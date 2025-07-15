@@ -9,15 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { 
-  CalendarIcon, 
-  BookOpenIcon, 
-  BuildingIcon, 
-  UserIcon,
-  InfoIcon,
-  SaveIcon,
-  AlertTriangleIcon
-} from 'lucide-react';
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import BookOpenIcon from "lucide-react/dist/esm/icons/book-open";
+import BuildingIcon from "lucide-react/dist/esm/icons/building";
+import UserIcon from "lucide-react/dist/esm/icons/user";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import SaveIcon from "lucide-react/dist/esm/icons/save";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
 import { useFinancialPeriods } from '@/hooks/useFinancialPeriods';
 import { 
   FISCAL_YEAR_START_MONTHS,

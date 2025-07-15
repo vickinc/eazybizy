@@ -5,7 +5,10 @@ import React from "react";
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
 import { Button } from "@/components/ui/button";
-import { Plus, Minimize2, Maximize2, Truck } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Truck from "lucide-react/dist/esm/icons/truck";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useVendorsManagementDB } from "@/hooks/useVendorsManagementDB";
 import { VendorStats } from "@/components/features/VendorStats";

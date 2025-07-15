@@ -1,18 +1,17 @@
 "use client"
 
 import * as React from "react"
-import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
+import AudioWaveform from "lucide-react/dist/esm/icons/udiowaveform";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import Bot from "lucide-react/dist/esm/icons/ot";
+import Command from "lucide-react/dist/esm/icons/ommand";
+import Frame from "lucide-react/dist/esm/icons/rame";
+import GalleryVerticalEnd from "lucide-react/dist/esm/icons/alleryverticalend";
+import Map from "lucide-react/dist/esm/icons/zap";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import Settings2 from "lucide-react/dist/esm/icons/settings2";
+import SquareTerminal from "lucide-react/dist/esm/icons/quareterminal";
+import  from "lucide-react/dist/esm/icons/help";
 
 import { NavMain } from "@/components/layout/nav-main"
 import { NavProjects } from "@/components/layout/nav-projects"

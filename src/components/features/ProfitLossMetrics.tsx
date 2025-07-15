@@ -1,6 +1,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, TrendingDown, DollarSign, Percent, Target } from "lucide-react";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Percent from "lucide-react/dist/esm/icons/percent";
+import Target from "lucide-react/dist/esm/icons/target";
 import { PLSummary } from '@/services/business/profitLossBusinessService';
 
 interface ProfitLossMetricsProps {

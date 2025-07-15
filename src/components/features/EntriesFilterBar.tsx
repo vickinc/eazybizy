@@ -3,14 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  FolderOpen, 
-  Calendar, 
-  Filter, 
-  Search 
-} from 'lucide-react';
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Search from "lucide-react/dist/esm/icons/search";
 
 interface EntriesFilterBarProps {
   // Filter state

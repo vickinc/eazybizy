@@ -47,10 +47,10 @@ export const EventList: React.FC<EventListProps> = ({
       </CardHeader>
       <CardContent>
         <div className={`space-y-${showDate ? '6' : '3'}`}>
-          {events.length === 0 ? (
+          {(events || []).length === 0 ? (
             <p className="text-gray-500 text-center py-4">{emptyMessage}</p>
           ) : (
-            events.map((event) => {
+            (events || []).map((event) => {
               const eventNotes = getNotesForEvent(event.id);
               return (
                 <EventItem

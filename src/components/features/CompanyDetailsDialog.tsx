@@ -2,7 +2,13 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Mail, Phone, MapPin, Globe, ExternalLink } from "lucide-react";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import Check from "lucide-react/dist/esm/icons/check";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import { Company } from '@/types/company.types';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 

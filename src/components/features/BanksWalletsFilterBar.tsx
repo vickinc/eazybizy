@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search,
-  Banknote,
-  Wallet,
-  Filter
-} from "lucide-react";
+import Search from "lucide-react/dist/esm/icons/search";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import Filter from "lucide-react/dist/esm/icons/filter";
 
 interface BanksWalletsFilterBarProps {
   searchTerm: string;

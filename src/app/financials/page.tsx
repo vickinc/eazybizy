@@ -3,24 +3,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  FileText, 
-  Calculator, 
-  FolderOpen, 
-  BarChart3, 
-  TrendingUp, 
-  ArrowRight,
-  DollarSign,
-  Receipt,
-  Building,
-  ChartLine,
-  Scale,
-  PieChart,
-  Building2,
-  ActivityIcon,
-  FileBarChart,
-  ShieldCheck
-} from "lucide-react";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Receipt from "lucide-react/dist/esm/icons/receipt";
+import Building from "lucide-react/dist/esm/icons/building";
+import ChartLine from "lucide-react/dist/esm/icons/chart-line";
+import Scale from "lucide-react/dist/esm/icons/scale";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import ActivityIcon from "lucide-react/dist/esm/icons/activity";
+import FileBarChart from "lucide-react/dist/esm/icons/file-bar-chart";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";

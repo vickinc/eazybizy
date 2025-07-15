@@ -8,7 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, ExternalLink, X, Building2 } from "lucide-react";
+import Search from "lucide-react/dist/esm/icons/search";
+import Package from "lucide-react/dist/esm/icons/package";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import X from "lucide-react/dist/esm/icons/x";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
 import { FormattedVendor, VendorFormData } from "@/types/vendor.types";
 import { Product } from "@/types/products.types";
 

@@ -7,12 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { formatDateForDisplay } from '@/utils';
 import { BankAccount, DigitalWallet, BookkeepingEntry, Company } from '@/types';
 import { BulkTransaction } from '@/services/business/transactionsBusinessService';
-import { 
-  Plus,
-  Trash2,
-  CreditCard,
-  Wallet
-} from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
 
 const INCOME_CATEGORIES = [
   'Sales Revenue',

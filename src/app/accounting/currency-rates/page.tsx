@@ -3,7 +3,9 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, AlertCircle, RefreshCw } from "lucide-react";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
 import { useCurrencyRatesManagement } from "@/hooks/useCurrencyRatesManagement";
 import { CurrencyRatesFilterBar } from "@/components/features/CurrencyRatesFilterBar";
 import { CurrencyRatesList } from "@/components/features/CurrencyRatesList";

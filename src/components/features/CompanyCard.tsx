@@ -3,7 +3,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Trash2, MapPin, Phone, Mail, Globe, Copy, ExternalLink, Check, Settings, MoreHorizontal, Share2, Download, Archive, User, ChevronDown, ChevronUp } from "lucide-react";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import Check from "lucide-react/dist/esm/icons/check";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Share2 from "lucide-react/dist/esm/icons/share-2";
+import Download from "lucide-react/dist/esm/icons/download";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import User from "lucide-react/dist/esm/icons/user";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
 import { Company } from '@/types';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 import { calculateCompanyAge } from '@/utils/companyUtils';
@@ -113,6 +128,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       className="text-blue-600 hover:text-blue-800 transition-colors"
+                      aria-label={`Visit Facebook page for ${company.tradingName}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -126,6 +142,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       className="hover:opacity-80 transition-opacity"
+                      aria-label={`Visit Instagram profile for ${company.tradingName}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                         <defs>
@@ -148,6 +165,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       className="text-gray-900 hover:text-gray-700 transition-colors"
+                      aria-label={`Visit X (Twitter) profile for ${company.tradingName}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
@@ -161,6 +179,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       className="text-red-600 hover:text-red-800 transition-colors"
+                      aria-label={`Visit YouTube channel for ${company.tradingName}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -204,6 +223,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   e.stopPropagation();
                   copyToClipboard(company.legalName, 'Legal Name', company.id);
                 }}
+                aria-label={`Copy legal name: ${company.legalName}`}
               >
                 {copiedFields[`${company.id}-Legal Name`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
               </Button>
@@ -226,6 +246,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   e.stopPropagation();
                   copyToClipboard(company.registrationNo, 'Registration Number', company.id);
                 }}
+                aria-label={`Copy registration number: ${company.registrationNo}`}
               >
                 {copiedFields[`${company.id}-Registration Number`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
               </Button>
@@ -252,6 +273,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     const formattedDate = new Date(company.registrationDate).toLocaleDateString('en-GB');
                     copyToClipboard(formattedDate, 'Registration Date', company.id);
                   }}
+                  aria-label={`Copy registration date: ${new Date(company.registrationDate).toLocaleDateString('en-GB')}`}
                 >
                   {copiedFields[`${company.id}-Registration Date`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
@@ -277,6 +299,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     e.stopPropagation();
                     copyToClipboard(company.countryOfRegistration, 'Country', company.id);
                   }}
+                  aria-label={`Copy country: ${company.countryOfRegistration}`}
                 >
                   {copiedFields[`${company.id}-Country`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
@@ -302,6 +325,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     e.stopPropagation();
                     copyToClipboard(company.baseCurrency, 'Base Currency', company.id);
                   }}
+                  aria-label={`Copy base currency: ${company.baseCurrency}`}
                 >
                   {copiedFields[`${company.id}-Base Currency`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
@@ -327,6 +351,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     e.stopPropagation();
                     copyToClipboard(company.businessLicenseNr!, 'Business License', company.id);
                   }}
+                  aria-label={`Copy business license: ${company.businessLicenseNr}`}
                 >
                   {copiedFields[`${company.id}-Business License`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
@@ -352,6 +377,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                     e.stopPropagation();
                     copyToClipboard(company.vatNumber!, 'VAT Number', company.id);
                   }}
+                  aria-label={`Copy VAT number: ${company.vatNumber}`}
                 >
                   {copiedFields[`${company.id}-VAT Number`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
@@ -381,6 +407,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       e.stopPropagation();
                       copyToClipboard(company.address, 'Address', company.id);
                     }}
+                    aria-label={`Copy address: ${company.address}`}
                   >
                     {copiedFields[`${company.id}-Address`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                   </Button>
@@ -409,6 +436,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       e.stopPropagation();
                       copyToClipboard(company.phone, 'Phone', company.id);
                     }}
+                    aria-label={`Copy phone number: ${company.phone}`}
                   >
                     {copiedFields[`${company.id}-Phone`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                   </Button>
@@ -421,6 +449,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       onClick={(e) => e.stopPropagation()}
                       className="ml-2 text-green-600 hover:text-green-800 transition-colors"
                       title="WhatsApp"
+                      aria-label={`Contact via WhatsApp: ${company.whatsappNumber}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.982-3.589c-.597-1.047-.9-2.215-.899-3.411.002-3.813 3.103-6.912 6.914-6.912 1.849.001 3.584.721 4.887 2.025 1.304 1.305 2.023 3.04 2.022 4.889-.002 3.814-3.103 6.878-6.911 6.878z"/>
@@ -435,6 +464,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       onClick={(e) => e.stopPropagation()}
                       className="ml-1 text-blue-500 hover:text-blue-700 transition-colors"
                       title="Telegram"
+                      aria-label={`Contact via Telegram: ${company.telegramNumber}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0c-6.626 0-12 5.373-12 12s5.374 12 12 12 12-5.373 12-12-5.374-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
@@ -466,6 +496,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       e.stopPropagation();
                       copyToClipboard(company.email, 'Email', company.id);
                     }}
+                    aria-label={`Copy email: ${company.email}`}
                   >
                     {copiedFields[`${company.id}-Email`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                   </Button>
@@ -495,6 +526,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                         e.stopPropagation();
                         copyToClipboard(company.website, 'Website', company.id);
                       }}
+                      aria-label={`Copy website: ${company.website}`}
                     >
                       {copiedFields[`${company.id}-Website`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                     </Button>
@@ -503,6 +535,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       size="sm"
                       className="h-5 w-5 p-0 hover:bg-gray-100"
                       onClick={(e) => handleWebsiteClick(company.website, e)}
+                      aria-label={`Visit website: ${company.website}`}
                     >
                       <ExternalLink className="h-3 w-3 text-gray-400" />
                     </Button>
@@ -567,6 +600,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                 e.stopPropagation();
                                 copyToClipboard(`${contactPerson.firstName} ${contactPerson.lastName}`, 'Contact Person Name', company.id);
                               }}
+                              aria-label={`Copy contact person name: ${contactPerson.firstName} ${contactPerson.lastName}`}
                             >
                               {copiedFields[`${company.id}-Contact Person Name`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                             </Button>
@@ -590,6 +624,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                 e.stopPropagation();
                                 copyToClipboard(contactPerson.email, 'Contact Person Email', company.id);
                               }}
+                              aria-label={`Copy contact person email: ${contactPerson.email}`}
                             >
                               {copiedFields[`${company.id}-Contact Person Email`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                             </Button>
@@ -614,6 +649,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                   e.stopPropagation();
                                   copyToClipboard(contactPerson.phoneNumber, 'Contact Person Phone', company.id);
                                 }}
+                                aria-label={`Copy contact person phone: ${contactPerson.phoneNumber}`}
                               >
                                 {copiedFields[`${company.id}-Contact Person Phone`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                               </Button>
@@ -647,6 +683,9 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                   : 'Shareholder';
                                 copyToClipboard(role, 'Contact Person Role', company.id);
                               }}
+                              aria-label={`Copy contact person role: ${company.mainContactType === 'representative' 
+                                ? ((contactPerson as any).role === 'Other' ? (contactPerson as any).customRole || 'Other' : (contactPerson as any).role)
+                                : 'Shareholder'}`}
                             >
                               {copiedFields[`${company.id}-Contact Person Role`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                             </Button>
@@ -674,6 +713,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                 e.stopPropagation();
                                 copyToClipboard(company.mainContactEmail!, 'Contact Email', company.id);
                               }}
+                              aria-label={`Copy contact email: ${company.mainContactEmail}`}
                             >
                               {copiedFields[`${company.id}-Contact Email`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                             </Button>
@@ -697,6 +737,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                                 e.stopPropagation();
                                 copyToClipboard(company.mainContactType!, 'Contact Type', company.id);
                               }}
+                              aria-label={`Copy contact type: ${company.mainContactType}`}
                             >
                               {copiedFields[`${company.id}-Contact Type`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                             </Button>
@@ -750,6 +791,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                 size="sm"
                 className="hover:bg-gray-100"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={`More actions for ${company.tradingName}`}
               >
                 <MoreHorizontal className="w-4 h-4" />
               </Button>

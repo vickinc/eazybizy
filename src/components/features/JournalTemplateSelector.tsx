@@ -11,18 +11,16 @@ import {
   TemplateCategory,
   JournalTemplateFormData 
 } from '@/types/journalTemplates.types';
-import { 
-  FileText, 
-  Users, 
-  TrendingDown, 
-  Calendar, 
-  Settings, 
-  RotateCw,
-  Clock,
-  Star,
-  Search,
-  ChevronRight
-} from 'lucide-react';
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Users from "lucide-react/dist/esm/icons/users";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import RotateCw from "lucide-react/dist/esm/icons/rotate-cw";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Star from "lucide-react/dist/esm/icons/star";
+import Search from "lucide-react/dist/esm/icons/search";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 
 interface JournalTemplateSelectorProps {
   open: boolean;

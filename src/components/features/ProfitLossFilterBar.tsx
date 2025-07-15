@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-  Calendar, 
-  Download, 
-  ChevronDown, 
-  FileText, 
-  Table, 
-  RefreshCw,
-  AlertCircle
-} from "lucide-react";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Download from "lucide-react/dist/esm/icons/download";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Table from "lucide-react/dist/esm/icons/table";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import { PeriodType, ComparisonPeriodType } from '@/hooks/useProfitLossManagement';
 
 interface ProfitLossFilterBarProps {

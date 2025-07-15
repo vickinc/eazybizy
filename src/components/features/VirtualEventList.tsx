@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
-import { CalendarDays, Clock } from "lucide-react";
+import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
+import Clock from "lucide-react/dist/esm/icons/clock";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VirtualList, VariableVirtualList, InfiniteVirtualList } from "@/components/ui/virtual-scroll";
 import { CalendarEvent, Note } from '@/types/calendar.types';
@@ -60,16 +61,19 @@ export const VirtualEventList: React.FC<VirtualEventListProps> = ({
   enableVirtualization = true
 }) => {
   
+  // Safety check for events array
+  const safeEvents = events || [];
+  
   // Determine if we should use virtualization
-  const shouldVirtualize = enableVirtualization && events.length > virtualThreshold;
+  const shouldVirtualize = enableVirtualization && safeEvents.length > virtualThreshold;
   
   // Memoized event items with notes
   const eventsWithNotes = useMemo(() => {
-    return events.map(event => ({
+    return safeEvents.map(event => ({
       ...event,
       eventNotes: getNotesForEvent(event.id)
     }));
-  }, [events, getNotesForEvent]);
+  }, [safeEvents, getNotesForEvent]);
   
   // Calculate variable heights for events with notes
   const getItemHeight = useCallback((index: number) => {

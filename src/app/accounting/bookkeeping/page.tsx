@@ -6,12 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { useBookkeepingManagement } from '@/hooks/useBookkeepingManagement.new';
-import { 
-  PieChart, 
-  TrendingUp, 
-  BookOpen,
-  BarChart3
-} from "lucide-react";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataIntegrityAlert, useDataIntegrityCheck } from "@/components/features/DataIntegrityAlert";
 import { BookkeepingStats } from "@/components/features/BookkeepingStats";

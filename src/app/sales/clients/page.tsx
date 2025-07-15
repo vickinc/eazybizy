@@ -5,7 +5,8 @@ import React from "react";
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
 import { Button } from "@/components/ui/button";
-import { UserCheck, Plus } from "lucide-react";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useClientsManagementDB } from "@/hooks/useClientsManagementDB";
 import { ClientStats } from "@/components/features/ClientStats";

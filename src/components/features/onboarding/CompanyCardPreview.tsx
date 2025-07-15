@@ -1,7 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Mail, Globe } from "lucide-react";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Globe from "lucide-react/dist/esm/icons/globe";
 import { CompanyFormData } from '@/services/business/companyValidationService';
 import { isImageLogo, validateLogo } from '@/utils/logoUtils';
 import { calculateCompanyAge } from '@/utils/companyUtils';

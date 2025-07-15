@@ -1,7 +1,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
 import { CompanyFormData } from '@/services/business/companyValidationService';
 import { Shareholder, Representative, ContactPerson } from '@/types/company.types';
 import { ShareholderSection } from './ShareholderSection';

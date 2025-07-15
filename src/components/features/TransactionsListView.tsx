@@ -10,19 +10,17 @@ interface EnhancedTransaction extends Transaction {
   account?: BankAccount | DigitalWallet;
   linkedEntry?: BookkeepingEntry;
 }
-import { 
-  ArrowUpCircle,
-  ArrowDownCircle,
-  ChevronDown,
-  ChevronUp,
-  FolderOpen,
-  Folder,
-  CheckSquare,
-  Square,
-  Link,
-  CreditCard,
-  Wallet
-} from "lucide-react";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Link from "lucide-react/dist/esm/icons/link";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
 
 interface TransactionsListViewProps {
   groupedTransactions: Array<{ key: string; name: string; transactions: EnhancedTransaction[] }>;

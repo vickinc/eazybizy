@@ -3,17 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Landmark, 
-  CreditCard, 
-  Wallet,
-  DollarSign,
-  Package,
-  Eye,
-  EyeOff
-} from "lucide-react";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import Landmark from "lucide-react/dist/esm/icons/landmark";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Package from "lucide-react/dist/esm/icons/package";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import EyeOff from "lucide-react/dist/esm/icons/eye-off";
 import { AccountBalance, GroupedBalances, BalanceGroupBy } from '@/types/balance.types';
 import { BalanceListItem } from './BalanceListItem';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';

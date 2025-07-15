@@ -2,7 +2,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Plus, Maximize2, Minimize2 } from "lucide-react";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useCashflowManagement } from '@/hooks/useCashflowManagement';
 import { CashflowFilterBar } from '@/components/features/CashflowFilterBar';

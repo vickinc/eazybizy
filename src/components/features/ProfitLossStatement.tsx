@@ -3,18 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from '@/components/ui/separator';
-import { 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  TrendingUpIcon,
-  TrendingDownIcon,
-  InfoIcon,
-  DownloadIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  MinusIcon,
-  CalculatorIcon
-} from "lucide-react";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import ArrowUpIcon from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDownIcon from "lucide-react/dist/esm/icons/arrow-down";
+import MinusIcon from "lucide-react/dist/esm/icons/minus";
+import CalculatorIcon from "lucide-react/dist/esm/icons/calculator";
 import { PLData } from '@/services/business/profitLossBusinessService';
 import { ProfitLossData, FinancialStatementSection, FinancialStatementItem } from '@/types/financialStatements.types';
 

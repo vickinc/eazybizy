@@ -2,7 +2,8 @@
 
 import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Building2, Edit } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Edit from "lucide-react/dist/esm/icons/edit";
 import { OnboardingWizard } from "@/components/features/onboarding/OnboardingWizard";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";

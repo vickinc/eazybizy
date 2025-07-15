@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Edit3, Trash2, StickyNote, Loader2 } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Edit3 from "lucide-react/dist/esm/icons/edit-3";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import { CalendarEvent, Note } from '@/types/calendar.types';
 import { toast } from 'sonner';
 
@@ -88,14 +92,16 @@ export const EventItem: React.FC<EventItemProps> = ({
                 Auto-generated
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEditEvent(event)}
-              disabled={isEventDeleting}
-            >
-              <Edit3 className="h-4 w-4" />
-            </Button>
+            {event.type !== 'anniversary' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditEvent(event)}
+                disabled={isEventDeleting}
+              >
+                <Edit3 className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

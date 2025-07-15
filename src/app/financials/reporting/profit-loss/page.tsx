@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, Calculator, PieChart } from "lucide-react";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
 import { Button } from "@/components/ui/button";
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { useProfitLossManagement } from '@/hooks/useProfitLossManagement';

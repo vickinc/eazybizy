@@ -38,7 +38,7 @@ const EventDialog = dynamic(
 );
 import { EventList } from "@/components/features/EventList";
 import { VirtualizedEventList } from "@/components/features/VirtualizedEventList";
-import { CalendarStats } from "@/components/features/CalendarStats";
+import { PaginatedEventList } from "@/components/features/PaginatedEventList";
 // Dynamic import for CalendarSettings to reduce bundle size
 const CalendarSettings = dynamic(
   () => import('@/components/features/CalendarSettings').then(mod => ({ default: mod.CalendarSettings })),
@@ -75,53 +75,111 @@ const CalendarPageSkeleton = () => (
             </div>
           </div>
           <div className="flex gap-2">
-            <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
             <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
           </div>
         </div>
       </div>
 
+      {/* Main Content - Calendar and Events Side by Side */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-        {/* Main Content Skeleton */}
-        <div className="flex-1 space-y-4 sm:space-y-6">
-          {/* Stats Cards Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
-                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-
-          {/* Event List Skeleton */}
+        {/* Calendar Widget Skeleton */}
+        <div className="flex-1 lg:flex-none lg:w-1/2">
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="flex-1">
-                    <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
-                    <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+            {/* Calendar Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+              <div className="flex gap-2">
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+            
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1 mb-4">
+              {/* Day headers */}
+              {[...Array(7)].map((_, i) => (
+                <div key={`header-${i}`} className="h-6 bg-gray-100 rounded animate-pulse"></div>
+              ))}
+              {/* Calendar dates */}
+              {[...Array(35)].map((_, i) => (
+                <div key={`date-${i}`} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+            
+            {/* Add Event Button */}
+            <div className="h-10 w-full bg-blue-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Paginated Event List Skeleton */}
+        <div className="flex-1 lg:w-1/2">
+          <div className="bg-white rounded-lg shadow-sm">
+            {/* Card Header */}
+            <div className="p-6 border-b">
+              <div className="flex items-center mb-2">
+                <div className="h-5 w-5 bg-gray-200 rounded animate-pulse mr-2"></div>
+                <div className="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse ml-2"></div>
+              </div>
+              <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            
+            {/* Card Content */}
+            <div className="p-6">
+              {/* Search Bar */}
+              <div className="relative mb-4">
+                <div className="h-10 w-full bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              
+              {/* Event Items */}
+              <div className="space-y-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3 flex-1">
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="flex-1">
+                          <div className="h-5 w-56 bg-gray-200 rounded animate-pulse mb-2"></div>
+                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                          <div className="h-3 w-72 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="h-6 w-16 bg-yellow-200 rounded animate-pulse"></div>
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination Skeleton */}
+              <div className="mt-6 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="flex items-center space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Calendar Widget Skeleton */}
-        <div className="hidden lg:block flex-shrink-0 w-80">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="h-6 w-24 bg-gray-200 rounded animate-pulse mb-4"></div>
-            <div className="grid grid-cols-7 gap-1">
-              {[...Array(35)].map((_, i) => (
-                <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
-              ))}
-            </div>
-          </div>
-        </div>
+      </div>
+      
+      {/* Mobile Floating Action Button Skeleton */}
+      <div className="lg:hidden fixed bottom-4 right-4">
+        <div className="h-12 w-12 bg-blue-200 rounded-full animate-pulse"></div>
       </div>
     </div>
   </div>
@@ -141,6 +199,7 @@ export default function CalendarPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGoogleCalendarOpen, setIsGoogleCalendarOpen] = useState(false);
+  const [deleteUpdateTrigger, setDeleteUpdateTrigger] = useState(0);
   // Use React Query for sync status with caching and deduplication
   const { data: syncStatus, refetch: refetchSyncStatus } = useQuery({
     queryKey: ['calendar-sync-status'],
@@ -247,9 +306,8 @@ export default function CalendarPage() {
     if (date) {
       setSelectedDate(date);
       updateFormField('date', date);
-      openDialog();
     }
-  }, [setSelectedDate, updateFormField, openDialog]);
+  }, [setSelectedDate, updateFormField]);
 
   const handleGoogleCalendarChange = useCallback((open: boolean) => {
     setIsGoogleCalendarOpen(open);
@@ -282,6 +340,27 @@ export default function CalendarPage() {
     // This is a placeholder for future settings data pre-fetching
   }, []);
 
+  // Wrapped delete handler to trigger UI updates
+  const handleDeleteEventWithUpdate = useCallback(async (eventId: string, onConfirm?: () => void) => {
+    try {
+      console.log('CalendarPage: Calling handleDeleteEvent with:', eventId);
+      const result = await handleDeleteEvent(eventId, onConfirm);
+      console.log('CalendarPage: Delete completed, triggering UI update');
+      
+      // Small delay to ensure all async operations complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger UI update after successful deletion
+      setDeleteUpdateTrigger(prev => prev + 1);
+      console.log('CalendarPage: UI update trigger set');
+      
+      return result;
+    } catch (error) {
+      console.error('CalendarPage: Delete failed:', error);
+      throw error;
+    }
+  }, [handleDeleteEvent]);
+
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
 
@@ -293,7 +372,6 @@ export default function CalendarPage() {
   return (
     <div className="min-h-screen bg-lime-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
         {/* Error State */}
         {isError && (
           <div className="mb-6">
@@ -378,44 +456,19 @@ export default function CalendarPage() {
               </DialogHeader>
               <CalendarSettings />
             </DialogContent>
-          </Dialog>
+            </Dialog>
           </div>
         </div>
-      </div>
 
-      {/* Google Calendar Dialog */}
-      <GoogleCalendarDialog 
-        open={isGoogleCalendarOpen} 
-        onOpenChange={handleGoogleCalendarChange}
-      />
+        {/* Google Calendar Dialog */}
+        <GoogleCalendarDialog 
+          open={isGoogleCalendarOpen} 
+          onOpenChange={handleGoogleCalendarChange}
+        />
 
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
-        {/* Main Content Section */}
-        <div className="flex-1 space-y-4 sm:space-y-6 pb-20 lg:pb-0">
-          {/* Stats Cards */}
-          <CalendarStats 
-            filteredEvents={filteredEvents}
-            getTodaysEvents={getTodaysEvents}
-            getThisWeekEvents={getThisWeekEvents}
-            getUpcomingEvents={getUpcomingEvents}
-          />
-
-          {/* Mobile Calendar Widget - shown under stats on mobile only */}
-          <div className="lg:hidden">
-            <CalendarWidget
-              selectedDate={selectedDate}
-              currentMonth={currentMonth}
-              events={filteredEvents}
-              isExpanded={true}
-              onDateSelect={handleCalendarSelect}
-              onMonthChange={setCurrentMonth}
-              onToggleExpanded={noOpCallback} // No-op since always expanded on mobile
-              onAddEvent={openDialog}
-              getEventsForDate={getEventsForDate}
-              getPriorityColor={getPriorityColor}
-              formatDate={formatDate}
-            />
-          </div>
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
+          {/* Main Content Section */}
+          <div className="flex-1 space-y-4 sm:space-y-6 pb-20 lg:pb-0">
 
           <EventDialog 
             isDialogOpen={isDialogOpen}
@@ -433,61 +486,50 @@ export default function CalendarPage() {
             selectedCompany={globalSelectedCompany}
           />
 
-          {/* Selected Date Events */}
-          {selectedDate && (
-            <EventList 
-              title={`Events for ${formatDate(selectedDate)}`}
-              description={`${getEventsForDate(selectedDate).length} event(s) scheduled`}
-              events={getEventsForDate(selectedDate)}
-              emptyMessage="No events scheduled for this date"
-              getNotesForEvent={getNotesForEvent}
-              handleEditEvent={handleEditEvent}
-              handleDeleteEvent={handleDeleteEvent}
-              getPriorityColor={getPriorityColor}
-              getTypeIcon={getTypeIcon}
-            />
-          )}
 
-          {/* Future Events List - Virtualized for Performance */}
-          <VirtualizedEventList 
-            title="All Future Events"
-            description={`Upcoming events across all dates (${getUpcomingEvents().length} total)`}
-            events={getUpcomingEvents()}
-            emptyMessage="No upcoming events scheduled"
-            icon={<TrendingUp className="h-5 w-5" />}
-            showDate={true}
-            getNotesForEvent={getNotesForEvent}
-            handleEditEvent={handleEditEvent}
-            handleDeleteEvent={handleDeleteEvent}
-            getPriorityColor={getPriorityColor}
-            getTypeIcon={getTypeIcon}
-            formatDate={formatDate}
-            height={500} // Set a fixed height for virtualization
-            itemHeight={120} // Estimated height for events with dates
-          />
-        </div>
+          {/* Calendar and Events Side by Side */}
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+            {/* Calendar Widget */}
+            <div className="flex-1 lg:flex-none lg:w-1/2">
+              <CalendarWidget
+                selectedDate={selectedDate}
+                currentMonth={currentMonth}
+                events={filteredEvents}
+                onDateSelect={handleCalendarSelect}
+                onMonthChange={setCurrentMonth}
+                onAddEvent={openDialog}
+                getEventsForDate={getEventsForDate}
+                getPriorityColor={getPriorityColor}
+                formatDate={formatDate}
+                handleEditEvent={handleEditEvent}
+                handleDeleteEvent={handleDeleteEventWithUpdate}
+              />
+            </div>
 
-        {/* Calendar Widget Sidebar */}
-        <div className="hidden lg:block flex-shrink-0 w-80">
-          <div className="h-fit">
-            <CalendarWidget
-              selectedDate={selectedDate}
-              currentMonth={currentMonth}
-              events={filteredEvents}
-              isExpanded={isCalendarWidgetExpanded}
-              onDateSelect={handleCalendarSelect}
-              onMonthChange={setCurrentMonth}
-              onToggleExpanded={toggleCalendarWidget}
-              onAddEvent={openDialog}
-              getEventsForDate={getEventsForDate}
-              getPriorityColor={getPriorityColor}
-              formatDate={formatDate}
-            />
+            {/* Future Events List - Paginated with Search */}
+            <div className="flex-1 lg:w-1/2">
+              <PaginatedEventList 
+                key={`upcoming-events-${getUpcomingEvents().length}-${deleteUpdateTrigger}`} // Force re-render when events change
+                title="All Future Events"
+                description={`Upcoming events across all dates (${getUpcomingEvents().length} total)`}
+                events={getUpcomingEvents()}
+                emptyMessage="No upcoming events scheduled"
+                icon={<TrendingUp className="h-5 w-5" />}
+                showDate={true}
+                getNotesForEvent={getNotesForEvent}
+                handleEditEvent={handleEditEvent}
+                handleDeleteEvent={handleDeleteEventWithUpdate}
+                getPriorityColor={getPriorityColor}
+                getTypeIcon={getTypeIcon}
+                formatDate={formatDate}
+                itemsPerPage={3}
+              />
+            </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Mobile Calendar Modal */}
+        {/* Mobile Calendar Modal */}
       <MobileCalendarModal
         selectedDate={selectedDate}
         currentMonth={currentMonth}
@@ -511,9 +553,10 @@ export default function CalendarPage() {
         >
           <CalendarDays className="h-5 w-5" />
         </Button>
-        </div>
+      </div>
 
       </div>
     </div>
+  </div>
   );
 }

@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserManagementService } from '@/services/business/userManagementService';
 import { User } from '@/types/user.types';
-import { UserCheck, UserX, Shield, Eye, BookOpen, Settings } from 'lucide-react';
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import UserX from "lucide-react/dist/esm/icons/user-x";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import Settings from "lucide-react/dist/esm/icons/settings";
 
 interface UserSelectorProps {
   onUserChange?: (user: User) => void;

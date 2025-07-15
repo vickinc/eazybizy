@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
+import ChevronsUpDown from "lucide-react/dist/esm/icons/chevronsupdown";
+import Plus from "lucide-react/dist/esm/icons/plus";
 
 import {
   DropdownMenu,

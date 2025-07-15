@@ -18,18 +18,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Shield,
-  Info
-} from 'lucide-react';
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import EyeOff from "lucide-react/dist/esm/icons/eye-off";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-up-down";
+import ArrowUp from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDown from "lucide-react/dist/esm/icons/arrow-down";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import Info from "lucide-react/dist/esm/icons/info";
 import {
   VATTreatment,
   TableSortConfig,

@@ -2,17 +2,15 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  EyeOff,
-  Building2,
-  CreditCard,
-  TrendingUp,
-  TrendingDown
-} from "lucide-react";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import EyeOff from "lucide-react/dist/esm/icons/eye-off";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
 import {
   DropdownMenu,
   DropdownMenuContent,

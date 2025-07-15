@@ -2,7 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { BookOpen, Plus, Calculator } from "lucide-react";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
 import { Button } from "@/components/ui/button";
 import { useChartOfAccountsManagement } from '@/hooks';
 import { CategoryFilterBar } from '@/components/features/CategoryFilterBar';

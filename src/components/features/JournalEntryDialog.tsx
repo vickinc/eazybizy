@@ -11,7 +11,13 @@ import { JournalEntryStorageService } from '@/services/storage';
 import { JournalEntryValidationService } from '@/services/business/journalEntryValidationService';
 import { JournalTemplateService } from '@/services/business/journalTemplateService';
 import { JournalTemplateSelector } from './JournalTemplateSelector';
-import { Plus, Trash2, AlertCircle, Hash, CheckCircle, TriangleAlert, FileText } from 'lucide-react';
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import Hash from "lucide-react/dist/esm/icons/hash";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import TriangleAlert from "lucide-react/dist/esm/icons/triangle-alert";
+import FileText from "lucide-react/dist/esm/icons/file-text";
 
 interface JournalEntryDialogProps {
   open: boolean;

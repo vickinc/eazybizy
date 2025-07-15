@@ -1,7 +1,12 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mail, Globe, Phone, Share2, Download, Trash2 } from "lucide-react";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Share2 from "lucide-react/dist/esm/icons/share-2";
+import Download from "lucide-react/dist/esm/icons/download";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
 import { FormattedBusinessCard } from "@/types/businessCards.types";
 import { isImageLogo } from "@/utils/logoUtils";
 
@@ -118,10 +123,12 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({
               <Mail className="w-3 h-3 flex-shrink-0 opacity-75" />
               <span className="truncate">{card.personEmail || card.company.email}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <Globe className="w-3 h-3 flex-shrink-0 opacity-75" />
-              <span className="truncate">{card.company.website}</span>
-            </div>
+            {card.company.website && (
+              <div className="flex items-center gap-2 text-xs">
+                <Globe className="w-3 h-3 flex-shrink-0 opacity-75" />
+                <span className="truncate">{card.company.website}</span>
+              </div>
+            )}
             {(card.personPhone || card.company.phone) && (
               <div className="flex items-center gap-2 text-xs">
                 <Phone className="w-3 h-3 flex-shrink-0 opacity-75" />

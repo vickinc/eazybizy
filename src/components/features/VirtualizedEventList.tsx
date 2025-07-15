@@ -41,11 +41,14 @@ export const VirtualizedEventList: React.FC<VirtualizedEventListProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Safety check for events array
+  const safeEvents = events || [];
+  
   // Only virtualize if we have many events
-  const shouldVirtualize = events.length > 20;
+  const shouldVirtualize = safeEvents.length > 20;
 
   const virtualizer = useVirtualizer({
-    count: events.length,
+    count: safeEvents.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => itemHeight,
     overscan: 5, // Render 5 items before and after visible area
@@ -55,7 +58,7 @@ export const VirtualizedEventList: React.FC<VirtualizedEventListProps> = ({
 
   // Memoize event items to prevent unnecessary re-renders
   const eventItems = useMemo(() => {
-    return events.map((event) => {
+    return safeEvents.map((event) => {
       const eventNotes = getNotesForEvent(event.id);
       return {
         event,
@@ -76,9 +79,9 @@ export const VirtualizedEventList: React.FC<VirtualizedEventListProps> = ({
         )
       };
     });
-  }, [events, getNotesForEvent, handleEditEvent, handleDeleteEvent, getPriorityColor, getTypeIcon, formatDate, showDate]);
+  }, [safeEvents, getNotesForEvent, handleEditEvent, handleDeleteEvent, getPriorityColor, getTypeIcon, formatDate, showDate]);
 
-  if (events.length === 0) {
+  if (safeEvents.length === 0) {
     return (
       <Card className={className}>
         <CardHeader>

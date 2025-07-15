@@ -4,14 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  BarChart3Icon,
-  LoaderIcon,
-  AlertCircleIcon,
-  RefreshCwIcon,
-  SettingsIcon,
-  InfoIcon
-} from 'lucide-react';
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
 import { ARRDashboard } from '@/components/features/ARRDashboard';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';

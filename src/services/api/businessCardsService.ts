@@ -1,4 +1,5 @@
 import { BusinessCard } from '@/types/businessCards.types';
+import { BusinessCardsBusinessService } from '@/services/business/businessCardsBusinessService';
 
 // API Response Types
 export interface BusinessCardResponse {
@@ -88,9 +89,9 @@ export interface BusinessCardUpdateRequest {
 export class BusinessCardsService {
   private baseUrl = '/api/business-cards';
 
-  // Transform API response to client format
+  // Transform API response to client format with formatting
   private transformBusinessCardResponse(card: BusinessCardResponse): BusinessCard {
-    return {
+    const businessCard: BusinessCard = {
       id: card.id,
       companyId: card.companyId,
       company: card.company,
@@ -104,6 +105,9 @@ export class BusinessCardsService {
       isArchived: card.isArchived,
       createdAt: new Date(card.createdAt)
     };
+    
+    // Apply formatting directly during transformation
+    return BusinessCardsBusinessService.formatBusinessCardForDisplay(businessCard);
   }
 
   // Business Cards API

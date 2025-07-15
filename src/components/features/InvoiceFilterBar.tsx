@@ -3,18 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Filter,
-  Calendar,
-  Users,
-  Folder,
-  FolderOpen,
-  FileText,
-  CheckCircle,
-  Send,
-  Clock,
-  Search
-} from "lucide-react";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Users from "lucide-react/dist/esm/icons/users";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Send from "lucide-react/dist/esm/icons/send";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Search from "lucide-react/dist/esm/icons/search";
 
 interface InvoiceFilterBarProps {
   viewFilter: 'all' | 'draft' | 'sent' | 'paid' | 'overdue' | 'archived';

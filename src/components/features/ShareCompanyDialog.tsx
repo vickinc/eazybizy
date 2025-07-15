@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Share2, Mail, MessageCircle, Download } from "lucide-react";
+import Share2 from "lucide-react/dist/esm/icons/share-2";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import MessageCircle from "lucide-react/dist/esm/icons/message-circle";
+import Download from "lucide-react/dist/esm/icons/download";
 import { Company } from '@/types/company.types';
 
 interface ShareCompanyDialogProps {

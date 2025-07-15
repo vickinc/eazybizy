@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Parse parameters
     const filters: NotesFilters = {
       page: parseInt(searchParams.get('page') || '1'),
-      limit: Math.min(parseInt(searchParams.get('limit') || '50'), 100),
+      limit: Math.min(parseInt(searchParams.get('limit') || '50'), 1000),
       eventId: searchParams.get('eventId') || undefined,
       companyId: searchParams.get('companyId') || undefined,
       priority: searchParams.get('priority') || undefined,
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       } as CachedNotesResponse
 
       // Generate ETag for cache validation
-      const etag = generateETag(responseData)
+      const etag = await generateETag(responseData)
       
       // Check if client has matching ETag (304 Not Modified)
       if (checkETag(request, etag)) {
@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
     } as CachedNotesResponse
 
     // Generate ETag for fresh data
-    const etag = generateETag(responseData)
+    const etag = await generateETag(responseData)
 
     // Return compressed response with shorter cache for fresh data
     return await ResponseCompression.createOptimizedResponse(

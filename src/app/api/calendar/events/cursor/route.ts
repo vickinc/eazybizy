@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get('cursor');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 5000); // Increased limit to 5000 for large datasets
     const sortDirection = searchParams.get('sortDirection') as 'asc' | 'desc' || 'desc';
     const companyId = searchParams.get('companyId');
     const type = searchParams.get('type');

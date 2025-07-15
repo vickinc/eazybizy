@@ -4,7 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, Phone, Globe, MapPin, ArrowRight, ArrowLeft, Upload, X, AlertTriangle, Hash } from 'lucide-react';
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import X from "lucide-react/dist/esm/icons/x";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import Hash from "lucide-react/dist/esm/icons/hash";
 import { CompanyCardPreview } from './CompanyCardPreview';
 import { CompanyFormData } from '@/services/business/companyValidationService';
 

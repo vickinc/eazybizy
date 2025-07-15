@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { JournalEntry } from '@/types';
 import { formatDateForDisplay } from '@/utils';
-import { AlertTriangle, RotateCcw, DollarSign } from 'lucide-react';
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 
 interface JournalEntryReversalDialogProps {
   open: boolean;

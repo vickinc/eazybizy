@@ -1,11 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  Banknote,
-  CheckCircle,
-  Wallet
-} from "lucide-react";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
 import { BanksWalletsSummary } from '@/services/business/banksWalletsBusinessService';
 
 interface BanksWalletsSummaryCardsProps {

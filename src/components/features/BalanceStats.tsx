@@ -1,17 +1,15 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  PieChart, 
-  Calculator,
-  CreditCard,
-  Wallet,
-  Building,
-  MousePointer2
-} from "lucide-react";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import Building from "lucide-react/dist/esm/icons/building";
+import MousePointer2 from "lucide-react/dist/esm/icons/mouse-pointer-2";
 import { BalanceSummary } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 

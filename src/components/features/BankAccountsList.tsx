@@ -3,14 +3,12 @@ import { formatDateForDisplay } from '@/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Edit,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Maximize2,
-  Minimize2
-} from "lucide-react";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import { EnhancedBankAccount } from '@/services/business/banksWalletsBusinessService';
 
 interface BankAccountsListProps {

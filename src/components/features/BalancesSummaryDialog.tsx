@@ -9,12 +9,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  CreditCard, 
-  Wallet, 
-  Building2,
-  Calculator
-} from "lucide-react";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
 import { AccountBalance } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 

@@ -4,39 +4,37 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Calendar, 
-  StickyNote, 
-  CreditCard, 
-  Home,
-  Settings,
-  LogOut,
-  ChevronDown,
-  ChevronRight,
-  DollarSign,
-  FileText,
-  Calculator,
-  FolderOpen,
-  BarChart3,
-  TrendingUp,
-  Package,
-  ShoppingCart,
-  Truck,
-  Users,
-  UserCheck,
-  Receipt,
-  ArrowRightLeft,
-  Scale,
-  Banknote,
-  PieChart,
-  Building,
-  Target,
-  BookOpen,
-  Landmark,
-  ShieldCheck,
-  HardDrive,
-  MonitorSpeaker
-} from "lucide-react";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Home from "lucide-react/dist/esm/icons/home";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import LogOut from "lucide-react/dist/esm/icons/log-out";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import BarChart3 from "lucide-react/dist/esm/icons/bar-chart-3";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Package from "lucide-react/dist/esm/icons/package";
+import ShoppingCart from "lucide-react/dist/esm/icons/shopping-cart";
+import Truck from "lucide-react/dist/esm/icons/truck";
+import Users from "lucide-react/dist/esm/icons/users";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import Receipt from "lucide-react/dist/esm/icons/receipt";
+import ArrowRightLeft from "lucide-react/dist/esm/icons/arrow-right-left";
+import Scale from "lucide-react/dist/esm/icons/scale";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
+import PieChart from "lucide-react/dist/esm/icons/pie-chart";
+import Building from "lucide-react/dist/esm/icons/building";
+import Target from "lucide-react/dist/esm/icons/target";
+import BookOpen from "lucide-react/dist/esm/icons/book-open";
+import Landmark from "lucide-react/dist/esm/icons/landmark";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import HardDrive from "lucide-react/dist/esm/icons/hard-drive";
+import MonitorSpeaker from "lucide-react/dist/esm/icons/monitor-speaker";
 import {
   Sidebar,
   SidebarContent,

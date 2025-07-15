@@ -109,6 +109,26 @@ export function useHomeDashboard(
     }),
     staleTime: 60000, // 1 minute
   });
+
+  // Fetch deleted anniversary event IDs
+  const {
+    data: deletedEventIdsData,
+    isLoading: deletedEventIdsLoading,
+    isError: deletedEventIdsError,
+    error: deletedEventIdsErrorObj,
+    refetch: refetchDeletedEventIds
+  } = useQuery({
+    queryKey: ['calendar', 'deleted-anniversary-events'],
+    queryFn: async () => {
+      const response = await fetch('/api/calendar/auto-generated/deleted');
+      if (!response.ok) {
+        throw new Error('Failed to fetch deleted anniversary events');
+      }
+      const data = await response.json();
+      return data.deletedEventIds || [];
+    },
+    staleTime: 60000, // 1 minute
+  });
   
   // Process companies
   const companies = companiesData?.data || [];
@@ -118,6 +138,7 @@ export function useHomeDashboard(
   
   // Process events
   const databaseEvents = eventsData?.events || [];
+  const deletedEventIds = deletedEventIdsData || [];
   
   // Generate anniversary events for the next year
   const today = new Date();
@@ -135,7 +156,8 @@ export function useHomeDashboard(
   const anniversaryEvents = CompanyAnniversaryService.generateAnniversaryEventsForCompanies(
     filteredCompanies,
     today,
-    nextYear
+    nextYear,
+    deletedEventIds
   ).map(anniversaryEvent => CompanyAnniversaryService.convertToCalendarEvent(anniversaryEvent));
   
   // Combine database events with anniversary events
@@ -178,15 +200,16 @@ export function useHomeDashboard(
   };
   
   // Combined loading and error states
-  const isLoading = companiesLoading || eventsLoading || notesLoading;
-  const isError = companiesError || eventsError || notesError;
-  const error = companiesErrorObj || eventsErrorObj || notesErrorObj;
+  const isLoading = companiesLoading || eventsLoading || notesLoading || deletedEventIdsLoading;
+  const isError = companiesError || eventsError || notesError || deletedEventIdsError;
+  const error = companiesErrorObj || eventsErrorObj || notesErrorObj || deletedEventIdsErrorObj;
   
   // Combined refetch
   const refetch = () => {
     refetchCompanies();
     refetchEvents();
     refetchNotes();
+    refetchDeletedEventIds();
   };
   
   return {

@@ -6,13 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  CalendarIcon, 
-  InfoIcon, 
-  GitCompare,
-  TrendingUpIcon,
-  AlertCircleIcon
-} from 'lucide-react';
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import GitCompare from "lucide-react/dist/esm/icons/git-compare";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
 import { useFinancialPeriods } from '@/hooks/useFinancialPeriods';
 import { FinancialPeriod, PeriodType } from '@/types/financialPeriods.types';
 import { StatementPeriod, PeriodComparison } from '@/types/financialStatements.types';

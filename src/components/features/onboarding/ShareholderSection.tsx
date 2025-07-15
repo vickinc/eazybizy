@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, User, Trash2, Plus, ChevronUp, ChevronDown, Edit2 } from 'lucide-react';
+import Users from "lucide-react/dist/esm/icons/users";
+import User from "lucide-react/dist/esm/icons/user";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import Edit2 from "lucide-react/dist/esm/icons/edit-2";
 import { Shareholder } from '@/types/company.types';
 import { ShareholderForm } from './ShareholderForm';
 

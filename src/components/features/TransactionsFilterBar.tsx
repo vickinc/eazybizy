@@ -3,16 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Filter,
-  Calendar,
-  Building,
-  Folder,
-  FolderOpen,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Search
-} from "lucide-react";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Building from "lucide-react/dist/esm/icons/building";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import Search from "lucide-react/dist/esm/icons/search";
 
 interface TransactionsFilterBarProps {
   viewFilter: 'all' | 'incoming' | 'outgoing';

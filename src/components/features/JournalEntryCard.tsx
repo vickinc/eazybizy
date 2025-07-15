@@ -4,17 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { formatDateForDisplay } from '@/utils';
 import { JournalEntry } from '@/types';
 import { AuditTrailCard } from './AuditTrailCard';
-import { 
-  CheckSquare,
-  Square,
-  Edit,
-  Trash2,
-  ChevronDown,
-  ChevronRight,
-  RotateCcw,
-  Link,
-  Copy
-} from 'lucide-react';
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import Link from "lucide-react/dist/esm/icons/link";
+import Copy from "lucide-react/dist/esm/icons/copy";
 
 interface JournalEntryCardProps {
   entry: JournalEntry;

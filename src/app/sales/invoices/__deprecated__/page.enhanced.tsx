@@ -8,7 +8,12 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { Plus, Search, Filter, Download, Upload, FileText } from 'lucide-react';
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Search from "lucide-react/dist/esm/icons/search";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import Download from "lucide-react/dist/esm/icons/download";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import FileText from "lucide-react/dist/esm/icons/file-text";
 import { ErrorBoundary, ApiErrorBoundary } from '@/components/ui/error-boundary';
 import { 
   LoadingSpinner, 

@@ -8,7 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Clock, Settings, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import XCircle from "lucide-react/dist/esm/icons/circle";
 import { toast } from 'sonner';
 import { getTimezoneOptions, detectUserTimezone, getTimezoneInfo } from '@/lib/timezone';
 

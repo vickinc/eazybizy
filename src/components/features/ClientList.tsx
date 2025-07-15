@@ -1,7 +1,8 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Minimize2, Maximize2 } from "lucide-react";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
 import { FormattedClient, ClientStatistics } from "@/types/client.types";
 import { ClientListItem } from "./ClientListItem";
 

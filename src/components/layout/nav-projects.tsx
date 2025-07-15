@@ -1,12 +1,11 @@
 "use client"
 
-import {
-  Folder,
-  Forward,
-  MoreHorizontal,
-  Trash2,
-  type LucideIcon,
-} from "lucide-react"
+import Folder from "lucide-react/dist/esm/icons/folder";
+import Forward from "lucide-react/dist/esm/icons/orward";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import type LucideIcon from "lucide-react/dist/esm/icons/ype lucideicon";
+import  from "lucide-react/dist/esm/icons/help";
 
 import {
   DropdownMenu,

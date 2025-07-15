@@ -6,7 +6,10 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Home from "lucide-react/dist/esm/icons/home";
+import Bug from "lucide-react/dist/esm/icons/bug";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -326,9 +329,14 @@ export function withErrorBoundary<P extends object>(
  */
 
 // API Error Boundary
-export const ApiErrorBoundary: React.FC<{ children: ReactNode; onError?: (error: Error) => void }> = ({ 
+export const ApiErrorBoundary: React.FC<{ 
+  children: ReactNode; 
+  onError?: (error: Error) => void;
+  onRetry?: () => void;
+}> = ({ 
   children, 
-  onError 
+  onError,
+  onRetry
 }) => (
   <ErrorBoundary
     level="section"
@@ -341,9 +349,18 @@ export const ApiErrorBoundary: React.FC<{ children: ReactNode; onError?: (error:
           <p className="text-gray-600 mb-4">
             There was a problem communicating with the server.
           </p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Refresh Page
-          </Button>
+          <div className="space-y-2">
+            {onRetry ? (
+              <Button onClick={onRetry} variant="outline" className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
+            ) : (
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Refresh Page
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     }

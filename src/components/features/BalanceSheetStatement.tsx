@@ -3,18 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Building2Icon, 
-  TrendingUpIcon, 
-  TrendingDownIcon, 
-  InfoIcon, 
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  DownloadIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  MinusIcon
-} from 'lucide-react';
+import Building2Icon from "lucide-react/dist/esm/icons/building-2";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import ArrowUpIcon from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDownIcon from "lucide-react/dist/esm/icons/arrow-down";
+import MinusIcon from "lucide-react/dist/esm/icons/minus";
 import { BalanceSheetData, FinancialStatementSection, FinancialStatementItem } from '@/types/financialStatements.types';
 
 interface BalanceSheetStatementProps {

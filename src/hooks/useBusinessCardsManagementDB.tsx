@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { 
   useQuery, 
+  useInfiniteQuery,
   useMutation, 
   useQueryClient 
 } from '@tanstack/react-query';
@@ -51,6 +52,11 @@ export interface BusinessCardsManagementDBHook {
   isError: boolean;
   error: Error | null;
   isMutating: boolean;
+  
+  // Infinite Scrolling
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  loadMore: () => void;
   
   // Actions
   handleCreateCard: () => void;
@@ -109,19 +115,31 @@ export function useBusinessCardsManagementDB(
   const businessCardsQueryKey = ['business-cards', selectedCompany, { isArchived: showArchived }];
   const statisticsQueryKey = ['business-cards', 'statistics', selectedCompany];
   
-  // Business Cards Query
+  // Business Cards Infinite Query
   const { 
     data: businessCardsData, 
     isLoading, 
     isError, 
     error,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
     refetch: refetchBusinessCards
-  } = useQuery({
+  } = useInfiniteQuery({
     queryKey: businessCardsQueryKey,
-    queryFn: () => businessCardsService.getBusinessCards(1, 1000, {
-      companyId: selectedCompany !== 'all' ? selectedCompany.toString() : undefined,
-      isArchived: showArchived
-    }),
+    queryFn: ({ pageParam }) => businessCardsService.getBusinessCardsWithCursor(
+      pageParam,
+      20, // Load 20 cards per page
+      'desc',
+      {
+        companyId: selectedCompany !== 'all' ? selectedCompany.toString() : undefined,
+        isArchived: showArchived
+      }
+    ),
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined;
+    },
+    initialPageParam: undefined as string | undefined,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
@@ -132,18 +150,17 @@ export function useBusinessCardsManagementDB(
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
-  const businessCards = businessCardsData?.businessCards || [];
-  
-  // Format business cards for display (add QR codes, etc.)
-  const formattedBusinessCards = useMemo(() => {
-    return businessCards.map(card => BusinessCardsBusinessService.formatBusinessCardForDisplay(card));
-  }, [businessCards]);
+  // Extract business cards from infinite query pages (already formatted by service)
+  const businessCards = useMemo(() => {
+    return businessCardsData?.pages.flatMap(page => page.businessCards) || [];
+  }, [businessCardsData?.pages]);
   
   // Create Business Card Mutation
   const createBusinessCardMutation = useMutation({
     mutationFn: (cardData: BusinessCardCreateRequest) => businessCardsService.createBusinessCard(cardData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['business-cards'] });
+      queryClient.invalidateQueries({ queryKey: businessCardsQueryKey });
+      queryClient.invalidateQueries({ queryKey: statisticsQueryKey });
       closeDialog();
       toast.success('Business card created successfully');
     },
@@ -157,7 +174,8 @@ export function useBusinessCardsManagementDB(
     mutationFn: ({ id, data }: { id: string; data: BusinessCardUpdateRequest }) => 
       businessCardsService.updateBusinessCard(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['business-cards'] });
+      queryClient.invalidateQueries({ queryKey: businessCardsQueryKey });
+      queryClient.invalidateQueries({ queryKey: statisticsQueryKey });
       toast.success('Business card updated successfully');
     },
     onError: (error) => {
@@ -169,7 +187,8 @@ export function useBusinessCardsManagementDB(
   const deleteBusinessCardMutation = useMutation({
     mutationFn: (id: string) => businessCardsService.deleteBusinessCard(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['business-cards'] });
+      queryClient.invalidateQueries({ queryKey: businessCardsQueryKey });
+      queryClient.invalidateQueries({ queryKey: statisticsQueryKey });
       toast.success('Business card deleted successfully');
     },
     onError: (error) => {
@@ -182,7 +201,8 @@ export function useBusinessCardsManagementDB(
     mutationFn: ({ id, archive }: { id: string; archive: boolean }) => 
       archive ? businessCardsService.archiveBusinessCard(id) : businessCardsService.unarchiveBusinessCard(id),
     onSuccess: (_, { archive }) => {
-      queryClient.invalidateQueries({ queryKey: ['business-cards'] });
+      queryClient.invalidateQueries({ queryKey: businessCardsQueryKey });
+      queryClient.invalidateQueries({ queryKey: statisticsQueryKey });
       toast.success(`Business card ${archive ? 'archived' : 'unarchived'} successfully`);
     },
     onError: (error) => {
@@ -281,8 +301,17 @@ export function useBusinessCardsManagementDB(
   
   // Dialog Management
   const openDialog = useCallback(() => {
+    // Smart default QR type based on company website availability
+    const selectedCompanyObj = companies.find(c => c.id === selectedCompany);
+    const defaultQRType = selectedCompanyObj?.website ? "website" : "email";
+    
+    setFormData(prev => ({
+      ...prev,
+      qrType: defaultQRType
+    }));
+    
     setIsDialogOpen(true);
-  }, []);
+  }, [selectedCompany, companies]);
   
   const closeDialog = useCallback(() => {
     setIsDialogOpen(false);
@@ -468,9 +497,15 @@ export function useBusinessCardsManagementDB(
     refetchBusinessCards();
   }, [refetchBusinessCards]);
   
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  
   return {
     // Data
-    businessCards: formattedBusinessCards,
+    businessCards,
     statistics,
     
     // UI State
@@ -499,6 +534,11 @@ export function useBusinessCardsManagementDB(
                updateBusinessCardMutation.isPending || 
                deleteBusinessCardMutation.isPending || 
                archiveBusinessCardMutation.isPending,
+    
+    // Infinite Scrolling
+    hasMore: hasNextPage || false,
+    isLoadingMore: isFetchingNextPage,
+    loadMore,
     
     // Actions
     handleCreateCard,

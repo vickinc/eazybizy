@@ -8,7 +8,15 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Edit, Trash2, ChevronDown, ChevronUp, Truck, MoreHorizontal, Copy, Power, PowerOff } from "lucide-react";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import Truck from "lucide-react/dist/esm/icons/truck";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import Power from "lucide-react/dist/esm/icons/power";
+import PowerOff from "lucide-react/dist/esm/icons/power-off";
 
 interface Product {
   id: string;

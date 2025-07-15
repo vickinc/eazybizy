@@ -13,18 +13,16 @@ import { BulkAddDialog } from '@/components/features/BulkAddDialog';
 import { formatDateForDisplay } from '@/utils';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
-import { 
-  Plus, 
-  Upload,
-  Maximize2, 
-  Minimize2,
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
-  CheckSquare,
-  Square,
-  Receipt
-} from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ToggleLeft from "lucide-react/dist/esm/icons/toggle-left";
+import ToggleRight from "lucide-react/dist/esm/icons/toggle-right";
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Receipt from "lucide-react/dist/esm/icons/receipt";
 
 export default function EntriesPage() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();

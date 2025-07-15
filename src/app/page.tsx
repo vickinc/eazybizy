@@ -6,17 +6,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Building2, 
-  Users, 
-  Calculator, 
-  TrendingUp, 
-  Shield, 
-  Zap,
-  ChevronRight,
-  Star,
-  CheckCircle
-} from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Users from "lucide-react/dist/esm/icons/users";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import Zap from "lucide-react/dist/esm/icons/zap";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import Star from "lucide-react/dist/esm/icons/star";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 
 export default function LandingPage() {
   const router = useRouter();

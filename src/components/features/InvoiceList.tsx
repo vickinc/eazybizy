@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InvoiceListItem } from "./InvoiceListItem";
-import { Send, CheckCircle, Archive, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import Send from "lucide-react/dist/esm/icons/send";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-updown";
+import ArrowUp from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDown from "lucide-react/dist/esm/icons/arrow-down";
 
 interface InvoiceListProps {
   filteredInvoices: unknown[];

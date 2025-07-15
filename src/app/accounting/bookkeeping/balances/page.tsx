@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Download,
-  RefreshCw,
-  Landmark,
-  AlertCircle
-} from "lucide-react";
+import Download from "lucide-react/dist/esm/icons/download";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Landmark from "lucide-react/dist/esm/icons/landmark";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBalanceManagement } from "@/hooks/useBalanceManagement";
 import { BalanceFilterBar } from "@/components/features/BalanceFilterBar";

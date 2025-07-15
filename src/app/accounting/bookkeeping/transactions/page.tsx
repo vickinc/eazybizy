@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { ArrowRightLeft, Plus } from "lucide-react";
+import ArrowRightLeft from "lucide-react/dist/esm/icons/arrow-right-left";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';

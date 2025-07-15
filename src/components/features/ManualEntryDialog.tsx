@@ -5,12 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  ArrowUpCircle,
-  ArrowDownCircle,
-  CreditCard,
-  Wallet
-} from "lucide-react";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
 import { Company } from '@/types';
 import { NewManualEntry, EnhancedBankAccount, EnhancedDigitalWallet } from '@/services/business/cashflowBusinessService';
 

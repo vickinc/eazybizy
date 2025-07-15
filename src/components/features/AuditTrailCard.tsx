@@ -3,15 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { JournalEntry } from '@/types';
 import { UserManagementService } from '@/services/business/userManagementService';
 import { formatDateForDisplay } from '@/utils';
-import { 
-  User, 
-  Clock, 
-  CheckCircle, 
-  Send, 
-  RotateCcw,
-  Edit3,
-  Calendar
-} from 'lucide-react';
+import User from "lucide-react/dist/esm/icons/user";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Send from "lucide-react/dist/esm/icons/send";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import Edit3 from "lucide-react/dist/esm/icons/edit-3";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
 
 interface AuditTrailCardProps {
   entry: JournalEntry;

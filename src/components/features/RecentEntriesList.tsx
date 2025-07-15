@@ -3,7 +3,10 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Maximize2, Minimize2 } from "lucide-react";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import { RecentEntriesListItem } from "./RecentEntriesListItem";
 
 interface EnrichedEntry {

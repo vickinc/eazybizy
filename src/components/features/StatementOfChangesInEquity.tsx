@@ -5,14 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DownloadIcon, 
-  AlertCircleIcon, 
-  CheckCircleIcon,
-  InfoIcon,
-  TrendingUpIcon,
-  TrendingDownIcon
-} from 'lucide-react';
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
 import { EquityChangesData } from '@/types/financialStatements.types';
 
 interface StatementOfChangesInEquityProps {

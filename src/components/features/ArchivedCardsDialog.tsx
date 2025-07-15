@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Archive } from "lucide-react";
+import Archive from "lucide-react/dist/esm/icons/archive";
 import { BusinessCard } from './BusinessCard';
 import { FormattedBusinessCard } from "@/types/businessCards.types";
 

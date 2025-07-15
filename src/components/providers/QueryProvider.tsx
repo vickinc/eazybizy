@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
+import { defaultQueryOptions } from '@/lib/queryOptions'
 
 interface QueryProviderProps {
   children: React.ReactNode
@@ -10,28 +11,11 @@ interface QueryProviderProps {
 
 export function QueryProvider({ children }: QueryProviderProps) {
   // Create a new QueryClient instance for each component tree
-  // This ensures proper SSR hydration
+  // This ensures proper SSR hydration and uses shared configuration
   const [queryClient] = useState(
     () =>
       new QueryClient({
-        defaultOptions: {
-          queries: {
-            // No default stale time - let individual queries decide
-            staleTime: 0,
-            // Cache time: Data stays in cache for 5 minutes after becoming stale (reduced from 30)
-            gcTime: 5 * 60 * 1000,
-            // Retry failed requests 3 times with exponential backoff
-            retry: 3,
-            // Don't refetch on window focus for better performance
-            refetchOnWindowFocus: false,
-            // Refetch on reconnect to get latest data
-            refetchOnReconnect: true,
-          },
-          mutations: {
-            // Retry failed mutations once
-            retry: 1,
-          },
-        },
+        defaultOptions: defaultQueryOptions,
       })
   )
 

@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StickyNote, Plus } from "lucide-react";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useNotesManagementDB } from "@/hooks/useNotesManagementDB";
-import { VirtualizedNoteList } from "@/components/features/VirtualizedNoteList";
+import { PaginatedNoteList } from "@/components/features/PaginatedNoteList";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -350,8 +350,8 @@ export default function Notes() {
         </div>
       )}
 
-      {/* Notes List - Virtualized for Performance */}
-      <VirtualizedNoteList 
+      {/* Notes List - With Load More Pagination */}
+      <PaginatedNoteList 
         filteredNotes={deferredFilteredNotes}
         showArchived={showArchived}
         getFormattedEvent={getFormattedEvent}
@@ -363,8 +363,8 @@ export default function Notes() {
         handleDeleteNote={handleDeleteNote}
         openDetailsDialog={openDetailsDialog}
         openDialog={handleOpenDialog}
-        height={600} // Set fixed height for virtualization
-        itemHeight={150} // Estimated height for note items
+        initialLimit={20} // Show 20 notes initially
+        loadMoreSize={20} // Load 20 more notes each time
       />
 
       {/* Note Details Dialog */}

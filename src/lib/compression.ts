@@ -1,9 +1,4 @@
 import { NextResponse } from 'next/server'
-import { gzip, deflate } from 'zlib'
-import { promisify } from 'util'
-
-const gzipAsync = promisify(gzip)
-const deflateAsync = promisify(deflate)
 
 interface CompressionOptions {
   threshold?: number // Minimum size to compress (default: 1024 bytes)
@@ -53,6 +48,13 @@ export class ResponseCompression {
 
     try {
       let compressedData: Buffer
+      
+      // Dynamic import of zlib and util
+      const { gzip, deflate } = await import('zlib')
+      const { promisify } = await import('util')
+      
+      const gzipAsync = promisify(gzip)
+      const deflateAsync = promisify(deflate)
       
       switch (encoding) {
         case 'gzip':
@@ -174,8 +176,9 @@ export class ResponseCompression {
 /**
  * Utility function to create an ETag from data
  */
-export function generateETag(data: unknown): string {
-  const hash = require('crypto')
+export async function generateETag(data: unknown): Promise<string> {
+  const crypto = await import('crypto')
+  const hash = crypto
     .createHash('md5')
     .update(JSON.stringify(data))
     .digest('hex')
@@ -188,4 +191,23 @@ export function generateETag(data: unknown): string {
 export function checkETag(request: Request, etag: string): boolean {
   const ifNoneMatch = request.headers.get('if-none-match')
   return ifNoneMatch === `"${etag}"`
+}
+
+// Light-weight version for routes that don't need compression
+export class LightResponseUtils {
+  static json(data: unknown, options: {
+    status?: number
+    headers?: Record<string, string>
+  } = {}): NextResponse {
+    const { status = 200, headers = {} } = options
+    
+    return NextResponse.json(data, {
+      status,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+        ...headers
+      }
+    })
+  }
 }

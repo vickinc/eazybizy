@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Search, Filter, RotateCcw } from "lucide-react";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import Search from "lucide-react/dist/esm/icons/search";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 import { 
   FilterPeriod, 
   AccountTypeFilter, 

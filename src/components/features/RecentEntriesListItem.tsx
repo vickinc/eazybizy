@@ -2,7 +2,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Edit, ChevronDown, ChevronUp, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
 import { formatDateForDisplay } from '@/utils';
 
 interface EnrichedEntry {

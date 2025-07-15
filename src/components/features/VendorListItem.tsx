@@ -11,28 +11,26 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { FormattedVendor } from "@/types/vendor.types";
-import { 
-  Edit,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  User,
-  Mail,
-  Phone,
-  Globe,
-  DollarSign,
-  MapPin,
-  FileText,
-  Package,
-  ExternalLink,
-  CreditCard,
-  Calendar,
-  Building2,
-  MoreHorizontal,
-  Copy,
-  Archive,
-  RotateCcw
-} from "lucide-react";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import User from "lucide-react/dist/esm/icons/user";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Package from "lucide-react/dist/esm/icons/package";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 
 interface VendorListItemProps {
   vendor: FormattedVendor;

@@ -3,22 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  EyeOff,
-  Building2,
-  CreditCard,
-  TrendingUp,
-  TrendingDown,
-  ChevronDown,
-  ChevronRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown
-} from "lucide-react";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import EyeOff from "lucide-react/dist/esm/icons/eye-off";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDown from "lucide-react/dist/esm/icons/trending-down";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-up-down";
+import ArrowUp from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDown from "lucide-react/dist/esm/icons/arrow-down";
 import {
   DropdownMenu,
   DropdownMenuContent,

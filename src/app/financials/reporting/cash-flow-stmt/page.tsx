@@ -5,17 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DollarSignIcon, 
-  DownloadIcon, 
-  RefreshCwIcon, 
-  SettingsIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
-  LoaderIcon,
-  ToggleLeftIcon,
-  ToggleRightIcon
-} from 'lucide-react';
+import DollarSignIcon from "lucide-react/dist/esm/icons/dollar-sign";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import ToggleLeftIcon from "lucide-react/dist/esm/icons/toggle-left";
+import ToggleRightIcon from "lucide-react/dist/esm/icons/toggle-right";
 import { CashFlowStatement } from '@/components/features/CashFlowStatement';
 import { FinancialPeriodSelector } from '@/components/features/FinancialPeriodSelector';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';

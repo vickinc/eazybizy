@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 import { Company } from '@/types/company.types';
 import { useCompanies } from '@/hooks/useCompanies';
 
@@ -19,19 +19,23 @@ export function CompanyFilterProvider({ children }: { children: React.ReactNode 
   const [selectedCompany, setSelectedCompany] = useState<number | 'all'>('all');
   
   // Use API-based companies hook instead of localStorage
-  const { companies, isLoading, isError, refetch } = useCompanies();
+  const { companies: rawCompanies, isLoading, isError, refetch } = useCompanies();
+
+  // Memoize companies to ensure stable reference
+  const companies = useMemo(() => rawCompanies || [], [rawCompanies]);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    selectedCompany,
+    setSelectedCompany,
+    companies,
+    isLoading,
+    isError,
+    refetch
+  }), [selectedCompany, companies, isLoading, isError, refetch]);
 
   return (
-    <CompanyFilterContext.Provider
-      value={{
-        selectedCompany,
-        setSelectedCompany,
-        companies,
-        isLoading,
-        isError,
-        refetch
-      }}
-    >
+    <CompanyFilterContext.Provider value={contextValue}>
       {children}
     </CompanyFilterContext.Provider>
   );

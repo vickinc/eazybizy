@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { FileText, Plus, Banknote, Users, Package } from "lucide-react";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Banknote from "lucide-react/dist/esm/icons/banknote";
+import Users from "lucide-react/dist/esm/icons/users";
+import Package from "lucide-react/dist/esm/icons/package";
 import { Button } from "@/components/ui/button";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useInvoicesManagementDB as useInvoicesManagement } from "@/hooks/useInvoicesManagementDB";

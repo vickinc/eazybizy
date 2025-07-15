@@ -8,20 +8,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Eye,
-  Edit,
-  Archive,
-  Trash2,
-  Send,
-  Download,
-  Copy,
-  CheckCircle,
-  MoreHorizontal,
-  ChevronDown,
-  ChevronUp,
-  RotateCcw,
-} from "lucide-react";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Send from "lucide-react/dist/esm/icons/send";
+import Download from "lucide-react/dist/esm/icons/download";
+import Copy from "lucide-react/dist/esm/icons/copy";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import HelpCircle from "lucide-react/dist/esm/icons/help-circle";
 
 interface InvoiceItem {
   id: string;

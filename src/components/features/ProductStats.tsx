@@ -1,7 +1,9 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Package, Archive, DollarSign } from "lucide-react";
+import Package from "lucide-react/dist/esm/icons/package";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 
 interface ProductStatistics {
   totalProducts: number;

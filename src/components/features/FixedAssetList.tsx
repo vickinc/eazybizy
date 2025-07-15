@@ -18,18 +18,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Package,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Calculator,
-  FileText,
-  AlertCircle
-} from 'lucide-react';
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import Package from "lucide-react/dist/esm/icons/package";
+import ArrowUpDown from "lucide-react/dist/esm/icons/arrow-up-down";
+import ArrowUp from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDown from "lucide-react/dist/esm/icons/arrow-down";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import {
   FixedAsset,
   TableSortConfig,

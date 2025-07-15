@@ -9,14 +9,12 @@ import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import { useEffect } from 'react';
-import { 
-  Database, 
-  ArrowRight, 
-  Info, 
-  CheckCircle, 
-  AlertTriangle,
-  Zap
-} from "lucide-react";
+import Database from "lucide-react/dist/esm/icons/database";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import Info from "lucide-react/dist/esm/icons/info";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { MigrationResult } from "@/services/business/dataMigrationBusinessService";
 
 export default function DataMigrationPage() {

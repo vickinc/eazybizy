@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       } as CachedBankAccountResponse
 
       // Generate ETag for cache validation
-      const etag = generateETag(responseData)
+      const etag = await generateETag(responseData)
       
       // Check if client has matching ETag (304 Not Modified)
       if (checkETag(request, etag)) {
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
     } as CachedBankAccountResponse
 
     // Generate ETag for fresh data
-    const etag = generateETag(responseData)
+    const etag = await generateETag(responseData)
 
     // Return compressed response with longer cache for relatively stable data
     return await ResponseCompression.createOptimizedResponse(

@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Globe, Bitcoin, Coins } from "lucide-react";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import Bitcoin from "lucide-react/dist/esm/icons/bitcoin";
+import Coins from "lucide-react/dist/esm/icons/coins";
 import { EnhancedCurrencyRate } from '@/services/business/currencyRatesBusinessService';
 
 interface CurrencyRatesListProps {

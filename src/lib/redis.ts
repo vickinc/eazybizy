@@ -2,11 +2,15 @@ import Redis from 'ioredis'
 
 const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined
+  redisPromise: Promise<Redis> | undefined
 }
 
-export const redis =
-  globalForRedis.redis ??
-  new Redis(process.env.REDIS_URL || {
+// Lazy-loaded Redis instance
+let redisInstance: Redis | null = null
+let connectionAttempted = false
+
+function createRedisInstance(): Redis {
+  const instance = new Redis(process.env.REDIS_URL || {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD,
@@ -22,23 +26,59 @@ export const redis =
     enableOfflineQueue: false,
   })
 
-// Handle Redis connection errors gracefully
-redis.on('error', (error) => {
-  // Suppress connection refused errors (expected when Redis is not running)
-  if (error.code === 'ECONNREFUSED') {
-    console.warn('Redis not available - using in-memory fallback cache')
-  } else {
-    console.error('Redis error:', error.message)
+  // Handle Redis connection errors gracefully
+  instance.on('error', (error) => {
+    // Suppress connection refused errors (expected when Redis is not running)
+    if (error.code === 'ECONNREFUSED') {
+      console.warn('Redis not available - using in-memory fallback cache')
+    } else {
+      console.error('Redis error:', error.message)
+    }
+  })
+
+  return instance
+}
+
+// Get or create Redis instance lazily
+async function getRedisInstance(): Promise<Redis | null> {
+  if (redisInstance) {
+    return redisInstance
+  }
+
+  if (!connectionAttempted) {
+    connectionAttempted = true
+    
+    if (!globalForRedis.redisPromise) {
+      globalForRedis.redisPromise = (async () => {
+        try {
+          const instance = createRedisInstance()
+          await instance.connect()
+          redisInstance = instance
+          
+          if (process.env.NODE_ENV !== 'production') {
+            globalForRedis.redis = instance
+          }
+          
+          return instance
+        } catch (error) {
+          console.warn('Redis connection failed, using in-memory cache fallback')
+          return null
+        }
+      })()
+    }
+
+    return globalForRedis.redisPromise
+  }
+
+  return null
+}
+
+// Export a proxy that lazily initializes Redis
+export const redis = new Proxy({} as Redis, {
+  get(target, prop) {
+    throw new Error('Direct redis access is deprecated. Use CacheService instead.')
   }
 })
-
-redis.on('connect', () => {
-})
-
-redis.on('ready', () => {
-})
-
-if (process.env.NODE_ENV !== 'production') globalForRedis.redis = redis
 
 // Cache key generators
 export const CacheKeys = {
@@ -150,41 +190,47 @@ const memoryCache = new Map<string, { value: unknown; expires: number }>()
 
 // Cache utilities
 export class CacheService {
-  private static async isRedisAvailable(): Promise<boolean> {
-    try {
-      await redis.ping()
-      return true
-    } catch {
-      return false
+  private static redisInstance: Redis | null | undefined = undefined
+
+  private static async getRedis(): Promise<Redis | null> {
+    if (this.redisInstance !== undefined) {
+      return this.redisInstance
     }
+    
+    this.redisInstance = await getRedisInstance()
+    return this.redisInstance
   }
 
   static async get<T>(key: string): Promise<T | null> {
     try {
-      const isRedisUp = await this.isRedisAvailable()
+      const redis = await this.getRedis()
       
-      if (isRedisUp) {
+      if (redis) {
         const value = await redis.get(key)
         return value ? JSON.parse(value) : null
       } else {
         // Fallback to memory cache
         const cached = memoryCache.get(key)
         if (cached && cached.expires > Date.now()) {
-          return cached.value
+          return cached.value as T
         }
         return null
       }
     } catch (error) {
-      console.error('Cache get error:', error)
+      // Fallback to memory cache on any error
+      const cached = memoryCache.get(key)
+      if (cached && cached.expires > Date.now()) {
+        return cached.value as T
+      }
       return null
     }
   }
 
   static async set(key: string, value: unknown, ttl?: number): Promise<boolean> {
     try {
-      const isRedisUp = await this.isRedisAvailable()
+      const redis = await this.getRedis()
       
-      if (isRedisUp) {
+      if (redis) {
         if (ttl) {
           await redis.setex(key, ttl, JSON.stringify(value))
         } else {
@@ -192,107 +238,168 @@ export class CacheService {
         }
       } else {
         // Fallback to memory cache
-        const expires = ttl ? Date.now() + (ttl * 1000) : Date.now() + (5 * 1000) // 5 seconds default (reduced from 1 hour)
+        const expires = ttl ? Date.now() + (ttl * 1000) : Date.now() + (5 * 1000) // 5 seconds default
         memoryCache.set(key, { value, expires })
       }
       return true
     } catch (error) {
-      console.error('Cache set error:', error)
-      return false
+      // Fallback to memory cache on any error
+      const expires = ttl ? Date.now() + (ttl * 1000) : Date.now() + (5 * 1000)
+      memoryCache.set(key, { value, expires })
+      return true
     }
   }
 
   static async del(key: string): Promise<boolean> {
     try {
-      const isRedisUp = await this.isRedisAvailable()
+      const redis = await this.getRedis()
       
-      if (isRedisUp) {
+      if (redis) {
         await redis.del(key)
-      } else {
-        memoryCache.delete(key)
       }
+      memoryCache.delete(key)
       return true
     } catch (error) {
-      console.error('Cache delete error:', error)
-      return false
+      memoryCache.delete(key)
+      return true
     }
   }
 
   static async delPattern(pattern: string): Promise<number> {
     try {
-      const isRedisUp = await this.isRedisAvailable()
+      let deletedCount = 0
+      const redis = await this.getRedis()
       
-      if (isRedisUp) {
+      if (redis) {
         const keys = await redis.keys(pattern)
         if (keys.length > 0) {
-          return await redis.del(...keys)
+          deletedCount = await redis.del(...keys)
         }
-        return 0
-      } else {
-        // Fallback: delete from memory cache using pattern matching
-        let deletedCount = 0
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'))
-        for (const key of memoryCache.keys()) {
-          if (regex.test(key)) {
-            memoryCache.delete(key)
-            deletedCount++
-          }
-        }
-        return deletedCount
       }
+      
+      // Also delete from memory cache using pattern matching
+      const regex = new RegExp(pattern.replace(/\*/g, '.*'))
+      for (const key of memoryCache.keys()) {
+        if (regex.test(key)) {
+          memoryCache.delete(key)
+          deletedCount++
+        }
+      }
+      
+      return deletedCount
     } catch (error) {
-      console.error('Cache delete pattern error:', error)
-      return 0
+      // Fallback: delete from memory cache only
+      let deletedCount = 0
+      const regex = new RegExp(pattern.replace(/\*/g, '.*'))
+      for (const key of memoryCache.keys()) {
+        if (regex.test(key)) {
+          memoryCache.delete(key)
+          deletedCount++
+        }
+      }
+      return deletedCount
     }
   }
 
   static async exists(key: string): Promise<boolean> {
     try {
-      const exists = await redis.exists(key)
-      return exists === 1
+      const redis = await this.getRedis()
+      
+      if (redis) {
+        const exists = await redis.exists(key)
+        return exists === 1
+      } else {
+        const cached = memoryCache.get(key)
+        return cached !== undefined && cached.expires > Date.now()
+      }
     } catch (error) {
-      console.error('Cache exists error:', error)
-      return false
+      const cached = memoryCache.get(key)
+      return cached !== undefined && cached.expires > Date.now()
     }
   }
 
   static async increment(key: string, by: number = 1): Promise<number> {
     try {
-      return await redis.incrby(key, by)
+      const redis = await this.getRedis()
+      
+      if (redis) {
+        return await redis.incrby(key, by)
+      } else {
+        // Simple in-memory increment
+        const current = await this.get<number>(key) || 0
+        const newValue = current + by
+        await this.set(key, newValue)
+        return newValue
+      }
     } catch (error) {
-      console.error('Cache increment error:', error)
-      return 0
+      const current = await this.get<number>(key) || 0
+      const newValue = current + by
+      await this.set(key, newValue)
+      return newValue
     }
   }
 
   static async getMany<T>(keys: string[]): Promise<(T | null)[]> {
     try {
       if (keys.length === 0) return []
-      const values = await redis.mget(...keys)
-      return values.map(value => value ? JSON.parse(value) : null)
+      
+      const redis = await this.getRedis()
+      
+      if (redis) {
+        const values = await redis.mget(...keys)
+        return values.map(value => value ? JSON.parse(value) : null)
+      } else {
+        // Fallback to memory cache
+        return keys.map(key => {
+          const cached = memoryCache.get(key)
+          if (cached && cached.expires > Date.now()) {
+            return cached.value as T
+          }
+          return null
+        })
+      }
     } catch (error) {
-      console.error('Cache getMany error:', error)
-      return keys.map(() => null)
+      return keys.map(key => {
+        const cached = memoryCache.get(key)
+        if (cached && cached.expires > Date.now()) {
+          return cached.value as T
+        }
+        return null
+      })
     }
   }
 
   static async setMany(items: Array<{key: string, value: unknown, ttl?: number}>): Promise<boolean> {
     try {
-      const pipeline = redis.pipeline()
+      const redis = await this.getRedis()
       
-      for (const item of items) {
-        if (item.ttl) {
-          pipeline.setex(item.key, item.ttl, JSON.stringify(item.value))
-        } else {
-          pipeline.set(item.key, JSON.stringify(item.value))
+      if (redis) {
+        const pipeline = redis.pipeline()
+        
+        for (const item of items) {
+          if (item.ttl) {
+            pipeline.setex(item.key, item.ttl, JSON.stringify(item.value))
+          } else {
+            pipeline.set(item.key, JSON.stringify(item.value))
+          }
+        }
+        
+        await pipeline.exec()
+      } else {
+        // Fallback to memory cache
+        for (const item of items) {
+          const expires = item.ttl ? Date.now() + (item.ttl * 1000) : Date.now() + (5 * 1000)
+          memoryCache.set(item.key, { value: item.value, expires })
         }
       }
-      
-      await pipeline.exec()
       return true
     } catch (error) {
-      console.error('Cache setMany error:', error)
-      return false
+      // Fallback to memory cache
+      for (const item of items) {
+        const expires = item.ttl ? Date.now() + (item.ttl * 1000) : Date.now() + (5 * 1000)
+        memoryCache.set(item.key, { value: item.value, expires })
+      }
+      return true
     }
   }
 }
@@ -300,10 +407,13 @@ export class CacheService {
 // Redis health check
 export async function checkRedisConnection(): Promise<boolean> {
   try {
-    await redis.ping()
-    return true
+    const redis = await getRedisInstance()
+    if (redis) {
+      await redis.ping()
+      return true
+    }
+    return false
   } catch (error) {
-    console.error('Redis connection failed:', error)
     return false
   }
 }

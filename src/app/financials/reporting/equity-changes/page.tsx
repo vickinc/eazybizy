@@ -5,16 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ScaleIcon, 
-  DownloadIcon, 
-  RefreshCwIcon, 
-  SettingsIcon,
-  AlertCircleIcon,
-  CheckCircleIcon,
-  LoaderIcon,
-  InfoIcon
-} from 'lucide-react';
+import ScaleIcon from "lucide-react/dist/esm/icons/scale";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
 import { StatementOfChangesInEquity } from '@/components/features/StatementOfChangesInEquity';
 import { FinancialPeriodSelector } from '@/components/features/FinancialPeriodSelector';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';

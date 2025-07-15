@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FolderOpen } from "lucide-react";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
 import { Invoice } from '@/services/api/invoicesApiService.enhanced';
 import { InvoiceListItem } from './InvoiceListItem';
 

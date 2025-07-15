@@ -1,16 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  CheckCircle, 
-  Building2, 
-  Users, 
-  FileText, 
-  Package, 
-  ArrowRight,
-  Home,
-  Plus
-} from 'lucide-react';
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Users from "lucide-react/dist/esm/icons/users";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Package from "lucide-react/dist/esm/icons/package";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import Home from "lucide-react/dist/esm/icons/home";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { useRouter } from 'next/navigation';
 import { CompanyFormData } from '@/services/business/companyValidationService';
 

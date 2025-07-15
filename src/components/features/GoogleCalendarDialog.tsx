@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Calendar, CheckCircle, RefreshCw, Settings, Zap } from "lucide-react";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

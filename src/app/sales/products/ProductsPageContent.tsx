@@ -2,12 +2,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Package, 
-  Plus, 
-  Minimize2,
-  Maximize2
-} from "lucide-react";
+import Package from "lucide-react/dist/esm/icons/package";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useProductsManagementDB } from "@/hooks/useProductsManagementDB";
 import { ProductStats } from "@/components/features/ProductStats";

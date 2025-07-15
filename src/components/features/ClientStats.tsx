@@ -1,7 +1,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, UserCheck, TrendingUp, DollarSign } from "lucide-react";
+import Users from "lucide-react/dist/esm/icons/users";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 import { ClientStatistics } from "@/services/api/clientsApiService";
 
 interface ClientStatsProps {

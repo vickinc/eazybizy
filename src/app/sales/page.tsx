@@ -7,16 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Package, 
-  Building2, 
-  FileText,
-  ShoppingCart,
-  Plus,
-  Users,
-  DollarSign,
-  Clock
-} from "lucide-react";
+import Package from "lucide-react/dist/esm/icons/package";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import ShoppingCart from "lucide-react/dist/esm/icons/shopping-cart";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Users from "lucide-react/dist/esm/icons/users";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Clock from "lucide-react/dist/esm/icons/clock";
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";

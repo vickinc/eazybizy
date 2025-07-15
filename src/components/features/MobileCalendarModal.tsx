@@ -5,14 +5,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  CalendarDays,
-  Clock,
-  Building2,
-  StickyNote,
-  Plus,
-  X
-} from "lucide-react";
+import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import StickyNote from "lucide-react/dist/esm/icons/sticky-note";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import X from "lucide-react/dist/esm/icons/x";
 import { CalendarEvent } from "@/types/calendar.types";
 
 interface MobileCalendarModalProps {

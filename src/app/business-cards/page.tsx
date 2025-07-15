@@ -4,12 +4,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreditCard, Plus, Users } from "lucide-react";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Users from "lucide-react/dist/esm/icons/users";
 import Link from "next/link";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBusinessCardsManagementDB } from "@/hooks/useBusinessCardsManagementDB";
 import { CreateCardDialog } from "@/components/features/CreateCardDialog";
-import { BusinessCardList } from "@/components/features/BusinessCardList";
+import { InfiniteBusinessCardList } from "@/components/features/InfiniteBusinessCardList";
 import { PreviewCardDialog } from "@/components/features/PreviewCardDialog";
 import { ArchivedCardsDialog } from "@/components/features/ArchivedCardsDialog";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
@@ -53,6 +55,11 @@ export default function BusinessCardsPage() {
     isLoading,
     isError,
     error,
+    
+    // Infinite Scrolling
+    hasMore,
+    isLoadingMore,
+    loadMore,
     
     // Actions
     handleCreateCard,
@@ -187,9 +194,12 @@ export default function BusinessCardsPage() {
         </div>
       )}
 
-      <BusinessCardList 
-        visibleCards={businessCards}
+      <InfiniteBusinessCardList 
+        businessCards={businessCards}
         companies={companies}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        loadMore={loadMore}
         handleShareCard={handleShareCard}
         handleDownloadCard={handleDownloadCard}
         handleDelete={handleDelete}

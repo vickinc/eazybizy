@@ -11,23 +11,21 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { 
-  TrendingUpIcon,
-  CalculatorIcon,
-  DollarSignIcon,
-  BarChart3Icon,
-  PieChartIcon,
-  AlertTriangleIcon,
-  InfoIcon,
-  CheckCircleIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  RefreshCwIcon,
-  DownloadIcon,
-  SettingsIcon,
-  TargetIcon,
-  TrendingDownIcon
-} from 'lucide-react';
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import CalculatorIcon from "lucide-react/dist/esm/icons/calculator";
+import DollarSignIcon from "lucide-react/dist/esm/icons/dollar-sign";
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import PieChartIcon from "lucide-react/dist/esm/icons/pie-chart";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import ArrowUpIcon from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDownIcon from "lucide-react/dist/esm/icons/arrow-down";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import TargetIcon from "lucide-react/dist/esm/icons/target";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
 import { 
   CompanyValuation,
   FinancialInputs,

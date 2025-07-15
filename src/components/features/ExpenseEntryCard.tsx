@@ -3,16 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { formatDateForDisplay } from '@/utils';
-import { 
-  CheckSquare,
-  Square,
-  Edit,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  Link,
-  ArrowUpCircle
-} from 'lucide-react';
+import CheckSquare from "lucide-react/dist/esm/icons/check-square";
+import Square from "lucide-react/dist/esm/icons/square";
+import Edit from "lucide-react/dist/esm/icons/edit";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import Link from "lucide-react/dist/esm/icons/link";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
 
 interface ExpenseEntryCardProps {
   // Core data

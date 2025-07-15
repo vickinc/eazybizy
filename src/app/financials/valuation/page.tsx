@@ -5,19 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TrendingUpIcon,
-  AlertTriangleIcon,
-  TargetIcon,
-  CalculatorIcon,
-  LoaderIcon,
-  InfoIcon,
-  DollarSignIcon,
-  BarChart3Icon,
-  PieChartIcon,
-  BookOpenIcon,
-  HistoryIcon
-} from 'lucide-react';
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import TargetIcon from "lucide-react/dist/esm/icons/target";
+import CalculatorIcon from "lucide-react/dist/esm/icons/calculator";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import DollarSignIcon from "lucide-react/dist/esm/icons/dollar-sign";
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import PieChartIcon from "lucide-react/dist/esm/icons/pie-chart";
+import BookOpenIcon from "lucide-react/dist/esm/icons/book-open";
+import HistoryIcon from "lucide-react/dist/esm/icons/history";
 import { ValuationCalculator } from '@/components/features/ValuationCalculator';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';

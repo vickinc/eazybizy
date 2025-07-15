@@ -6,16 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  BookOpenIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  DownloadIcon,
-  ExternalLinkIcon,
-  HashIcon,
-  TableIcon,
-  InfoIcon
-} from 'lucide-react';
+import BookOpenIcon from "lucide-react/dist/esm/icons/book-open";
+import ChevronDownIcon from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRightIcon from "lucide-react/dist/esm/icons/chevron-right";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import ExternalLinkIcon from "lucide-react/dist/esm/icons/external-link";
+import HashIcon from "lucide-react/dist/esm/icons/hash";
+import TableIcon from "lucide-react/dist/esm/icons/table";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
 import { 
   FinancialStatementNote, 
   FinancialStatementSubNote, 

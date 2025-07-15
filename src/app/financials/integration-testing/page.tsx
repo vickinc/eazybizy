@@ -4,16 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ShieldCheckIcon,
-  AlertCircleIcon,
-  LoaderIcon,
-  RefreshCwIcon,
-  FileTextIcon,
-  PlayIcon,
-  SettingsIcon,
-  InfoIcon
-} from 'lucide-react';
+import ShieldCheckIcon from "lucide-react/dist/esm/icons/shield-check";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import FileTextIcon from "lucide-react/dist/esm/icons/file-text";
+import PlayIcon from "lucide-react/dist/esm/icons/play";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
 import { IntegrationTestingDashboard } from '@/components/features/IntegrationTestingDashboard';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';

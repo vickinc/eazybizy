@@ -6,7 +6,13 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, MoreHorizontal, Loader2, Eye, Grid, List } from 'lucide-react';
+import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import Grid from "lucide-react/dist/esm/icons/grid";
+import List from "lucide-react/dist/esm/icons/list";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/utils/cn';

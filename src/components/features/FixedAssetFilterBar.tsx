@@ -11,7 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X, Search, Filter } from 'lucide-react';
+import X from "lucide-react/dist/esm/icons/x";
+import Search from "lucide-react/dist/esm/icons/search";
+import Filter from "lucide-react/dist/esm/icons/filter";
 import {
   FixedAssetFilter,
   AssetCategory,

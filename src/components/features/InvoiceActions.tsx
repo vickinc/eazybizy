@@ -1,6 +1,9 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Minimize2, Maximize2, FileText } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
+import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import FileText from "lucide-react/dist/esm/icons/file-text";
 
 interface InvoiceActionsProps {
   onCreateInvoice: () => void;

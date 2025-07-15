@@ -5,16 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  FolderOpenIcon,
-  BuildingIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  SettingsIcon,
-  LoaderIcon,
-  AlertCircleIcon,
-  CheckCircleIcon
-} from 'lucide-react';
+import FolderOpenIcon from "lucide-react/dist/esm/icons/folder-open";
+import BuildingIcon from "lucide-react/dist/esm/icons/building";
+import PlusIcon from "lucide-react/dist/esm/icons/plus";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import SettingsIcon from "lucide-react/dist/esm/icons/settings";
+import LoaderIcon from "lucide-react/dist/esm/icons/loader";
+import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
 import { VirtualHoldingDashboard } from '@/components/features/VirtualHoldingDashboard';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { 

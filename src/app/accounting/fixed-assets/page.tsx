@@ -2,7 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MonitorSpeaker, Plus, Download, FileText, ArrowLeft, Calculator, RefreshCw } from "lucide-react";
+import MonitorSpeaker from "lucide-react/dist/esm/icons/monitor-speaker";
+import Plus from "lucide-react/dist/esm/icons/plus";
+import Download from "lucide-react/dist/esm/icons/download";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFixedAssetsManagement } from '@/hooks/useFixedAssetsManagement';

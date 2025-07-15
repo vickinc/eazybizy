@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { formatDateRange } from "little-date"
-import { PlusIcon } from "lucide-react"
+import PlusIcon from "lucide-react/dist/esm/icons/plus";
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"

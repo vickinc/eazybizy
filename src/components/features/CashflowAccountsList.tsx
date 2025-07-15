@@ -2,14 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp,
-  FolderOpen,
-  Folder,
-  ChevronDown,
-  CreditCard,
-  Wallet
-} from "lucide-react";
+import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
+import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
+import Folder from "lucide-react/dist/esm/icons/folder";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Wallet from "lucide-react/dist/esm/icons/wallet";
 import { EnhancedGroupedCashflow, EnhancedAccountInfo } from '@/services/business/cashflowBusinessService';
 
 interface CashflowAccountsListProps {

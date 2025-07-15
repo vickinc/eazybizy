@@ -5,19 +5,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  Search, 
-  Filter, 
-  X, 
-  RotateCcw, 
-  ChevronDown,
-  Calendar,
-  DollarSign,
-  User,
-  FileText,
-  SortAsc,
-  SortDesc
-} from 'lucide-react';
+import Search from "lucide-react/dist/esm/icons/search";
+import Filter from "lucide-react/dist/esm/icons/filter";
+import X from "lucide-react/dist/esm/icons/x";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import User from "lucide-react/dist/esm/icons/user";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import SortAsc from "lucide-react/dist/esm/icons/sort-asc";
+import SortDesc from "lucide-react/dist/esm/icons/sort-desc";
 import { JournalEntryFilters, JournalEntrySortConfig } from '@/hooks/useJournalEntriesManagement';
 import { ChartOfAccount } from '@/types';
 

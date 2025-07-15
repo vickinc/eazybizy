@@ -1,12 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  ArrowUpCircle,
-  ArrowDownCircle,
-  DollarSign,
-  Calculator
-} from "lucide-react";
+import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
+import ArrowDownCircle from "lucide-react/dist/esm/icons/arrow-down-circle";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
 import { CashflowSummary } from '@/services/business/cashflowBusinessService';
 
 interface CashflowSummaryCardsProps {

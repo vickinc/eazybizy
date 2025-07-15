@@ -7,26 +7,24 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart3Icon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  UsersIcon,
-  DollarSignIcon,
-  CalendarIcon,
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  MinusIcon,
-  InfoIcon,
-  PieChartIcon,
-  ActivityIcon,
-  TargetIcon,
-  RefreshCwIcon,
-  DownloadIcon,
-  FilterIcon
-} from 'lucide-react';
+import BarChart3Icon from "lucide-react/dist/esm/icons/bar-chart-3";
+import TrendingUpIcon from "lucide-react/dist/esm/icons/trending-up";
+import TrendingDownIcon from "lucide-react/dist/esm/icons/trending-down";
+import UsersIcon from "lucide-react/dist/esm/icons/users";
+import DollarSignIcon from "lucide-react/dist/esm/icons/dollar-sign";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import AlertTriangleIcon from "lucide-react/dist/esm/icons/alert-triangle";
+import CheckCircleIcon from "lucide-react/dist/esm/icons/check-circle";
+import ArrowUpIcon from "lucide-react/dist/esm/icons/arrow-up";
+import ArrowDownIcon from "lucide-react/dist/esm/icons/arrow-down";
+import MinusIcon from "lucide-react/dist/esm/icons/minus";
+import InfoIcon from "lucide-react/dist/esm/icons/info";
+import PieChartIcon from "lucide-react/dist/esm/icons/pie-chart";
+import ActivityIcon from "lucide-react/dist/esm/icons/activity";
+import TargetIcon from "lucide-react/dist/esm/icons/target";
+import RefreshCwIcon from "lucide-react/dist/esm/icons/refresh-cw";
+import DownloadIcon from "lucide-react/dist/esm/icons/download";
+import FilterIcon from "lucide-react/dist/esm/icons/filter";
 import { 
   SaaSMetricsData,
   ARRMetrics,
