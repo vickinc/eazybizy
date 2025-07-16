@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
   useQuery, 
@@ -282,7 +282,7 @@ export function useProductsManagementDB(
   });
   
   // Handle URL highlight parameter
-  useState(() => {
+  useEffect(() => {
     const highlight = searchParams.get('highlight');
     if (highlight) {
       setHighlightedProductId(highlight);
@@ -301,7 +301,7 @@ export function useProductsManagementDB(
         setHighlightedProductId(null);
       }, 5000);
     }
-  });
+  }, [searchParams]);
   
   // Calculate statistics
   const formattedStatistics = useMemo(() => {
@@ -345,12 +345,12 @@ export function useProductsManagementDB(
   }, [products, vendors, companies, vendorFilter]);
   
   // Update isAllExpanded based on individual expansions
-  useState(() => {
+  useEffect(() => {
     if (filteredProducts.length > 0) {
       const allExpanded = filteredProducts.every(product => expandedProducts.has(product.id));
       setIsAllExpanded(allExpanded);
     }
-  });
+  }, [filteredProducts, expandedProducts]);
   
   // Form Handlers
   const handleProductFormChange = useCallback((field: string, value: unknown) => {

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, startTransition } from 'react';
 import { Button } from "@/components/ui/button";
 import { ChevronDown, QrCode, Building2 } from "lucide-react";
 import { BusinessCard } from './BusinessCard';
+import { BusinessCardSkeleton } from '@/components/ui/loading-states';
 import { FormattedBusinessCard } from "@/types/businessCards.types";
 import { Company } from '@/types';
 
@@ -25,6 +26,7 @@ interface InfiniteBusinessCardListProps {
   setHoveredButton: (buttonId: string | null) => void;
   initialDisplay?: number; // Initial number of cards to display
   loadMoreSize?: number; // Number of cards to load on "Load More"
+  showSkeleton?: boolean; // Show skeleton loading state
 }
 
 export const InfiniteBusinessCardList: React.FC<InfiniteBusinessCardListProps> = ({
@@ -39,7 +41,8 @@ export const InfiniteBusinessCardList: React.FC<InfiniteBusinessCardListProps> =
   getTemplateStyles,
   setHoveredButton,
   initialDisplay = 20, // Show 20 cards initially
-  loadMoreSize = 20 // Load 20 more cards each time
+  loadMoreSize = 20, // Load 20 more cards each time
+  showSkeleton = false // Show skeleton loading state
 }) => {
   const [displayLimit, setDisplayLimit] = useState(initialDisplay);
 
@@ -76,6 +79,19 @@ export const InfiniteBusinessCardList: React.FC<InfiniteBusinessCardListProps> =
   }, [businessCards.length, initialDisplay]);
 
   const showLoadMoreButton = hasMoreLocal || (hasMore && !isLoadingMore);
+
+  // Show skeleton loading state
+  if (showSkeleton) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 place-items-start">
+          {[...Array(3)].map((_, index) => (
+            <BusinessCardSkeleton key={`skeleton-${index}`} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (totalCount === 0) {
     return (

@@ -15,7 +15,6 @@ import { CreateCardDialog } from "@/components/features/CreateCardDialog";
 import { InfiniteBusinessCardList } from "@/components/features/InfiniteBusinessCardList";
 import { PreviewCardDialog } from "@/components/features/PreviewCardDialog";
 import { ArchivedCardsDialog } from "@/components/features/ArchivedCardsDialog";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 export default function BusinessCardsPage() {
@@ -109,10 +108,7 @@ export default function BusinessCardsPage() {
     }
   };
 
-  // Handle loading state
-  if (showLoader) {
-    return <LoadingScreen />;
-  }
+  // We don't need the full page loading anymore since we'll show skeleton for cards
 
   return (
     <div className="min-h-screen bg-lime-50">
@@ -231,6 +227,7 @@ export default function BusinessCardsPage() {
         handleDelete={handleDelete}
         getTemplateStyles={getTemplateStyles}
         setHoveredButton={setHoveredButton}
+        showSkeleton={showLoader}
       />
 
       <PreviewCardDialog 

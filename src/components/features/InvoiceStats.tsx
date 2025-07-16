@@ -5,7 +5,7 @@ import FileText from "lucide-react/dist/esm/icons/file-text";
 import Send from "lucide-react/dist/esm/icons/send";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
-import { InvoiceStatistics } from "@/services/api/invoicesApiService.enhanced";
+import { InvoiceStatistics } from "@/services/database/invoiceSSRService";
 
 interface InvoiceStatsProps {
   statistics: InvoiceStatistics | null;

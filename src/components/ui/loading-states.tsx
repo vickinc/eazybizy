@@ -400,6 +400,213 @@ export const TransactionListSkeleton: React.FC = () => (
   </div>
 );
 
+// Business Card Loading
+export const BusinessCardSkeleton: React.FC = () => (
+  <div className="relative">
+    <div className="w-80 h-48 rounded-lg shadow-lg p-6 bg-gray-100 border border-gray-200 animate-pulse">
+      {/* Header with Logo and Company */}
+      <div className="flex items-start gap-3 mb-4 pr-20 -ml-2 -mt-3">
+        {/* Logo */}
+        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+          <Skeleton className="w-8 h-8 rounded" />
+        </div>
+        
+        {/* Company Info */}
+        <div className="flex-1 min-w-0">
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      </div>
+
+      {/* Person Info - Middle */}
+      <div className="absolute top-16 left-4 right-20">
+        <Skeleton className="h-5 w-32 mb-2" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+
+      {/* Contact Info - Bottom */}
+      <div className="absolute bottom-4 left-4 right-20">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-3 h-3 rounded" />
+            <Skeleton className="h-3 w-36" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-3 h-3 rounded" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-3 h-3 rounded" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+      </div>
+
+      {/* QR Code - Bottom Right */}
+      <div className="absolute bottom-4 right-4 w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+        <Skeleton className="w-14 h-14 rounded" />
+      </div>
+
+      {/* Action Buttons - Top Right Inside Card */}
+      <div className="absolute top-2 right-2 flex gap-1">
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <Skeleton className="h-8 w-8 rounded-lg" />
+      </div>
+    </div>
+  </div>
+);
+
+// Vendor Card Loading
+export const VendorCardSkeleton: React.FC = () => (
+  <div className="bg-white rounded-lg shadow border p-4 sm:p-6 animate-pulse">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <Skeleton className="h-6 w-6 rounded" />
+          <Skeleton className="h-5 w-40" />
+        </div>
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-12 mb-1" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-20 mb-1" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-18 mb-1" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-14 mb-1" />
+        <Skeleton className="h-4 w-22" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+    </div>
+  </div>
+);
+
+// Client Card Loading
+export const ClientCardSkeleton: React.FC = () => (
+  <div className="bg-white rounded-lg shadow border p-4 sm:p-6 animate-pulse">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <Skeleton className="h-6 w-6 rounded" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-56" />
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-14 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-18 mb-1" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-12 mb-1" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-20 mb-1" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+    </div>
+  </div>
+);
+
+// Invoice Card Loading
+export const InvoiceCardSkeleton: React.FC = () => (
+  <div className="bg-white rounded-lg shadow border p-4 sm:p-6 animate-pulse">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <Skeleton className="h-6 w-6 rounded" />
+          <Skeleton className="h-5 w-44" />
+        </div>
+        <div className="space-y-1">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-3 w-52" />
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-full" />
+      </div>
+    </div>
+    
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-12 mb-1" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-20 mb-1" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-18 mb-1" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-14 mb-1" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <div>
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+    </div>
+  </div>
+);
+
 export default {
   LoadingSpinner,
   PageLoading,
@@ -416,5 +623,9 @@ export default {
   ButtonLoading,
   InvoiceListSkeleton,
   ClientListSkeleton,
-  TransactionListSkeleton
+  TransactionListSkeleton,
+  BusinessCardSkeleton,
+  VendorCardSkeleton,
+  ClientCardSkeleton,
+  InvoiceCardSkeleton
 };

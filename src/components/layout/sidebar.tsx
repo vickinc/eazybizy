@@ -156,7 +156,31 @@ export function AppSidebar() {
   useEffect(() => {
     setMounted(true);
     // Don't set any initial expanded state - start collapsed
-  }, []);
+    
+    // Prefetch critical routes for instant navigation
+    const criticalRoutes = [
+      '/dashboard',
+      '/companies',
+      '/calendar',
+      '/notes',
+      '/business-cards',
+      // Also prefetch commonly used sub-routes
+      '/sales/products',
+      '/sales/clients',
+      '/sales/invoices',
+      '/accounting/bookkeeping/entries',
+      '/financials/reporting',
+    ];
+    
+    // Prefetch routes after a short delay to not block initial render
+    const prefetchTimer = setTimeout(() => {
+      criticalRoutes.forEach(route => {
+        router.prefetch(route);
+      });
+    }, 100);
+    
+    return () => clearTimeout(prefetchTimer);
+  }, [router]);
 
   // Load counts from localStorage
   useEffect(() => {
