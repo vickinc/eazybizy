@@ -104,13 +104,10 @@ export class InvoicesBusinessService {
     invoices: Invoice[], 
     viewFilter: 'all' | 'draft' | 'sent' | 'paid' | 'overdue' | 'archived'
   ): Invoice[] {
-    // Don't filter by status in the business service when viewFilter is 'all'
-    // Let the UI handle the active vs archived filtering
-    if (viewFilter === 'all') {
-      return invoices;
-    }
-    
     switch (viewFilter) {
+      case 'all':
+        // When "All Invoices" is selected, show only active invoices (exclude archived)
+        return invoices.filter(invoice => invoice.status !== 'ARCHIVED');
       case 'draft':
         return invoices.filter(invoice => invoice.status === 'DRAFT');
       case 'sent':
@@ -122,7 +119,7 @@ export class InvoicesBusinessService {
       case 'archived':
         return invoices.filter(invoice => invoice.status === 'ARCHIVED');
       default:
-        return invoices;
+        return invoices.filter(invoice => invoice.status !== 'ARCHIVED');
     }
   }
 

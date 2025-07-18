@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   useQuery, 
   useMutation, 
@@ -192,6 +192,15 @@ export function useInvoicesManagementDB(
   const [searchTerm, setSearchTerm] = useState('');
   const [viewFilter, setViewFilter] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue' | 'archived'>('all');
   const [filterClient, setFilterClient] = useState('all');
+  
+  // Auto-update viewMode based on viewFilter
+  useEffect(() => {
+    if (viewFilter === 'archived') {
+      setViewMode('archived');
+    } else {
+      setViewMode('active');
+    }
+  }, [viewFilter]);
   const [filterCurrency, setFilterCurrency] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom'>('allTime');
   const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
@@ -310,9 +319,8 @@ export function useInvoicesManagementDB(
   const clients = useMemo(() => clientsResponse?.data || [], [clientsResponse]);
   const products = useMemo(() => productsResponse?.data || [], [productsResponse]);
   const paymentMethods = useMemo(() => {
-    console.log('PaymentMethods useMemo - paymentMethodsError:', paymentMethodsError);
     return paymentMethodsResponse?.data || [];
-  }, [paymentMethodsResponse, globalSelectedCompany, isLoadingPaymentMethods, paymentMethodsError]);
+  }, [paymentMethodsResponse]);
 
   // Transform invoices to FormattedInvoice objects
   const invoices = useMemo(() => {
@@ -390,8 +398,8 @@ export function useInvoicesManagementDB(
         daysOverdue,
         // Add paymentMethodIds from paymentMethodInvoices if available
         paymentMethodIds: invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [],
-        // Add empty paymentMethodNames for now (will be populated by individual components)
-        paymentMethodNames: []
+        // Use paymentMethodNames from API response (already populated by the API)
+        paymentMethodNames: invoice.paymentMethodNames || []
       };
     });
   }, [rawInvoices, companies]);
@@ -399,7 +407,7 @@ export function useInvoicesManagementDB(
   // Filter invoices using business service
   const filteredInvoices = useMemo(() => {
     // Apply all filters through the business service
-    let filtered = InvoicesBusinessService.getFilteredInvoices(
+    return InvoicesBusinessService.getFilteredInvoices(
       invoices,
       globalSelectedCompany,
       selectedPeriod,
@@ -409,17 +417,7 @@ export function useInvoicesManagementDB(
       filterCurrency,
       searchTerm
     );
-    
-    // Apply viewMode filtering for backward compatibility
-    // This handles the Active/Archived toggle from the old UI
-    if (viewMode === 'active') {
-      filtered = filtered.filter(invoice => invoice.status !== 'ARCHIVED');
-    } else if (viewMode === 'archived') {
-      filtered = filtered.filter(invoice => invoice.status === 'ARCHIVED');
-    }
-    
-    return filtered;
-  }, [invoices, globalSelectedCompany, selectedPeriod, customDateRange, viewFilter, filterClient, filterCurrency, searchTerm, viewMode]);
+  }, [invoices, globalSelectedCompany, selectedPeriod, customDateRange, viewFilter, filterClient, filterCurrency, searchTerm]);
 
   // Group invoices if grouped view is enabled
   const groupedInvoices = useMemo(() => {
@@ -964,40 +962,75 @@ export function useInvoicesManagementDB(
       const { PDFService } = await import('@/services/business/pdfService');
       const company = companies.find(c => Number(c.id) === Number(invoice.fromCompanyId));
       
-      // Fetch payment methods specifically for this invoice's company
-      const [bankAccountsRes, digitalWalletsRes] = await Promise.all([
-        fetch(`/api/bank-accounts?companyId=${invoice.fromCompanyId}`),
-        fetch(`/api/digital-wallets?companyId=${invoice.fromCompanyId}`)
-      ]);
+      // Fetch the specific invoice to get its payment sources
+      const invoiceRes = await fetch(`/api/invoices/${invoice.id}`);
+      const invoiceData = invoiceRes.ok ? await invoiceRes.json() : null;
       
-      const bankAccounts = bankAccountsRes.ok ? await bankAccountsRes.json() : { data: [] };
-      const digitalWallets = digitalWalletsRes.ok ? await digitalWalletsRes.json() : { data: [] };
+      let invoicePaymentMethods = [];
       
-      // Transform to payment method format
-      const invoicePaymentMethods = [
-        ...(bankAccounts.data || []).map((bank: unknown) => ({
-          id: bank.id,
-          type: 'BANK',
-          name: bank.bankName,
-          accountName: bank.accountName,
-          bankName: bank.bankName,
-          bankAddress: bank.bankAddress,
-          iban: bank.iban,
-          swiftCode: bank.swiftCode,
-          accountNumber: bank.accountNumber,
-          currency: bank.currency,
-          details: bank.notes || ''
-        })),
-        ...(digitalWallets.data || []).map((wallet: unknown) => ({
-          id: wallet.id,
-          type: 'WALLET',
-          name: wallet.walletName,
-          walletAddress: wallet.walletAddress,
-          currency: wallet.currency,
-          details: wallet.description || ''
-        }))
-      ];
-      
+      if (invoiceData && invoiceData.paymentSources && invoiceData.paymentSources.length > 0) {
+        // Use polymorphic payment sources from the invoice
+        for (const source of invoiceData.paymentSources) {
+          try {
+            if (source.sourceType === 'BANK_ACCOUNT') {
+              const bankRes = await fetch(`/api/bank-accounts/${source.sourceId}`);
+              const bank = bankRes.ok ? await bankRes.json() : null;
+              if (bank) {
+                invoicePaymentMethods.push({
+                  id: bank.id,
+                  type: 'BANK',
+                  name: bank.bankName,
+                  accountName: bank.accountName,
+                  bankName: bank.bankName,
+                  bankAddress: bank.bankAddress,
+                  iban: bank.iban,
+                  swiftCode: bank.swiftCode,
+                  accountNumber: bank.accountNumber,
+                  currency: bank.currency,
+                  details: bank.notes || ''
+                });
+              }
+            } else if (source.sourceType === 'DIGITAL_WALLET') {
+              const walletRes = await fetch(`/api/digital-wallets/${source.sourceId}`);
+              const wallet = walletRes.ok ? await walletRes.json() : null;
+              if (wallet) {
+                invoicePaymentMethods.push({
+                  id: wallet.id,
+                  type: 'WALLET',
+                  name: wallet.walletName,
+                  walletAddress: wallet.walletAddress,
+                  currency: wallet.currency,
+                  details: wallet.description || ''
+                });
+              }
+            } else if (source.sourceType === 'PAYMENT_METHOD') {
+              const pmRes = await fetch(`/api/payment-methods/${source.sourceId}`);
+              const pm = pmRes.ok ? await pmRes.json() : null;
+              if (pm) {
+                invoicePaymentMethods.push({
+                  id: pm.id,
+                  type: pm.type,
+                  name: pm.name,
+                  accountName: pm.accountName,
+                  bankName: pm.bankName,
+                  bankAddress: pm.bankAddress,
+                  iban: pm.iban,
+                  swiftCode: pm.swiftCode,
+                  accountNumber: pm.accountNumber,
+                  walletAddress: pm.walletAddress,
+                  currency: pm.currency,
+                  details: pm.details || ''
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching payment source ${source.sourceType}:${source.sourceId}`, error);
+          }
+        }
+      } else if (invoiceData && invoiceData.paymentMethodInvoices && invoiceData.paymentMethodInvoices.length > 0) {
+        // Fallback to old payment method invoices
+        invoicePaymentMethods = invoiceData.paymentMethodInvoices.map((pmi: unknown) => pmi.paymentMethod);
+      }
       
       await PDFService.generateInvoicePDF(invoice, company, invoicePaymentMethods, clients);
       toast.success('Invoice PDF downloaded successfully');

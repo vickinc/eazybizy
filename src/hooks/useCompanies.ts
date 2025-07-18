@@ -19,7 +19,7 @@ export function useCompanies() {
     refetch
   } = useQuery({
     queryKey: [COMPANIES_SIMPLE_QUERY_KEY],
-    queryFn: () => companyApiService.getCompanies({ take: 1000 }), // Get all companies
+    queryFn: () => companyApiService.getCompanies({ take: 9999 }), // Get all companies (high limit to ensure all are loaded)
     staleTime: 500, // 0.5 seconds for near-immediate updates
     retry: 3,
   })
@@ -29,7 +29,7 @@ export function useCompanies() {
   // Cache-busted refetch for post-mutation updates
   const refetchFresh = useCallback(async () => {
     try {
-      const freshData = await companyApiService.getCompaniesFresh({ take: 1000 })
+      const freshData = await companyApiService.getCompaniesFresh({ take: 9999 })
       // Manually update the query cache with fresh data
       queryClient.setQueryData([COMPANIES_SIMPLE_QUERY_KEY], freshData)
       return freshData

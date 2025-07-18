@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -96,41 +96,6 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
   onRestore,
   onDelete,
 }) => {
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
-  
-  // Fetch payment methods when expanded
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!isExpanded || !invoice.fromCompanyId) {
-        setPaymentMethods([]);
-        return;
-      }
-      
-      try {
-        // Fetch both bank accounts and digital wallets for this specific company
-        const [bankAccountsRes, digitalWalletsRes] = await Promise.all([
-          fetch(`/api/bank-accounts?companyId=${invoice.fromCompanyId}`),
-          fetch(`/api/digital-wallets?companyId=${invoice.fromCompanyId}`)
-        ]);
-        
-        const bankAccounts = bankAccountsRes.ok ? await bankAccountsRes.json() : { data: [] };
-        const digitalWallets = digitalWalletsRes.ok ? await digitalWalletsRes.json() : { data: [] };
-        
-        // Transform to payment method names
-        const methodNames = [
-          ...(bankAccounts.data || []).map((bank: unknown) => `${bank.bankName} (${bank.currency})`),
-          ...(digitalWallets.data || []).map((wallet: unknown) => `${wallet.walletName} (${wallet.currency})`)
-        ];
-        
-        setPaymentMethods(methodNames);
-      } catch (error) {
-        console.error('Error fetching payment methods for list item:', error);
-        setPaymentMethods([]);
-      }
-    };
-    
-    fetchPaymentMethods();
-  }, [isExpanded, invoice.fromCompanyId]);
 
   return (
     <div className="border rounded-lg hover:bg-gray-50 transition-all duration-200">
@@ -318,8 +283,8 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
               <div className="p-2 bg-white rounded border">
                 <div className="font-medium text-gray-600 text-xs mb-0.5">Payment Methods</div>
                 <div className="text-sm">
-                  {paymentMethods.length > 0 
-                    ? paymentMethods.join(', ')
+                  {invoice.paymentMethodNames.length > 0 
+                    ? invoice.paymentMethodNames.join(', ')
                     : 'No payment methods'
                   }
                 </div>

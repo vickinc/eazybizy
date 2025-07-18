@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     
     // Pagination parameters
     const skip = parseInt(searchParams.get('skip') || '0')
-    const take = parseInt(searchParams.get('take') || '20')
+    const takeParam = searchParams.get('take')
+    const take = takeParam ? parseInt(takeParam) : 20
     
     // Filter parameters
     const searchTerm = searchParams.get('search') || ''
@@ -69,12 +70,14 @@ export async function GET(request: NextRequest) {
     }
     
     // Execute only essential queries in parallel for fast response
+    // If take is very high (9999+), fetch all companies without pagination
+    const shouldPaginate = take < 9999
+    
     const [companies, totalCount] = await Promise.all([
       prisma.company.findMany({
         where,
         orderBy,
-        skip,
-        take,
+        ...(shouldPaginate ? { skip, take } : {}),
       }),
       prisma.company.count({ where }),
     ])
@@ -83,9 +86,9 @@ export async function GET(request: NextRequest) {
       data: companies,
       pagination: {
         total: totalCount,
-        skip,
-        take,
-        hasMore: skip + take < totalCount,
+        skip: shouldPaginate ? skip : 0,
+        take: shouldPaginate ? take : companies.length,
+        hasMore: shouldPaginate ? skip + take < totalCount : false,
       },
     })
   } catch (error) {

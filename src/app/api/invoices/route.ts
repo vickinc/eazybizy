@@ -179,10 +179,73 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          paymentSources: true,
         },
       }),
       prisma.invoice.count({ where }),
     ])
+    
+    // Resolve polymorphic payment sources and add payment method names
+    const invoicesWithResolvedPaymentMethods = await Promise.all(
+      invoices.map(async (invoice) => {
+        const paymentMethodNames = []
+        
+        // Process new polymorphic payment sources
+        if (invoice.paymentSources && invoice.paymentSources.length > 0) {
+          for (const source of invoice.paymentSources) {
+            try {
+              let name = ''
+              
+              if (source.sourceType === 'BANK_ACCOUNT') {
+                const bankAccount = await prisma.bankAccount.findUnique({
+                  where: { id: source.sourceId },
+                  select: { bankName: true, accountName: true, currency: true }
+                })
+                if (bankAccount) {
+                  name = `${bankAccount.bankName} (${bankAccount.currency})`
+                }
+              } else if (source.sourceType === 'DIGITAL_WALLET') {
+                const digitalWallet = await prisma.digitalWallet.findUnique({
+                  where: { id: source.sourceId },
+                  select: { walletType: true, walletName: true, currency: true }
+                })
+                if (digitalWallet) {
+                  name = `${digitalWallet.walletType} (${digitalWallet.currency})`
+                }
+              } else if (source.sourceType === 'PAYMENT_METHOD') {
+                const paymentMethod = await prisma.paymentMethod.findUnique({
+                  where: { id: source.sourceId },
+                  select: { name: true, currency: true }
+                })
+                if (paymentMethod) {
+                  name = `${paymentMethod.name} (${paymentMethod.currency})`
+                }
+              }
+              
+              if (name) {
+                paymentMethodNames.push(name)
+              }
+            } catch (error) {
+              console.error(`Error resolving payment source ${source.sourceType}:${source.sourceId}`, error)
+            }
+          }
+        }
+        
+        // Fallback to old payment method invoices if no polymorphic sources
+        if (paymentMethodNames.length === 0 && invoice.paymentMethodInvoices) {
+          for (const pmi of invoice.paymentMethodInvoices) {
+            if (pmi.paymentMethod) {
+              paymentMethodNames.push(`${pmi.paymentMethod.name} (${pmi.paymentMethod.currency})`)
+            }
+          }
+        }
+        
+        return {
+          ...invoice,
+          paymentMethodNames
+        }
+      })
+    )
     
     // Calculate statistics
     const stats = await prisma.invoice.aggregate({
@@ -216,7 +279,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, { count: number; value: number }>)
     
     return NextResponse.json({
-      data: invoices,
+      data: invoicesWithResolvedPaymentMethods,
       pagination: {
         total: totalCount,
         skip,
@@ -270,7 +333,27 @@ export async function POST(request: NextRequest) {
 
     
     
-    // Create invoice with items and payment methods
+    // Process payment sources for polymorphic relationship
+    const paymentSources = (paymentMethodIds || []).map(sourceId => {
+      // Determine source type based on ID format or explicit type
+      let sourceType = 'PAYMENT_METHOD' // default
+      let actualId = sourceId
+      
+      if (sourceId.startsWith('bank_')) {
+        sourceType = 'BANK_ACCOUNT'
+        actualId = sourceId.replace(/^bank_/, '')
+      } else if (sourceId.startsWith('wallet_')) {
+        sourceType = 'DIGITAL_WALLET'
+        actualId = sourceId.replace(/^wallet_/, '')
+      }
+      
+      return {
+        sourceType,
+        sourceId: actualId,
+      }
+    })
+
+    // Create invoice first
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber,
@@ -289,8 +372,15 @@ export async function POST(request: NextRequest) {
         totalAmount: calculatedTotalAmount,
         fromCompanyId: Number(fromCompanyId),
         notes: notes || '',
-        items: {
-          create: items.map((item: unknown) => ({
+      },
+    })
+
+    // Create items separately if they exist
+    if (items && items.length > 0) {
+      try {
+        await prisma.invoiceItem.createMany({
+          data: items.map((item: any) => ({
+            invoiceId: invoice.id,
             productId: item.productId || null,
             productName: item.productName || '',
             description: item.description || '',
@@ -299,13 +389,39 @@ export async function POST(request: NextRequest) {
             currency: item.currency || currency,
             total: Number(item.total) || (Number(item.quantity) * Number(item.unitPrice)),
           })),
-        },
-        paymentMethodInvoices: {
-          create: (paymentMethodIds || []).map((paymentMethodId: string) => ({
-            paymentMethodId,
+        })
+      } catch (error) {
+        console.error('Error creating invoice items:', error)
+        throw error
+      }
+    }
+
+    // Create payment sources separately if they exist
+    if (paymentSources && paymentSources.length > 0) {
+      // Create polymorphic payment sources
+      await prisma.invoicePaymentSource.createMany({
+        data: paymentSources.map((source: any) => ({
+          invoiceId: invoice.id,
+          sourceType: source.sourceType,
+          sourceId: source.sourceId,
+        })),
+      })
+
+      // Create legacy payment method invoices for backward compatibility
+      const paymentMethodSources = paymentSources.filter((source: any) => source.sourceType === 'PAYMENT_METHOD')
+      if (paymentMethodSources.length > 0) {
+        await prisma.paymentMethodInvoice.createMany({
+          data: paymentMethodSources.map((source: any) => ({
+            invoiceId: invoice.id,
+            paymentMethodId: source.sourceId,
           })),
-        },
-      },
+        })
+      }
+    }
+
+    // Fetch the complete invoice with relations
+    const completeInvoice = await prisma.invoice.findUnique({
+      where: { id: invoice.id },
       include: {
         company: true,
         client: true,
@@ -315,19 +431,22 @@ export async function POST(request: NextRequest) {
             paymentMethod: true,
           },
         },
+        paymentSources: true,
       },
     })
     
     // Invalidate related caches after successful creation
-    CacheInvalidationService.invalidateOnInvoiceMutation(
-      invoice.id,
-      invoice.fromCompanyId,
-      invoice.clientId || undefined
-    ).catch(error => 
-      console.error('Failed to invalidate caches after invoice creation:', error)
-    )
+    if (completeInvoice) {
+      CacheInvalidationService.invalidateOnInvoiceMutation(
+        completeInvoice.id,
+        completeInvoice.fromCompanyId,
+        completeInvoice.clientId || undefined
+      ).catch(error => 
+        console.error('Failed to invalidate caches after invoice creation:', error)
+      )
+    }
     
-    return NextResponse.json(invoice, { status: 201 })
+    return NextResponse.json(completeInvoice, { status: 201 })
   } catch (error) {
     console.error('Error creating invoice:', error)
     return NextResponse.json(
