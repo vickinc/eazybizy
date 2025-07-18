@@ -2,6 +2,7 @@ import * as React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { ReactPDFTemplate } from '@/components/features/invoices';
 import { InvoiceBusinessService } from '@/services/business/invoiceBusinessService';
+import { InvoicesBusinessService } from '@/services/business/invoicesBusinessService';
 
 export class PDFService {
   static async generateInvoicePDF(
@@ -26,8 +27,8 @@ export class PDFService {
         logo: company.logo
       } : undefined;
 
-      // Get payment methods for this invoice
-      let invoicePaymentMethods = paymentMethods.length > 0 ? [paymentMethods[0]] : [];
+      // Get payment methods for this invoice (use all selected payment methods)
+      let invoicePaymentMethods = paymentMethods || [];
       
       invoicePaymentMethods = invoicePaymentMethods.map(pm => ({
         id: pm.id,
@@ -97,18 +98,13 @@ export class PDFService {
         // Calculate the effective rate
         const rate = (invoice.totalAmount || 0) > 0 ? convertedAmount / (invoice.totalAmount || 0) : 0;
         
-        // Format the converted amount
-        const formatter = new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: currency,
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
+        // Format the converted amount using InvoicesBusinessService to handle crypto currencies
+        const formattedAmount = InvoicesBusinessService.formatCurrency(convertedAmount, currency);
         
         currencyConversions.push({
           currency,
           amount: convertedAmount,
-          formattedAmount: formatter.format(convertedAmount),
+          formattedAmount: formattedAmount,
           rate: rate,
           paymentMethodNames: group.names
         });
