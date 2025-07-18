@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const digitalWallet = await prisma.digitalWallet.findUnique({
+      where: { id: params.id },
+      include: {
+        company: {
+          select: {
+            id: true,
+            tradingName: true,
+            legalName: true,
+            logo: true
+          }
+        }
+      }
+    })
+    
+    if (!digitalWallet) {
+      return NextResponse.json(
+        { error: 'Digital wallet not found' },
+        { status: 404 }
+      )
+    }
+    
+    return NextResponse.json(digitalWallet)
+  } catch (error) {
+    console.error('Error fetching digital wallet:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch digital wallet' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }

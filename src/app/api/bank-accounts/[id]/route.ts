@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const bankAccount = await prisma.bankAccount.findUnique({
+      where: { id: params.id },
+      include: {
+        company: {
+          select: {
+            id: true,
+            tradingName: true,
+            legalName: true,
+            logo: true
+          }
+        }
+      }
+    })
+    
+    if (!bankAccount) {
+      return NextResponse.json(
+        { error: 'Bank account not found' },
+        { status: 404 }
+      )
+    }
+    
+    return NextResponse.json(bankAccount)
+  } catch (error) {
+    console.error('Error fetching bank account:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch bank account' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }

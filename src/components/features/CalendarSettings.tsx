@@ -22,6 +22,7 @@ interface SyncStatus {
   lastGoogleSync: string | null;
   googleEmail: string | null;
   timezoneId: string;
+  timezoneMode: string | null;
   googleTimezone: string | null;
   recentSyncs: Array<{
     syncType: string;
@@ -86,15 +87,22 @@ export function CalendarSettings() {
           setGoogleTimezone(data.googleTimezone);
         }
         
-        // Determine timezone mode and value based on stored timezone
+        // Determine timezone mode based on stored preference or default to device
         const storedTimezone = data.timezoneId || detectUserTimezone();
-        if (storedTimezone === detectUserTimezone()) {
-          setTimezoneMode('device');
-        } else if (data.googleSyncEnabled && data.googleTimezone && storedTimezone === data.googleTimezone) {
-          setTimezoneMode('google');
+        
+        if (data.timezoneMode) {
+          // User has explicitly set a preference
+          setTimezoneMode(data.timezoneMode as 'device' | 'google' | 'custom');
         } else {
-          setTimezoneMode('custom');
+          // No explicit preference - default to device timezone
+          setTimezoneMode('device');
+          // If the stored timezone matches device timezone, keep it
+          // Otherwise, update to device timezone
+          if (storedTimezone !== detectUserTimezone()) {
+            handleTimezoneChange(detectUserTimezone());
+          }
         }
+        
         setSelectedTimezone(storedTimezone);
       }
     } catch (error) {
@@ -106,13 +114,16 @@ export function CalendarSettings() {
 
 
 
-  const handleTimezoneChange = async (timezone: string) => {
+  const handleTimezoneChange = async (timezone: string, mode?: 'device' | 'google' | 'custom') => {
     setSelectedTimezone(timezone);
     try {
       const response = await fetch('/api/user/timezone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezoneId: timezone })
+        body: JSON.stringify({ 
+          timezoneId: timezone,
+          timezoneMode: mode || timezoneMode 
+        })
       });
 
       if (response.ok) {
@@ -147,9 +158,7 @@ export function CalendarSettings() {
         break;
     }
     
-    if (newTimezone !== selectedTimezone) {
-      await handleTimezoneChange(newTimezone);
-    }
+    await handleTimezoneChange(newTimezone, mode);
   };
 
   const getCurrentTimezoneLabel = () => {
@@ -300,7 +309,7 @@ export function CalendarSettings() {
             {timezoneMode === 'custom' && (
               <div className="space-y-2">
                 <Label htmlFor="timezone">Select Timezone</Label>
-                <Select value={selectedTimezone} onValueChange={handleTimezoneChange}>
+                <Select value={selectedTimezone} onValueChange={(timezone) => handleTimezoneChange(timezone, 'custom')}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select timezone" />
                   </SelectTrigger>

@@ -36,102 +36,117 @@ export const InvoicePreviewDialog: React.FC<InvoicePreviewDialogProps> = ({
 }) => {
   const [invoicePaymentMethods, setInvoicePaymentMethods] = useState<PaymentMethod[]>([]);
   
-  // Fallback method to fetch specific payment methods by their IDs
-  const fetchPaymentMethodsFallback = useCallback(async (selectedIds?: string[]) => {
-    if (!invoice?.fromCompanyId) {
+  // Fetch specific payment methods from polymorphic payment sources
+  const fetchInvoicePaymentMethods = useCallback(async () => {
+    if (!invoice) {
       setInvoicePaymentMethods([]);
       return;
     }
     
     try {
-      // Fetch both bank accounts and digital wallets for this specific company
-      const [bankAccountsRes, digitalWalletsRes] = await Promise.all([
-        fetch(`/api/bank-accounts?companyId=${invoice.fromCompanyId}`),
-        fetch(`/api/digital-wallets?companyId=${invoice.fromCompanyId}`)
-      ]);
+      // Fetch the complete invoice data with payment sources
+      const invoiceRes = await fetch(`/api/invoices/${invoice.id}`);
+      const invoiceData = invoiceRes.ok ? await invoiceRes.json() : null;
       
-      const bankAccounts = bankAccountsRes.ok ? await bankAccountsRes.json() : { data: [] };
-      const digitalWallets = digitalWalletsRes.ok ? await digitalWalletsRes.json() : { data: [] };
+      if (!invoiceData) {
+        setInvoicePaymentMethods([]);
+        return;
+      }
       
-      // Transform to payment method format
-      const allMethods = [
-        ...(bankAccounts.data || []).filter((bank: unknown) => bank.isActive).map((bank: unknown) => ({
-          id: bank.id,
-          type: 'BANK',
-          name: bank.bankName,
-          accountName: bank.accountName,
-          bankName: bank.bankName,
-          bankAddress: bank.bankAddress,
-          iban: bank.iban,
-          swiftCode: bank.swiftCode,
-          accountNumber: bank.accountNumber,
-          currency: bank.currency,
-          details: bank.notes || ''
-        })),
-        ...(digitalWallets.data || []).filter((wallet: unknown) => wallet.isActive).map((wallet: unknown) => ({
-          id: wallet.id,
-          type: 'WALLET',
-          name: wallet.walletName,
-          walletAddress: wallet.walletAddress,
-          currency: wallet.currency,
-          details: wallet.description || ''
-        }))
-      ];
+      const methods = [];
       
-      // Filter to only selected payment methods if IDs are provided
-      const filteredMethods = selectedIds && selectedIds.length > 0 
-        ? allMethods.filter(method => selectedIds.includes(method.id))
-        : allMethods;
-      setInvoicePaymentMethods(filteredMethods);
+      // Use polymorphic payment sources if available
+      if (invoiceData.paymentSources && invoiceData.paymentSources.length > 0) {
+        for (const source of invoiceData.paymentSources) {
+          try {
+            if (source.sourceType === 'BANK_ACCOUNT') {
+              const bankRes = await fetch(`/api/bank-accounts/${source.sourceId}`);
+              const bank = bankRes.ok ? await bankRes.json() : null;
+              if (bank) {
+                methods.push({
+                  id: bank.id,
+                  type: 'BANK',
+                  name: bank.bankName,
+                  accountName: bank.accountName,
+                  bankName: bank.bankName,
+                  bankAddress: bank.bankAddress,
+                  iban: bank.iban,
+                  swiftCode: bank.swiftCode,
+                  accountNumber: bank.accountNumber,
+                  currency: bank.currency,
+                  details: bank.notes || ''
+                });
+              }
+            } else if (source.sourceType === 'DIGITAL_WALLET') {
+              const walletRes = await fetch(`/api/digital-wallets/${source.sourceId}`);
+              const wallet = walletRes.ok ? await walletRes.json() : null;
+              if (wallet) {
+                methods.push({
+                  id: wallet.id,
+                  type: 'WALLET',
+                  name: wallet.walletName,
+                  walletAddress: wallet.walletAddress,
+                  currency: wallet.currency,
+                  details: wallet.description || ''
+                });
+              }
+            } else if (source.sourceType === 'PAYMENT_METHOD') {
+              const pmRes = await fetch(`/api/payment-methods/${source.sourceId}`);
+              const pm = pmRes.ok ? await pmRes.json() : null;
+              if (pm) {
+                methods.push({
+                  id: pm.id,
+                  type: pm.type,
+                  name: pm.name,
+                  accountName: pm.accountName,
+                  bankName: pm.bankName,
+                  bankAddress: pm.bankAddress,
+                  iban: pm.iban,
+                  swiftCode: pm.swiftCode,
+                  accountNumber: pm.accountNumber,
+                  walletAddress: pm.walletAddress,
+                  currency: pm.currency,
+                  details: pm.details || ''
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching payment source ${source.sourceType}:${source.sourceId}`, error);
+          }
+        }
+      } else if (invoiceData.paymentMethodInvoices && invoiceData.paymentMethodInvoices.length > 0) {
+        // Fallback to old payment method invoices
+        for (const pmi of invoiceData.paymentMethodInvoices) {
+          if (pmi.paymentMethod) {
+            methods.push({
+              id: pmi.paymentMethod.id,
+              type: pmi.paymentMethod.type,
+              name: pmi.paymentMethod.name,
+              accountName: pmi.paymentMethod.accountName,
+              bankName: pmi.paymentMethod.bankName,
+              bankAddress: pmi.paymentMethod.bankAddress,
+              iban: pmi.paymentMethod.iban,
+              swiftCode: pmi.paymentMethod.swiftCode,
+              accountNumber: pmi.paymentMethod.accountNumber,
+              walletAddress: pmi.paymentMethod.walletAddress,
+              currency: pmi.paymentMethod.currency,
+              details: pmi.paymentMethod.details || ''
+            });
+          }
+        }
+      }
+      
+      setInvoicePaymentMethods(methods);
     } catch (error) {
       console.error('Error fetching payment methods for preview:', error);
       setInvoicePaymentMethods([]);
     }
   }, [invoice]);
   
-  // Extract payment methods from invoice data
+  // Fetch payment methods when invoice changes
   useEffect(() => {
-    if (!invoice) {
-      setInvoicePaymentMethods([]);
-      return;
-    }
-    
-    
-    // If invoice has paymentMethodInvoices relation with valid data, use that
-    if (invoice.paymentMethodInvoices && invoice.paymentMethodInvoices.length > 0) {
-      // Check if the payment method data is complete
-      const validMethods = invoice.paymentMethodInvoices.filter((pmi: unknown) => 
-        pmi.paymentMethod && (pmi.paymentMethod.name || pmi.paymentMethod.bankName)
-      );
-      
-      if (validMethods.length > 0) {
-        const methods = validMethods.map((pmi: unknown) => ({
-          id: pmi.paymentMethod.id,
-          type: pmi.paymentMethod.type,
-          name: pmi.paymentMethod.name,
-          accountName: pmi.paymentMethod.accountName,
-          bankName: pmi.paymentMethod.bankName,
-          bankAddress: pmi.paymentMethod.bankAddress,
-          iban: pmi.paymentMethod.iban,
-          swiftCode: pmi.paymentMethod.swiftCode,
-          accountNumber: pmi.paymentMethod.accountNumber,
-          walletAddress: pmi.paymentMethod.walletAddress,
-          currency: pmi.paymentMethod.currency,
-          details: pmi.paymentMethod.details || ''
-        }));
-        
-        setInvoicePaymentMethods(methods);
-      } else {
-        // If payment method data is incomplete, get the selected IDs and use fallback
-        const selectedIds = invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [];
-        fetchPaymentMethodsFallback(selectedIds);
-      }
-    } else {
-      // Use PaymentMethodInvoice relationship
-      const selectedIds = invoice.paymentMethodInvoices?.map((pmi: unknown) => pmi.paymentMethodId) || [];
-      fetchPaymentMethodsFallback(selectedIds);
-    }
-  }, [invoice, fetchPaymentMethodsFallback]);
+    fetchInvoicePaymentMethods();
+  }, [fetchInvoicePaymentMethods]);
   
   // Calculate currency conversions for payment methods
   const currencyConversions = useMemo(() => {

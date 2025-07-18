@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
         lastGoogleSync: true,
         googleEmail: true,
         timezoneId: true,
+        timezoneMode: true,
         googleCalendarId: true
       }
     });
@@ -142,6 +143,7 @@ export async function GET(request: NextRequest) {
       lastGoogleSync: user.lastGoogleSync,
       googleEmail: user.googleEmail,
       timezoneId: user.timezoneId,
+      timezoneMode: user.timezoneMode,
       googleTimezone,
       recentSyncs,
       syncStats: syncStats.reduce((acc, stat) => {

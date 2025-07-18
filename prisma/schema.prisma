@@ -127,6 +127,7 @@ model User {
   googleSyncEnabled       Boolean                  @default(false)
   lastGoogleSync          DateTime?
   timezoneId              String                   @default("UTC")
+  timezoneMode            String?                  // 'device', 'google', 'custom' - null means not explicitly set
   googleAutoSyncEnabled   Boolean?
   googleDefaultCalendarId String?
   auditLogs               AuditLog[]
@@ -312,6 +313,7 @@ model Invoice {
   client                Client?                @relation(fields: [clientId], references: [id])
   company               Company                @relation(fields: [fromCompanyId], references: [id])
   paymentMethodInvoices PaymentMethodInvoice[]
+  paymentSources        InvoicePaymentSource[]
 
   @@index([fromCompanyId, createdAt])
   @@index([status, createdAt])
@@ -381,6 +383,18 @@ model PaymentMethodInvoice {
 
   @@unique([invoiceId, paymentMethodId])
   @@map("payment_method_invoices")
+}
+
+model InvoicePaymentSource {
+  id         String   @id @default(cuid())
+  invoiceId  String
+  sourceType String   // 'BANK_ACCOUNT', 'DIGITAL_WALLET', 'PAYMENT_METHOD'
+  sourceId   String   // References the actual entity ID
+  createdAt  DateTime @default(now())
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, sourceType, sourceId])
+  @@map("invoice_payment_sources")
 }
 
 model BankAccount {

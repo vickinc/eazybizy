@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (error) return error;
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { timezoneId } = await request.json();
+    const { timezoneId, timezoneMode } = await request.json();
     
     if (!timezoneId || !isValidTimezone(timezoneId)) {
       return NextResponse.json({ error: 'Invalid timezone' }, { status: 400 });
@@ -24,9 +24,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const updateData: any = { timezoneId };
+    if (timezoneMode) {
+      updateData.timezoneMode = timezoneMode;
+    }
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { timezoneId }
+      data: updateData
     });
 
     return NextResponse.json({ success: true });
