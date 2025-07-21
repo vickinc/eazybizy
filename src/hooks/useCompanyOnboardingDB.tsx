@@ -82,7 +82,10 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null, initial
     telegramNumber: '',
     shareholders: [],
     representatives: [],
-    mainContactPerson: undefined
+    mainContactPerson: undefined,
+    entityType: '',
+    customEntityType: '',
+    fiscalYearEnd: ''
   });
 
   // Fetch company data if editing
@@ -125,7 +128,10 @@ export function useCompanyOnboardingDB(editingCompanyId?: string | null, initial
         telegramNumber: existingCompany.telegramNumber || '',
         shareholders: existingCompany.shareholders || [],
         representatives: existingCompany.representatives || [],
-        mainContactPerson: undefined // Will be set after form data is populated
+        mainContactPerson: undefined, // Will be set after form data is populated
+        entityType: existingCompany.entityType || '',
+        customEntityType: existingCompany.customEntityType || '',
+        fiscalYearEnd: existingCompany.fiscalYearEnd || ''
       });
 
       // Reconstruct main contact person from database fields

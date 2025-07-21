@@ -11,6 +11,9 @@ export interface CompanyListItem {
   logo: string | null
   registrationNo: string | null
   email: string | null
+  entityType?: string | null
+  customEntityType?: string | null
+  fiscalYearEnd?: string | null
   createdAt: Date
   updatedAt: Date
 }

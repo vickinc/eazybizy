@@ -228,6 +228,42 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                 {copiedFields[`${company.id}-Legal Name`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
               </Button>
             </div>
+            {/* Entity Type */}
+            {company.entityType && (
+              <div className="group flex items-center relative">
+                <p 
+                  className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const entityTypeDisplay = company.entityType === 'Other' && company.customEntityType 
+                      ? company.customEntityType 
+                      : company.entityType;
+                    copyToClipboard(entityTypeDisplay, 'Entity Type', company.id);
+                  }}
+                >
+                  Entity Type: {company.entityType === 'Other' && company.customEntityType 
+                    ? company.customEntityType 
+                    : company.entityType}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const entityTypeDisplay = company.entityType === 'Other' && company.customEntityType 
+                      ? company.customEntityType 
+                      : company.entityType;
+                    copyToClipboard(entityTypeDisplay, 'Entity Type', company.id);
+                  }}
+                  aria-label={`Copy entity type: ${company.entityType === 'Other' && company.customEntityType 
+                    ? company.customEntityType 
+                    : company.entityType}`}
+                >
+                  {copiedFields[`${company.id}-Entity Type`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                </Button>
+              </div>
+            )}
             <div className="group flex items-center relative">
               <p 
                 className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
@@ -380,6 +416,46 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   aria-label={`Copy VAT number: ${company.vatNumber}`}
                 >
                   {copiedFields[`${company.id}-VAT Number`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                </Button>
+              </div>
+            )}
+            {/* Always show Fiscal Year End if it exists */}
+            {company.fiscalYearEnd && (
+              <div className="group flex items-center relative">
+                <p 
+                  className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const [month, day] = company.fiscalYearEnd.split('-');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const displayText = `${monthNames[parseInt(month) - 1]} ${parseInt(day)}`;
+                    copyToClipboard(displayText, 'Fiscal Year End', company.id);
+                  }}
+                >
+                  Fiscal Year End: {(() => {
+                    const [month, day] = company.fiscalYearEnd.split('-');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}`;
+                  })()}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const [month, day] = company.fiscalYearEnd.split('-');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const displayText = `${monthNames[parseInt(month) - 1]} ${parseInt(day)}`;
+                    copyToClipboard(displayText, 'Fiscal Year End', company.id);
+                  }}
+                  aria-label={`Copy fiscal year end: ${(() => {
+                    const [month, day] = company.fiscalYearEnd.split('-');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}`;
+                  })()}`}
+                >
+                  {copiedFields[`${company.id}-Fiscal Year End`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
               </div>
             )}

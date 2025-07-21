@@ -173,6 +173,9 @@ export class CompanySSRService {
             telegramNumber: true,
             mainContactEmail: true,
             mainContactType: true,
+            entityType: true,
+            customEntityType: true,
+            fiscalYearEnd: true,
             createdAt: true,
             updatedAt: true,
             // Include related data for contact person details
@@ -213,6 +216,9 @@ export class CompanySSRService {
         logo: company.logo,
         registrationNo: company.registrationNo,
         email: company.email,
+        entityType: company.entityType,
+        customEntityType: company.customEntityType,
+        fiscalYearEnd: company.fiscalYearEnd,
         createdAt: company.createdAt,
         updatedAt: company.updatedAt,
       }))
@@ -432,6 +438,9 @@ export class CompanySSRService {
           logo: true,
           registrationNo: true,
           email: true,
+          entityType: true,
+          customEntityType: true,
+          fiscalYearEnd: true,
           createdAt: true,
           updatedAt: true,
         }
@@ -464,6 +473,9 @@ export class CompanySSRService {
         logo: company.logo,
         registrationNo: company.registrationNo,
         email: company.email,
+        entityType: company.entityType,
+        customEntityType: company.customEntityType,
+        fiscalYearEnd: company.fiscalYearEnd,
         createdAt: company.createdAt,
         updatedAt: company.updatedAt,
       }))

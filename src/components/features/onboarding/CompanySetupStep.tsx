@@ -21,6 +21,7 @@ import { CompanyCardPreview } from './CompanyCardPreview';
 import { CompanyFormData } from '@/services/business/companyValidationService';
 import { COUNTRIES } from '@/types/vendor.types';
 import { cn } from '@/utils/index';
+import { ENTITY_TYPES } from '@/constants/company.constants';
 
 interface CompanySetupStepProps {
   formData: CompanyFormData;
@@ -210,6 +211,53 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
               This should match your official business registration
             </p>
           </div>
+
+          {/* Entity Type */}
+          <div>
+            <Label htmlFor="entityType">Entity Type *</Label>
+            <Select
+              value={formData.entityType || ''}
+              onValueChange={(value) => {
+                onUpdateFormData({ 
+                  entityType: value,
+                  customEntityType: value === 'Other' ? formData.customEntityType : undefined
+                });
+              }}
+            >
+              <SelectTrigger id="entityType" className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
+                <SelectValue placeholder="Select entity type" />
+              </SelectTrigger>
+              <SelectContent>
+                {ENTITY_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              Legal structure of your business
+            </p>
+          </div>
+
+          {/* Custom Entity Type (if Other is selected) */}
+          {formData.entityType === 'Other' && (
+            <div>
+              <Label htmlFor="customEntityType">Specify Entity Type *</Label>
+              <Input
+                id="customEntityType"
+                name="customEntityType"
+                value={formData.customEntityType || ''}
+                onChange={handleInputChange}
+                placeholder="Enter custom entity type"
+                className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Please specify your entity type
+              </p>
+            </div>
+          )}
 
           {/* Trading Name */}
           <div className="md:col-span-2">
@@ -452,6 +500,70 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
               />
               <p className="text-xs text-gray-500 mt-1">
                 Your VAT/GST registration number (if applicable)
+              </p>
+            </div>
+
+            {/* Fiscal Year End */}
+            <div className="md:col-span-2">
+              <Label htmlFor="fiscalYearEnd">Fiscal Year End</Label>
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <div>
+                  <Select 
+                    value={formData.fiscalYearEnd?.split('-')[0] || undefined} 
+                    onValueChange={(month) => {
+                      if (month) {
+                        const day = formData.fiscalYearEnd?.split('-')[1] || '31';
+                        onUpdateFormData({ fiscalYearEnd: `${month}-${day}` });
+                      } else {
+                        onUpdateFormData({ fiscalYearEnd: '' });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Month (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="01">January</SelectItem>
+                      <SelectItem value="02">February</SelectItem>
+                      <SelectItem value="03">March</SelectItem>
+                      <SelectItem value="04">April</SelectItem>
+                      <SelectItem value="05">May</SelectItem>
+                      <SelectItem value="06">June</SelectItem>
+                      <SelectItem value="07">July</SelectItem>
+                      <SelectItem value="08">August</SelectItem>
+                      <SelectItem value="09">September</SelectItem>
+                      <SelectItem value="10">October</SelectItem>
+                      <SelectItem value="11">November</SelectItem>
+                      <SelectItem value="12">December</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Select 
+                    value={formData.fiscalYearEnd?.split('-')[1] || undefined} 
+                    onValueChange={(day) => {
+                      const month = formData.fiscalYearEnd?.split('-')[0];
+                      if (month && day) {
+                        onUpdateFormData({ fiscalYearEnd: `${month}-${day}` });
+                      }
+                    }}
+                    disabled={!formData.fiscalYearEnd?.split('-')[0]}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <SelectItem key={day} value={day.toString().padStart(2, '0')}>
+                          {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Select the last day of your financial year (e.g., December 31 for calendar year)
               </p>
             </div>
 

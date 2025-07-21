@@ -18,6 +18,9 @@ model Company {
   businessLicenseNr     String?
   vatNumber             String?
   industry              String
+  entityType            String?
+  customEntityType      String?
+  fiscalYearEnd         String?
   address               String
   phone                 String
   email                 String

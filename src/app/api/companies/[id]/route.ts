@@ -85,6 +85,9 @@ export async function PUT(
       shareholders,
       representatives,
       mainContactPerson,
+      entityType,
+      customEntityType,
+      fiscalYearEnd,
     } = body
     
     // Check if company exists
@@ -145,6 +148,9 @@ export async function PUT(
       updateData.mainContactEmail = mainContactPerson?.email
       updateData.mainContactType = mainContactPerson?.type
     }
+    if (entityType !== undefined) updateData.entityType = entityType
+    if (customEntityType !== undefined) updateData.customEntityType = entityType === 'Other' ? customEntityType : null
+    if (fiscalYearEnd !== undefined) updateData.fiscalYearEnd = fiscalYearEnd || null
     
     // Handle company update with sequential operations (SQLite-compatible)
     try {

@@ -9,6 +9,9 @@ export interface Company {
   businessLicenseNr?: string; // Optional field
   vatNumber?: string;
   industry: string;
+  entityType?: string; // Entity type (LTD, LLC, Corporation, etc.)
+  customEntityType?: string; // Custom entity type when 'Other' is selected
+  fiscalYearEnd?: string; // Fiscal year end (MM-DD format, e.g., "12-31")
   address: string;
   phone: string;
   email: string;

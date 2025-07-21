@@ -133,6 +133,15 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
                 {formData.legalName || 'Legal Company Name'}
               </p>
             </div>
+            {formData.entityType && (
+              <div className="group flex items-center relative">
+                <p className="text-xs text-gray-600">
+                  Entity Type: {formData.entityType === 'Other' && formData.customEntityType 
+                    ? formData.customEntityType 
+                    : formData.entityType}
+                </p>
+              </div>
+            )}
             <div className="group flex items-center relative">
               <p className="text-xs text-gray-600">
                 Registration: {formData.registrationNo || 'REG-XXXXX'}
@@ -170,6 +179,17 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
               <div className="group flex items-center relative">
                 <p className="text-xs text-gray-600">
                   VAT: {formData.vatNumber}
+                </p>
+              </div>
+            )}
+            {formData.fiscalYearEnd && (
+              <div className="group flex items-center relative">
+                <p className="text-xs text-gray-600">
+                  Fiscal Year End: {(() => {
+                    const [month, day] = formData.fiscalYearEnd.split('-');
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}`;
+                  })()}
                 </p>
               </div>
             )}

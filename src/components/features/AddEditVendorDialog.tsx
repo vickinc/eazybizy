@@ -13,6 +13,15 @@ import Package from "lucide-react/dist/esm/icons/package";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import X from "lucide-react/dist/esm/icons/x";
 import Building2 from "lucide-react/dist/esm/icons/building-2";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Globe from "lucide-react/dist/esm/icons/globe";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Edit3 from "lucide-react/dist/esm/icons/edit-3";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { FormattedVendor, VendorFormData } from "@/types/vendor.types";
 import { Product } from "@/types/products.types";
 
@@ -52,6 +61,7 @@ interface AddEditVendorDialogProps {
   onProductSearchTermChange: (value: string) => void;
   onProductToggle: (productId: string) => void;
   onNavigateToProducts: () => void;
+  onOpenAddProductDialog: () => void;
   onCreateVendor: () => void;
   onUpdateVendor: () => void;
   getFilteredProducts: () => ProductWithFormattedPrice[];
@@ -75,6 +85,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
   onProductSearchTermChange,
   onProductToggle,
   onNavigateToProducts,
+  onOpenAddProductDialog,
   onCreateVendor,
   onUpdateVendor,
   getFilteredProducts,
@@ -82,236 +93,390 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
-          </DialogTitle>
-          <DialogDescription>
-            {editingVendor 
-              ? 'Update vendor information for expense tracking.' 
-              : 'Enter vendor information for better expense tracking.'
-            }
-          </DialogDescription>
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-lg ${editingVendor ? 'bg-blue-100' : 'bg-purple-100'}`}>
+              {editingVendor ? (
+                <Edit3 className="h-6 w-6 text-blue-600" />
+              ) : (
+                <Plus className="h-6 w-6 text-purple-600" />
+              )}
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-semibold">
+                {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                {editingVendor 
+                  ? 'Update vendor information for expense tracking' 
+                  : 'Enter vendor information for better expense tracking'
+                }
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {/* Company Info Display */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          {/* Company Selection Section */}
           {!editingVendor && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
+              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-yellow-500 rounded-full"></div>
+                Company Assignment
+              </h3>
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Building2 className="h-5 w-5 text-yellow-600" />
+                </div>
                 <div>
-                  <Label className="text-sm font-medium text-blue-800">Adding vendor for:</Label>
-                  <p className="text-lg font-semibold text-blue-900">{selectedCompanyName}</p>
+                  <Label className="text-sm font-medium text-yellow-800">Adding vendor for:</Label>
+                  <p className="text-lg font-semibold text-yellow-900">{selectedCompanyName}</p>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="companyName">Vendor Company Name *</Label>
-              <Input
-                id="companyName"
-                placeholder="Enter vendor company name"
-                value={vendorForm.companyName}
-                onChange={(e) => onVendorFormChange('companyName', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="contactPerson">Contact Person *</Label>
-              <Input
-                id="contactPerson"
-                placeholder="Enter contact person name"
-                value={vendorForm.contactPerson}
-                onChange={(e) => onVendorFormChange('contactPerson', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="contactEmail">Contact Email *</Label>
-              <Input
-                id="contactEmail"
-                type="email"
-                placeholder="Enter contact email"
-                value={vendorForm.contactEmail}
-                onChange={(e) => onVendorFormChange('contactEmail', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter phone number (optional)"
-                value={vendorForm.phone}
-                onChange={(e) => onVendorFormChange('phone', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                placeholder="Enter website URL (optional)"
-                value={vendorForm.website}
-                onChange={(e) => onVendorFormChange('website', e.target.value)}
-              />
-            </div>
-            <div>
-              {/* Empty div for grid layout consistency */}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="companyRegistrationNr">Company Registration Nr.</Label>
-              <Input
-                id="companyRegistrationNr"
-                placeholder="Enter company registration number"
-                value={vendorForm.companyRegistrationNr}
-                onChange={(e) => onVendorFormChange('companyRegistrationNr', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="vatNr">VAT Number</Label>
-              <Input
-                id="vatNr"
-                placeholder="Enter VAT number"
-                value={vendorForm.vatNr}
-                onChange={(e) => onVendorFormChange('vatNr', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="vendorCountry">Vendor Country</Label>
-            <Select value={vendorForm.vendorCountry} onValueChange={(value) => onVendorFormChange('vendorCountry', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select country (type to search)" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {availableCountries.map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-gray-500 mt-1">
-              Type to search through countries
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="itemsServicesSold">Items/Services Sold</Label>
-            <Textarea
-              id="itemsServicesSold"
-              placeholder="Describe the items or services this vendor provides"
-              value={vendorForm.itemsServicesSold}
-              onChange={(e) => onVendorFormChange('itemsServicesSold', e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="paymentTerms">Payment Terms</Label>
-              <Select 
-                value={vendorForm.paymentTerms} 
-                onValueChange={(value) => onVendorFormChange('paymentTerms', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePaymentTermsOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {vendorForm.paymentTerms === 'custom' && (
+          {/* Basic Information Section */}
+          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              Basic Information
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="customPaymentTerms">Custom Days</Label>
-                <Input
-                  id="customPaymentTerms"
-                  type="number"
-                  placeholder="Enter days"
-                  value={customPaymentTerms}
-                  onChange={(e) => onCustomPaymentTermsChange(e.target.value)}
-                  min="1"
-                />
+                <Label htmlFor="companyName" className="text-sm font-medium">Vendor Company Name *</Label>
+                <div className="relative mt-1">
+                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="companyName"
+                    placeholder="e.g., ABC Supplies Ltd, John's Services"
+                    value={vendorForm.companyName}
+                    onChange={(e) => onVendorFormChange('companyName', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  The official name of the vendor company
+                </p>
               </div>
-            )}
 
-            <div>
-              <Label htmlFor="currency">Currency</Label>
-              <Select value={vendorForm.currency} onValueChange={(value) => onVendorFormChange('currency', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCurrencies.map((currency) => (
-                    <SelectItem key={currency} value={currency}>
-                      {currency}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="paymentMethod">Payment Method</Label>
-              <Select value={vendorForm.paymentMethod} onValueChange={(value) => onVendorFormChange('paymentMethod', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePaymentMethods.map((method) => (
-                    <SelectItem key={method.value} value={method.value}>
-                      {method.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                <Label htmlFor="contactPerson" className="text-sm font-medium">Contact Person *</Label>
+                <div className="relative mt-1">
+                  <UserCheck className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="contactPerson"
+                    placeholder="e.g., John Smith, Sarah Johnson"
+                    value={vendorForm.contactPerson}
+                    onChange={(e) => onVendorFormChange('contactPerson', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Primary contact person at the vendor
+                </p>
+              </div>
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="billingAddress">Billing Address</Label>
-            <Textarea
-              id="billingAddress"
-              placeholder="Enter billing address (optional)"
-              value={vendorForm.billingAddress}
-              onChange={(e) => onVendorFormChange('billingAddress', e.target.value)}
-              rows={3}
-            />
+          {/* Contact Information Section */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              Contact Information
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="contactEmail" className="text-sm font-medium">Contact Email *</Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    placeholder="contact@vendor.com"
+                    value={vendorForm.contactEmail}
+                    onChange={(e) => onVendorFormChange('contactEmail', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Primary email for business communication
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    value={vendorForm.phone}
+                    onChange={(e) => onVendorFormChange('phone', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Phone number for direct contact (optional)
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="website" className="text-sm font-medium">Website</Label>
+                  <div className="relative mt-1">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="website"
+                      placeholder="https://vendor-website.com"
+                      value={vendorForm.website}
+                      onChange={(e) => onVendorFormChange('website', e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Vendor's official website (optional)
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="vendorCountry" className="text-sm font-medium">Country</Label>
+                  <Select value={vendorForm.vendorCountry} onValueChange={(value) => onVendorFormChange('vendorCountry', value)}>
+                    <SelectTrigger id="vendorCountry" className="mt-1 w-full">
+                      <SelectValue placeholder="Select country (type to search)" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {availableCountries.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Type to search through countries
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Products Selection */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-base font-medium">Products</Label>
+          {/* Legal & Business Information Section */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+              Legal & Business Information
+              <Badge variant="secondary" className="text-xs">Optional</Badge>
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="companyRegistrationNr" className="text-sm font-medium">Company Registration Number</Label>
+                <div className="relative mt-1">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="companyRegistrationNr"
+                    placeholder="e.g., 123456789"
+                    value={vendorForm.companyRegistrationNr}
+                    onChange={(e) => onVendorFormChange('companyRegistrationNr', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Official company registration number
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="vatNr" className="text-sm font-medium">VAT Number</Label>
+                <div className="relative mt-1">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="vatNr"
+                    placeholder="e.g., GB123456789"
+                    value={vendorForm.vatNr}
+                    onChange={(e) => onVendorFormChange('vatNr', e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Tax identification number
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="itemsServicesSold" className="text-sm font-medium">Items/Services Sold</Label>
+              <Textarea
+                id="itemsServicesSold"
+                placeholder="Describe the items or services this vendor provides..."
+                value={vendorForm.itemsServicesSold}
+                onChange={(e) => onVendorFormChange('itemsServicesSold', e.target.value)}
+                rows={2}
+                className="mt-1 resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Brief description of what this vendor supplies
+              </p>
+            </div>
+          </div>
+
+          {/* Payment & Terms Section */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              Payment & Terms
+              <Badge variant="secondary" className="text-xs">Optional</Badge>
+            </h3>
+            
+            <div className="space-y-4">
+              {/* First Row: Payment Terms and Custom Days (if applicable) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="paymentTerms" className="text-sm font-medium">Payment Terms</Label>
+                  <Select 
+                    value={vendorForm.paymentTerms} 
+                    onValueChange={(value) => onVendorFormChange('paymentTerms', value)}
+                  >
+                    <SelectTrigger id="paymentTerms" className="mt-1 w-full">
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePaymentTermsOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    How long you have to pay invoices
+                  </p>
+                </div>
+
+                {vendorForm.paymentTerms === 'custom' && (
+                  <div>
+                    <Label htmlFor="customPaymentTerms" className="text-sm font-medium">Custom Days</Label>
+                    <Input
+                      id="customPaymentTerms"
+                      type="number"
+                      placeholder="Enter days"
+                      value={customPaymentTerms}
+                      onChange={(e) => onCustomPaymentTermsChange(e.target.value)}
+                      min="1"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Number of days to pay
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Second Row: Currency and Payment Method */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="currency" className="text-sm font-medium">Currency</Label>
+                  <Select value={vendorForm.currency} onValueChange={(value) => onVendorFormChange('currency', value)}>
+                    <SelectTrigger id="currency" className="mt-1 w-full">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCurrencies.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">{currency}</Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Default currency for this vendor
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="paymentMethod" className="text-sm font-medium">Payment Method</Label>
+                  <Select value={vendorForm.paymentMethod} onValueChange={(value) => onVendorFormChange('paymentMethod', value)}>
+                    <SelectTrigger id="paymentMethod" className="mt-1 w-full">
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePaymentMethods.map((method) => (
+                        <SelectItem key={method.value} value={method.value}>
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-4 w-4 text-gray-500" />
+                            {method.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    How you typically pay this vendor
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Address Information Section */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+              Address Information
+              <Badge variant="secondary" className="text-xs">Optional</Badge>
+            </h3>
+            
+            <div>
+              <Label htmlFor="billingAddress" className="text-sm font-medium">Billing Address</Label>
+              <div className="relative mt-1">
+                <Textarea
+                  id="billingAddress"
+                  placeholder="123 Business St, Suite 100&#10;City, State 12345&#10;Country"
+                  value={vendorForm.billingAddress}
+                  onChange={(e) => onVendorFormChange('billingAddress', e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+                <MapPin className="absolute top-3 right-3 h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Full billing address for invoices and payments
+              </p>
+            </div>
+          </div>
+
+          {/* Products Selection Section */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              Products & Services
+              <Badge variant="secondary" className="text-xs">Optional</Badge>
+            </h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Associate Products</Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Link products that this vendor supplies for better tracking
+                </p>
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={onNavigateToProducts}
-                className="flex items-center gap-2"
+                onClick={onOpenAddProductDialog}
+                className="flex items-center gap-2 shrink-0"
               >
-                <ExternalLink className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Add Product
               </Button>
             </div>
@@ -400,33 +565,65 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-2">
-              Select products that this vendor supplies. You can add new products using the "Add Product" button.
+            <p className="text-xs text-gray-500">
+              Select products that this vendor supplies. You can add new products using the "Add Product" button above.
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Additional notes about this vendor"
-              value={vendorForm.notes}
-              onChange={(e) => onVendorFormChange('notes', e.target.value)}
-              rows={3}
-            />
+          {/* Additional Notes Section */}
+          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-gray-500 rounded-full"></div>
+              Additional Notes
+              <Badge variant="secondary" className="text-xs">Optional</Badge>
+            </h3>
+            
+            <div>
+              <Label htmlFor="notes" className="text-sm font-medium">Notes</Label>
+              <div className="relative mt-1">
+                <Textarea
+                  id="notes"
+                  placeholder="Add any additional notes about this vendor, special terms, or other important information..."
+                  value={vendorForm.notes}
+                  onChange={(e) => onVendorFormChange('notes', e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+                <FileText className="absolute top-3 right-3 h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Any additional information about this vendor
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={editingVendor ? onUpdateVendor : onCreateVendor}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {editingVendor ? 'Update Vendor' : 'Create Vendor'}
-          </Button>
+        {/* Footer with Actions */}
+        <div className="border-t px-6 py-4 bg-gray-50 flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            * Required fields
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onClose} className="min-w-[100px]">
+              Cancel
+            </Button>
+            <Button 
+              onClick={editingVendor ? onUpdateVendor : onCreateVendor}
+              className={`min-w-[140px] ${editingVendor ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+            >
+              {editingVendor ? (
+                <>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Update Vendor
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Vendor
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

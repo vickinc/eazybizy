@@ -129,12 +129,23 @@ export async function POST(request: NextRequest) {
       shareholders = [],
       representatives = [],
       mainContactPerson,
+      entityType,
+      customEntityType,
+      fiscalYearEnd,
     } = body
     
     // Validate required fields
-    if (!legalName || !tradingName || !registrationNo || !registrationDate || !countryOfRegistration || !baseCurrency) {
+    if (!legalName || !tradingName || !registrationNo || !registrationDate || !countryOfRegistration || !baseCurrency || !entityType) {
       return NextResponse.json(
-        { error: 'Legal name, trading name, registration number, registration date, country of registration, and base currency are required' },
+        { error: 'Legal name, trading name, registration number, registration date, country of registration, base currency, and entity type are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate entity type and custom entity type
+    if (entityType === 'Other' && !customEntityType?.trim()) {
+      return NextResponse.json(
+        { error: 'Custom entity type is required when "Other" is selected' },
         { status: 400 }
       )
     }
@@ -178,6 +189,9 @@ export async function POST(request: NextRequest) {
         youtubeUrl,
         whatsappNumber,
         telegramNumber,
+        entityType,
+        customEntityType: entityType === 'Other' ? customEntityType : null,
+        fiscalYearEnd: fiscalYearEnd || null,
         mainContactEmail: mainContactPerson?.email,
         mainContactType: mainContactPerson?.type,
       },
@@ -185,6 +199,43 @@ export async function POST(request: NextRequest) {
 
     if (!company) {
       throw new Error('Failed to create company');
+    }
+
+    // Create shareholders if provided
+    if (shareholders && shareholders.length > 0) {
+      await prisma.shareholder.createMany({
+        data: shareholders.map((shareholder: any) => ({
+          companyId: company.id,
+          firstName: shareholder.firstName,
+          lastName: shareholder.lastName,
+          dateOfBirth: shareholder.dateOfBirth && shareholder.dateOfBirth.trim() ? new Date(shareholder.dateOfBirth) : null,
+          nationality: shareholder.nationality || '',
+          countryOfResidence: shareholder.countryOfResidence || '',
+          email: shareholder.email,
+          phoneNumber: shareholder.phoneNumber || '',
+          ownershipPercent: shareholder.ownershipPercent,
+        })),
+      });
+    }
+
+    // Create representatives if provided
+    if (representatives && representatives.length > 0) {
+      const representativeData = representatives.map((rep: any) => ({
+        companyId: company.id,
+        firstName: rep.firstName,
+        lastName: rep.lastName,
+        dateOfBirth: rep.dateOfBirth && rep.dateOfBirth.trim() ? new Date(rep.dateOfBirth) : null,
+        nationality: rep.nationality || '',
+        countryOfResidence: rep.countryOfResidence || '',
+        email: rep.email,
+        phoneNumber: rep.phoneNumber || '',
+        role: rep.role,
+        customRole: rep.customRole || null,
+      }));
+      
+      await prisma.representative.createMany({
+        data: representativeData,
+      });
     }
     
     // Generate anniversary events for the new company
@@ -224,7 +275,16 @@ export async function POST(request: NextRequest) {
       console.warn('Failed to invalidate calendar cache:', cacheError);
     }
     
-    return NextResponse.json(company, { status: 201 })
+    // Return company with related data
+    const companyWithRelatedData = await prisma.company.findUnique({
+      where: { id: company.id },
+      include: {
+        shareholders: true,
+        representatives: true,
+      },
+    });
+
+    return NextResponse.json(companyWithRelatedData || company, { status: 201 })
   } catch (error) {
     console.error('Error creating company:', error)
     

@@ -8,10 +8,12 @@ import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useVendorsManagementDB } from "@/hooks/useVendorsManagementDB";
+import { productApiService } from "@/services/api/productApiService";
+import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
 import VendorsLoading from "./loading";
 import dynamic from 'next/dynamic';
-import { Suspense, useCallback } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 // Lazy load heavy components to improve initial bundle size
@@ -79,8 +81,17 @@ const AddEditVendorDialog = dynamic(
   }
 );
 
+const AddProductDialog = dynamic(
+  () => import('@/components/features/AddProductDialog').then(mod => ({ default: mod.AddProductDialog })),
+  {
+    loading: () => null,
+    ssr: false
+  }
+);
+
 export default function VendorsClient() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
+  const queryClient = useQueryClient();
   
   const {
     // Data
@@ -165,6 +176,125 @@ export default function VendorsClient() {
   const handleRetry = useCallback(() => {
     window.location.reload();
   }, []);
+
+  // Product dialog state management
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    currency: 'USD',
+    vendorId: '',
+    cost: '',
+    costCurrency: 'USD',
+    description: ''
+  });
+
+  // Handle opening the Add Product dialog
+  const handleOpenAddProductDialog = useCallback(() => {
+    // Reset product form and auto-set company if one is selected
+    setNewProduct({
+      name: '',
+      price: '',
+      currency: 'USD',
+      vendorId: '',
+      cost: '',
+      costCurrency: 'USD',
+      description: ''
+    });
+    setShowProductDialog(true);
+  }, []);
+
+  // Handle closing the Add Product dialog
+  const handleCloseAddProductDialog = useCallback(() => {
+    setShowProductDialog(false);
+    // Reset form on close
+    setNewProduct({
+      name: '',
+      price: '',
+      currency: 'USD',
+      vendorId: '',
+      cost: '',
+      costCurrency: 'USD',
+      description: ''
+    });
+  }, []);
+
+  // Handle product form changes
+  const handleProductFormChange = useCallback((field: string, value: unknown) => {
+    setNewProduct(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Handle creating a new product
+  const handleCreateProduct = useCallback(async () => {
+    try {
+      // Validation
+      if (!newProduct.name.trim()) {
+        alert('Product name is required');
+        return;
+      }
+      
+      if (!newProduct.price || parseFloat(newProduct.price) <= 0) {
+        alert('Valid price is required');
+        return;
+      }
+
+      // Get the selected company ID
+      const companyId = globalSelectedCompany !== 'all' ? globalSelectedCompany : null;
+      if (!companyId) {
+        alert('Please select a company to add products');
+        return;
+      }
+
+      // Prepare product data for API
+      const productData = {
+        name: newProduct.name.trim(),
+        description: newProduct.description.trim(),
+        price: parseFloat(newProduct.price),
+        currency: newProduct.currency,
+        cost: newProduct.cost ? parseFloat(newProduct.cost) : 0,
+        costCurrency: newProduct.costCurrency,
+        vendorId: newProduct.vendorId || null,
+        isActive: true,
+        companyId: companyId
+      };
+
+      // Create product via API
+      const createdProduct = await productApiService.createProduct(productData);
+      
+      // Invalidate products cache to refresh the product lists
+      await queryClient.invalidateQueries({ 
+        queryKey: ['products'] 
+      });
+      
+      // Also invalidate the specific company's products if we're filtering by company
+      if (globalSelectedCompany !== 'all') {
+        await queryClient.invalidateQueries({ 
+          queryKey: ['products', globalSelectedCompany] 
+        });
+      }
+      
+      // Close dialog and reset form after successful creation
+      setShowProductDialog(false);
+      setNewProduct({
+        name: '',
+        price: '',
+        currency: 'USD',
+        vendorId: '',
+        cost: '',
+        costCurrency: 'USD',
+        description: ''
+      });
+
+      // Show success message (you might want to use a toast notification instead)
+      console.log('Product created successfully:', createdProduct);
+      
+      // Product list will now be refreshed in both vendor dialog and products page
+      
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Failed to create product. Please try again.');
+    }
+  }, [newProduct, globalSelectedCompany, queryClient]);
 
   // Handle loading state with skeleton UI
   if (showLoader) {
@@ -342,10 +472,24 @@ export default function VendorsClient() {
               onProductSearchTermChange={setProductSearchTerm}
               onProductToggle={handleProductToggle}
               onNavigateToProducts={navigateToProducts}
+              onOpenAddProductDialog={handleOpenAddProductDialog}
               onCreateVendor={handleCreateVendor}
               onUpdateVendor={handleUpdateVendor}
               getFilteredProducts={getFilteredProducts}
               getSelectedProducts={getSelectedProducts}
+            />
+
+            {/* Add Product Dialog */}
+            <AddProductDialog
+              isOpen={showProductDialog}
+              onClose={handleCloseAddProductDialog}
+              newProduct={newProduct}
+              selectedCompanyName={getSelectedCompanyName()}
+              availableCurrencies={availableCurrencies}
+              availableVendors={vendors.filter(v => v.isActive)} // Use active vendors from current data
+              onProductFormChange={handleProductFormChange}
+              onCreateProduct={handleCreateProduct}
+              onResetForm={handleCloseAddProductDialog}
             />
           </div>
         </div>

@@ -52,122 +52,191 @@ export const NoteDetailsDialog: React.FC<NoteDetailsDialogProps> = ({
 }) => {
   return (
     <Dialog open={isDetailsDialogOpen} onOpenChange={(open) => !open && closeDetailsDialog()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <StickyNote className="h-5 w-5" />
-            {selectedNote?.title}
-          </DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Enhanced Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <StickyNote className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                {selectedNote?.title}
+              </DialogTitle>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedNote && (
+                  <>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${getPriorityColor(selectedNote.priority)}`}
+                    >
+                      {selectedNote.priority.charAt(0).toUpperCase() + selectedNote.priority.slice(1)} Priority
+                    </Badge>
+                    <Badge variant={selectedNote.isStandalone ? "secondary" : "default"} className="text-xs">
+                      {selectedNote.isStandalone ? "Standalone" : "Event-Related"}
+                    </Badge>
+                    {selectedNote.isCompleted && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                        {selectedNote.isAutoArchived ? "Auto-Archived" : "Completed"}
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </DialogHeader>
         
         {selectedNote && (
-          <div className="space-y-4">
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2">
-              <Badge 
-                variant="outline" 
-                className={getPriorityColor(selectedNote.priority)}
-              >
-                {selectedNote.priority} Priority
-              </Badge>
-              <Badge variant={selectedNote.isStandalone ? "secondary" : "default"}>
-                {selectedNote.isStandalone ? "Standalone Note" : "Event-Related Note"}
-              </Badge>
-              {selectedNote.isCompleted && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  {selectedNote.isAutoArchived ? "Auto-Archived" : "Completed"}
-                  {selectedNote.formattedCompletedAt && ` on ${selectedNote.formattedCompletedAt}`}
-                </Badge>
-              )}
-            </div>
-
-            {/* Event Information for Event-Related notes */}
+          <div className="px-6 pb-6 space-y-6">
+            {/* Event Information Section */}
             {!selectedNote.isStandalone && selectedNote.eventId && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
                   Related Event
-                </h4>
+                </h3>
                 {(() => {
                   const relatedEvent = getFormattedEvent(selectedNote.eventId, selectedNote.event);
                   return relatedEvent ? (
-                    <div className="space-y-2">
+                    <div className="bg-white rounded-lg p-3 border border-blue-200">
                       <button
                         onClick={() => {
                           navigateToCalendar(relatedEvent.date);
                           closeDetailsDialog();
                         }}
-                        className="text-blue-700 hover:text-blue-900 font-medium hover:underline cursor-pointer block"
+                        className="text-blue-700 hover:text-blue-900 font-medium hover:underline cursor-pointer block mb-2"
                       >
-                        {relatedEvent.title}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {relatedEvent.title}
+                        </div>
                       </button>
-                      <p className="text-blue-600 text-sm">
+                      <p className="text-blue-600 text-sm flex items-center gap-2">
+                        <Calendar className="h-3 w-3" />
                         {relatedEvent.formattedDate} at {relatedEvent.time}
                       </p>
                       {relatedEvent.description && (
-                        <p className="text-blue-700 text-sm">{relatedEvent.description}</p>
+                        <p className="text-blue-700 text-sm mt-2 pl-5">{relatedEvent.description}</p>
                       )}
                     </div>
                   ) : (
-                    <p className="text-blue-600">Event not found</p>
+                    <div className="bg-white rounded-lg p-3 border border-blue-200">
+                      <p className="text-blue-600 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Event not found or no longer available
+                      </p>
+                    </div>
                   );
                 })()}
               </div>
             )}
 
-            {/* Company Information */}
+            {/* Company Information Section */}
             {selectedNote.companyId && getCompanyName(selectedNote.companyId) && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-800 mb-1 flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Company
-                </h4>
-                <p className="text-gray-700">{getCompanyName(selectedNote.companyId)}</p>
+              <div className="bg-purple-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+                  Company Association
+                </h3>
+                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <p className="text-gray-700 flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-purple-600" />
+                    <span className="font-medium">{getCompanyName(selectedNote.companyId)}</span>
+                  </p>
+                </div>
               </div>
             )}
 
-            {/* Tags */}
+            {/* Tags Section */}
             {selectedNote.tags.length > 0 && (
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-2">Tags</h4>
-                <div className="flex flex-wrap gap-1">
+              <div className="bg-orange-50 rounded-lg p-4 space-y-3">
+                <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+                  Tags
+                </h3>
+                <div className="flex flex-wrap gap-2">
                   {selectedNote.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
+                    <Badge key={index} variant="outline" className="text-xs bg-white border-orange-200 text-orange-700">
+                      #{tag}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Content */}
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Content</h4>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedNote.content}</p>
+            {/* Content Section */}
+            <div className="bg-green-50 rounded-lg p-4 space-y-3">
+              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                Note Content
+              </h3>
+              <div className="bg-white rounded-lg p-4 border border-green-200">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedNote.content}</p>
               </div>
             </div>
 
-            {/* Metadata */}
-            <div className="border-t pt-4 space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Created:</span>
-                <span>{selectedNote.formattedCreatedAt} at {selectedNote.createdAt.toLocaleTimeString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Last Updated:</span>
-                <span>{selectedNote.formattedUpdatedAt} at {selectedNote.updatedAt.toLocaleTimeString()}</span>
-              </div>
-              {selectedNote.completedAt && (
-                <div className="flex justify-between">
-                  <span>Completed:</span>
-                  <span>{selectedNote.formattedCompletedAt} at {selectedNote.completedAt.toLocaleTimeString()}</span>
+            {/* Metadata Section */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-gray-500 rounded-full"></div>
+                Note Details
+              </h3>
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <Calendar className="h-3 w-3" />
+                        Created:
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {selectedNote.formattedCreatedAt}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <Edit className="h-3 w-3" />
+                        Last Updated:
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {selectedNote.formattedUpdatedAt}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Time Created:</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedNote.createdAt.toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Time Updated:</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedNote.updatedAt.toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              )}
+                {selectedNote.completedAt && (
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-600" />
+                        Completed:
+                      </span>
+                      <span className="font-medium text-green-700">
+                        {selectedNote.formattedCompletedAt} at {selectedNote.completedAt.toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            {/* Action Buttons Section */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
               {selectedNote.isCompleted ? (
                 <Button
                   variant="outline"
@@ -175,7 +244,7 @@ export const NoteDetailsDialog: React.FC<NoteDetailsDialogProps> = ({
                     handleRestoreNote(selectedNote.id);
                     closeDetailsDialog();
                   }}
-                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-4"
                 >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Restore Note
@@ -188,10 +257,10 @@ export const NoteDetailsDialog: React.FC<NoteDetailsDialogProps> = ({
                       handleCompleteNote(selectedNote.id);
                       closeDetailsDialog();
                     }}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50 px-4"
                   >
                     <Check className="w-4 h-4 mr-2" />
-                    Complete
+                    Mark Complete
                   </Button>
                   <Button
                     variant="outline"
@@ -199,9 +268,10 @@ export const NoteDetailsDialog: React.FC<NoteDetailsDialogProps> = ({
                       handleEditNote(selectedNote);
                       closeDetailsDialog();
                     }}
+                    className="px-4"
                   >
                     <Edit className="w-4 h-4 mr-2" />
-                    Edit
+                    Edit Note
                   </Button>
                 </>
               )}
@@ -211,7 +281,7 @@ export const NoteDetailsDialog: React.FC<NoteDetailsDialogProps> = ({
                   handleDeleteNote(selectedNote.id);
                   closeDetailsDialog();
                 }}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 px-4"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete

@@ -195,6 +195,9 @@ export async function GET(request: NextRequest) {
           telegramNumber: true,
           mainContactEmail: true,
           mainContactType: true,
+          entityType: true,
+          customEntityType: true,
+          fiscalYearEnd: true,
           createdAt: true,
           updatedAt: true,
           // Include representatives and shareholders for UI components

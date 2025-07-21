@@ -15,6 +15,9 @@ export interface CompanyFormData {
   email: string;
   website: string;
   status: string;
+  entityType?: string;
+  customEntityType?: string;
+  fiscalYearEnd?: string;
   // Social Media URLs (optional)
   facebookUrl: string;
   instagramUrl: string;
@@ -96,6 +99,16 @@ export class CompanyValidationService {
     if (!formData.baseCurrency.trim()) {
       errors.push('Base Currency is required');
       fieldErrors.baseCurrency = ['Base Currency is required'];
+    }
+
+    if (!formData.entityType || !formData.entityType.trim()) {
+      errors.push('Entity Type is required');
+      fieldErrors.entityType = ['Entity Type is required'];
+    }
+
+    if (formData.entityType === 'Other' && (!formData.customEntityType || !formData.customEntityType.trim())) {
+      errors.push('Please specify entity type when "Other" is selected');
+      fieldErrors.customEntityType = ['Please specify entity type'];
     }
 
     if (!formData.email.trim()) {
@@ -343,6 +356,17 @@ export class CompanyValidationService {
         if (!value.trim()) {
           errors.push('Base Currency is required');
         }
+        break;
+
+      case 'entityType':
+        if (!value.trim()) {
+          errors.push('Entity Type is required');
+        }
+        break;
+
+      case 'customEntityType':
+        // Validation only needed when parent entityType is 'Other'
+        // This should be handled in context
         break;
     }
 
