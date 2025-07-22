@@ -38,7 +38,11 @@ export class CurrencyRatesStorageService {
       if (savedRates) {
         const parsed = JSON.parse(savedRates);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Ensure all rates are valid numbers
+          return parsed.map(rate => ({
+            ...rate,
+            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
+          }));
         }
       }
     } catch (error) {
@@ -56,7 +60,11 @@ export class CurrencyRatesStorageService {
       if (savedRates) {
         const parsed = JSON.parse(savedRates);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Ensure all rates are valid numbers
+          return parsed.map(rate => ({
+            ...rate,
+            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
+          }));
         }
       }
     } catch (error) {

@@ -33,23 +33,63 @@ export interface CurrencyRatesManagementHook {
   handleRateChange: (code: string, newRate: string, type: 'fiat' | 'crypto') => void;
   handleSaveRates: () => Promise<void>;
   handleResetToDefaults: (type: 'fiat' | 'crypto') => void;
+  updateRatesFromAPI?: (apiRates: CurrencyRate[], updateType: 'latest' | 'historical') => void;
 }
 
-export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
-  // Core Data State
-  const [fiatRates, setFiatRates] = useState<CurrencyRate[]>([]);
-  const [cryptoRates, setCryptoRates] = useState<CurrencyRate[]>([]);
+interface InitialCurrencyData {
+  fiatRates: EnhancedCurrencyRate[];
+  cryptoRates: EnhancedCurrencyRate[];
+  baseCurrency: string;
+  lastSaved: string;
+  metadata?: {
+    userId?: string;
+    companyId?: string;
+    cached?: boolean;
+  };
+}
+
+export const useCurrencyRatesManagement = (initialData?: InitialCurrencyData): CurrencyRatesManagementHook => {
+  // Core Data State - initialize with SSR data if available
+  const [fiatRates, setFiatRates] = useState<CurrencyRate[]>(
+    initialData?.fiatRates.map(rate => ({
+      code: rate.code,
+      name: rate.name,
+      rate: rate.rate,
+      type: rate.type,
+      lastUpdated: rate.lastUpdated
+    })) || []
+  );
+  const [cryptoRates, setCryptoRates] = useState<CurrencyRate[]>(
+    initialData?.cryptoRates.map(rate => ({
+      code: rate.code,
+      name: rate.name,
+      rate: rate.rate,
+      type: rate.type,
+      lastUpdated: rate.lastUpdated
+    })) || []
+  );
   
-  // UI State
-  const [isLoaded, setIsLoaded] = useState(false);
+  // UI State - set as loaded if we have initial data
+  const [isLoaded, setIsLoaded] = useState(!!initialData);
   const [activeTab, setActiveTab] = useState<'fiat' | 'crypto'>('fiat');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   // Validation State
   const [validationErrors, setValidationErrors] = useState<Map<string, string>>(new Map());
 
-  // Load data on mount
+  // Load data on mount (only if no initial data provided)
   useEffect(() => {
+    if (initialData) {
+      // If we have SSR data, still sync with localStorage for client-side persistence
+      try {
+        CurrencyRatesStorageService.saveFiatRates(fiatRates);
+        CurrencyRatesStorageService.saveCryptoRates(cryptoRates);
+      } catch (error) {
+        console.error('Error syncing SSR data with localStorage:', error);
+      }
+      return;
+    }
+
     const loadData = async () => {
       try {
         const data = await CurrencyRatesStorageService.loadAllCurrencyRatesData();
@@ -70,7 +110,7 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
     };
     
     loadData();
-  }, []);
+  }, [initialData]);
 
   // Auto-save data when it changes
   useEffect(() => {
@@ -217,6 +257,37 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
     }
   }, [fiatRates, cryptoRates]);
 
+  // Update rates from API data
+  const updateRatesFromAPI = useCallback((apiRates: CurrencyRate[], updateType: 'latest' | 'historical') => {
+    try {
+      // Use business service to merge API rates with existing rates
+      const { fiatRates: updatedFiatRates, cryptoRates: updatedCryptoRates } = 
+        CurrencyRatesBusinessService.mergeWithAPIRates(fiatRates, cryptoRates, apiRates);
+      
+      // Update state with merged rates
+      setFiatRates(updatedFiatRates);
+      setCryptoRates(updatedCryptoRates);
+      
+      // Create update summary
+      const fiatSummary = CurrencyRatesBusinessService.createUpdateSummary(fiatRates, updatedFiatRates);
+      const cryptoSummary = CurrencyRatesBusinessService.createUpdateSummary(cryptoRates, updatedCryptoRates);
+      
+      console.log(`API Update (${updateType}):`, {
+        fiat: fiatSummary,
+        crypto: cryptoSummary
+      });
+      
+      // Trigger event to notify other components
+      window.dispatchEvent(new CustomEvent('currencyRatesUpdated', {
+        detail: { updateType, apiRates }
+      }));
+      
+    } catch (error) {
+      console.error('Error updating rates from API:', error);
+      toast.error('Failed to update currency rates from API');
+    }
+  }, [fiatRates, cryptoRates]);
+
   return {
     // Core Data
     fiatRates,
@@ -240,6 +311,7 @@ export const useCurrencyRatesManagement = (): CurrencyRatesManagementHook => {
     // Rate Management
     handleRateChange,
     handleSaveRates,
-    handleResetToDefaults
+    handleResetToDefaults,
+    updateRatesFromAPI
   };
 };
