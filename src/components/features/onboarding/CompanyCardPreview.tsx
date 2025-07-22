@@ -178,7 +178,7 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
             {formData.vatNumber && (
               <div className="group flex items-center relative">
                 <p className="text-xs text-gray-600">
-                  VAT: {formData.vatNumber}
+                  Tax ID: {formData.vatNumber}
                 </p>
               </div>
             )}

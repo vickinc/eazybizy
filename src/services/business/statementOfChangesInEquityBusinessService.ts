@@ -123,7 +123,7 @@ export class StatementOfChangesInEquityBusinessService {
     currentPeriod: StatementPeriod,
     priorPeriod?: StatementPeriod
   ) {
-    const accounts = ChartOfAccountsStorageService.getAll();
+    const accounts = ChartOfAccountsStorageService.getAccounts();
     
     // Filter for equity accounts (account type 5)
     const equityAccounts = accounts.filter(account => 

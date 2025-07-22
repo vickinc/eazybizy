@@ -526,7 +526,7 @@ export const AddEditClientDialogEnhanced: React.FC<AddEditClientDialogEnhancedPr
                       id="vatNumber"
                       value={formData.vatNumber}
                       onChange={(e) => handleInputChange('vatNumber', e.target.value)}
-                      placeholder="VAT registration number"
+                      placeholder="Tax ID/VAT registration number"
                     />
                   </div>
                 </div>

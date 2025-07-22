@@ -400,10 +400,10 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   className={`text-xs ${isPassive ? 'text-gray-500' : 'text-gray-600'} cursor-pointer`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyToClipboard(company.vatNumber!, 'VAT Number', company.id);
+                    copyToClipboard(company.vatNumber!, 'Tax ID', company.id);
                   }}
                 >
-                  VAT: {company.vatNumber}
+                  Tax ID: {company.vatNumber}
                 </p>
                 <Button
                   variant="ghost"
@@ -411,11 +411,11 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   className="h-5 w-5 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyToClipboard(company.vatNumber!, 'VAT Number', company.id);
+                    copyToClipboard(company.vatNumber!, 'Tax ID', company.id);
                   }}
-                  aria-label={`Copy VAT number: ${company.vatNumber}`}
+                  aria-label={`Copy Tax ID: ${company.vatNumber}`}
                 >
-                  {copiedFields[`${company.id}-VAT Number`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
+                  {copiedFields[`${company.id}-Tax ID`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                 </Button>
               </div>
             )}

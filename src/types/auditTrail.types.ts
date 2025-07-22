@@ -140,7 +140,6 @@ export type AuditAction =
   // Data integrity
   | 'backup'
   | 'restore'
-  | 'data-migration'
   | 'reconciliation'
   | 'validation'
   

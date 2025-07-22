@@ -452,12 +452,12 @@ export class CashflowBusinessService {
     filteredManualEntries: ManualCashflowEntry[],
     viewFilter: 'all' | 'automatic' | 'manual' = 'all'
   ): CashflowSummary {
-    const totalInflow = 0;
-    const totalOutflow = 0;
-    const totalAutoInflow = 0;
-    const totalAutoOutflow = 0;
-    const totalManualInflow = 0;
-    const totalManualOutflow = 0;
+    let totalInflow = 0;
+    let totalOutflow = 0;
+    let totalAutoInflow = 0;
+    let totalAutoOutflow = 0;
+    let totalManualInflow = 0;
+    let totalManualOutflow = 0;
     
     accounts.forEach(account => {
       const cashflow = this.calculateAccountCashflow(

@@ -1,28 +1,28 @@
-export interface VATTreatment {
+export interface TaxTreatment {
   id: string;
-  code: string; // e.g., "VAT22", "VAT9", "EXEMPT"
-  name: string; // e.g., "Value Added Tax 22%"
+  code: string; // e.g., "TAX22", "TAX9", "EXEMPT"
+  name: string; // e.g., "VAT/Sales Tax/GST 22%"
   description: string;
   rate: number; // Tax rate percentage (0-100)
   isActive: boolean;
-  category: VATCategory;
-  applicability: VATApplicability[];
+  category: TaxCategory;
+  applicability: TaxApplicability[];
   isDefault: boolean; // Whether this is a system default treatment
   createdAt: string;
   updatedAt: string;
 }
 
-export interface VATTreatmentFormData {
+export interface TaxTreatmentFormData {
   code: string;
   name: string;
   description: string;
   rate: string; // Form input as string, converted to number in business logic
-  category: VATCategory;
-  applicability: VATApplicability[];
+  category: TaxCategory;
+  applicability: TaxApplicability[];
   isActive: boolean;
 }
 
-export type VATCategory = 
+export type TaxCategory = 
   | 'standard' 
   | 'reduced' 
   | 'exempt' 
@@ -31,7 +31,7 @@ export type VATCategory =
   | 'margin'
   | 'property';
 
-export type VATApplicability = 
+export type TaxApplicability = 
   | 'sales' 
   | 'purchases' 
   | 'assets' 
@@ -39,33 +39,33 @@ export type VATApplicability =
   | 'import'
   | 'export';
 
-export interface VATTreatmentStats {
+export interface TaxTreatmentStats {
   total: number;
   active: number;
   inactive: number;
   byCategory: {
-    [key in VATCategory]: number;
+    [key in TaxCategory]: number;
   };
 }
 
-export interface VATTreatmentFilter {
+export interface TaxTreatmentFilter {
   search: string;
-  category: VATCategory | 'all';
+  category: TaxCategory | 'all';
   isActive: boolean | 'all';
-  applicability: VATApplicability | 'all';
+  applicability: TaxApplicability | 'all';
   rateRange: {
     min: number;
     max: number;
   };
 }
 
-export interface VATTreatmentTableSortConfig {
+export interface TaxTreatmentTableSortConfig {
   field: 'code' | 'name' | 'rate' | 'category' | 'createdAt';
   direction: 'asc' | 'desc';
 }
 
 // Constants for form options and validation
-export const VAT_CATEGORIES: VATCategory[] = [
+export const TAX_CATEGORIES: TaxCategory[] = [
   'standard',
   'reduced', 
   'exempt',
@@ -75,7 +75,7 @@ export const VAT_CATEGORIES: VATCategory[] = [
   'property'
 ];
 
-export const VAT_APPLICABILITIES: VATApplicability[] = [
+export const TAX_APPLICABILITIES: TaxApplicability[] = [
   'sales',
   'purchases',
   'assets',
@@ -84,17 +84,17 @@ export const VAT_APPLICABILITIES: VATApplicability[] = [
   'export'
 ];
 
-export const VAT_CATEGORY_DESCRIPTIONS = {
-  'standard': 'Standard VAT rate for most goods and services',
-  'reduced': 'Reduced VAT rate for specific goods/services',
-  'exempt': 'VAT exempt transactions',
-  'special': 'Special VAT schemes and treatments',
-  'acquisition': 'VAT on acquisition of assets',
+export const TAX_CATEGORY_DESCRIPTIONS = {
+  'standard': 'Standard tax rate (VAT/Sales Tax/GST) for most goods and services',
+  'reduced': 'Reduced tax rate (VAT/Sales Tax/GST) for specific goods/services',
+  'exempt': 'Tax exempt transactions',
+  'special': 'Special tax schemes and treatments',
+  'acquisition': 'Tax (VAT/Sales Tax/GST) on acquisition of assets',
   'margin': 'Margin scheme taxation',
-  'property': 'Property and real estate related VAT'
+  'property': 'Property and real estate related tax (VAT/Sales Tax/GST)'
 } as const;
 
-export const VAT_APPLICABILITY_DESCRIPTIONS = {
+export const TAX_APPLICABILITY_DESCRIPTIONS = {
   'sales': 'Apply to sales transactions',
   'purchases': 'Apply to purchase transactions',
   'assets': 'Apply to asset acquisitions',
@@ -103,8 +103,8 @@ export const VAT_APPLICABILITY_DESCRIPTIONS = {
   'export': 'Apply to export transactions'
 } as const;
 
-// Default VAT treatments based on current system
-export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'updatedAt'>[] = [
+// Default tax treatments based on current system
+export const DEFAULT_TAX_TREATMENTS: Omit<TaxTreatment, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
     code: 'NOT_TURNOVER',
     name: 'Not included in Turnover',
@@ -116,9 +116,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_22',
-    name: 'Value Added Tax 22%',
-    description: 'Standard VAT rate of 22%',
+    code: 'TAX_22',
+    name: 'VAT/Sales Tax/GST 22%',
+    description: 'Standard tax rate (VAT/Sales Tax/GST) of 22%',
     rate: 22,
     isActive: true,
     category: 'standard',
@@ -126,9 +126,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_9',
-    name: 'Value Added Tax 9%',
-    description: 'Reduced VAT rate of 9%',
+    code: 'TAX_9',
+    name: 'VAT/Sales Tax/GST 9%',
+    description: 'Reduced tax rate (VAT/Sales Tax/GST) of 9%',
     rate: 9,
     isActive: true,
     category: 'reduced',
@@ -136,9 +136,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_0',
-    name: 'Value Added Tax 0%',
-    description: 'Zero-rated VAT for specific goods and services',
+    code: 'TAX_0',
+    name: 'VAT/Sales Tax/GST 0%',
+    description: 'Zero-rated tax (VAT/Sales Tax/GST) for specific goods and services',
     rate: 0,
     isActive: true,
     category: 'exempt',
@@ -146,9 +146,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_EXEMPT',
-    name: 'Turnover exempt from VAT',
-    description: 'Transactions completely exempt from VAT',
+    code: 'TAX_EXEMPT',
+    name: 'Turnover exempt from tax (VAT/Sales Tax/GST)',
+    description: 'Transactions completely exempt from tax (VAT/Sales Tax/GST)',
     rate: 0,
     isActive: true,
     category: 'exempt',
@@ -156,9 +156,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_ACQUISITION',
-    name: 'VAT on acquisition of non-current assets',
-    description: 'Special VAT treatment for non-current asset acquisitions',
+    code: 'TAX_ACQUISITION',
+    name: 'Tax (VAT/Sales Tax/GST) on acquisition of non-current assets',
+    description: 'Special tax treatment for non-current asset acquisitions',
     rate: 0,
     isActive: true,
     category: 'acquisition',
@@ -166,7 +166,7 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_MARGIN',
+    code: 'TAX_MARGIN',
     name: 'Taxation on the profit margin',
     description: 'Margin scheme taxation for second-hand goods, works of art, antiques and collectors items',
     rate: 0,
@@ -176,9 +176,9 @@ export const DEFAULT_VAT_TREATMENTS: Omit<VATTreatment, 'id' | 'createdAt' | 'up
     isDefault: true
   },
   {
-    code: 'VAT_PROPERTY',
+    code: 'TAX_PROPERTY',
     name: 'Immovable property and scrap metal',
-    description: 'Special VAT treatment for immovable property and scrap metal transactions',
+    description: 'Special tax treatment for immovable property and scrap metal transactions',
     rate: 0,
     isActive: true,
     category: 'property',

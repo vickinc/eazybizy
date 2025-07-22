@@ -167,9 +167,16 @@ export default function EntriesPage() {
 
       {/* Filters */}
       <EntriesFilterBar
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        activeCompanies={activeCompanies}
+        viewFilter={filters.viewFilter}
+        groupedView={groupedView}
+        selectedPeriod={filters.period}
+        customDateRange={filters.customDateRange}
+        searchTerm={filters.searchTerm}
+        setViewFilter={(filter) => handleFilterChange({ viewFilter: filter })}
+        setGroupedView={toggleGroupedView}
+        setSelectedPeriod={(period) => handleFilterChange({ selectedPeriod: period })}
+        setCustomDateRange={(range) => handleFilterChange({ customDateRange: range })}
+        setSearchTerm={(term) => handleFilterChange({ searchTerm: term })}
       />
 
       {/* Action Buttons */}

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartOfAccount } from '@/types';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/types/bookkeeping.types';
-import { ChartOfAccountsStorageService } from '@/services/storage';
+import { useChartOfAccounts } from '@/hooks/useChartOfAccountsAPI';
 
 interface Company {
   id: number;
@@ -66,10 +66,12 @@ export const BookkeepingEntryDialog: React.FC<BookkeepingEntryDialogProps> = ({
   onEntrySubmit,
   formatCurrency
 }) => {
-  // Get Chart of Accounts for category selection
-  const chartOfAccounts = useMemo(() => {
-    return ChartOfAccountsStorageService.getAccounts();
-  }, []);
+  // Get Chart of Accounts from API
+  const { data: accountsResponse } = useChartOfAccounts({
+    take: 1000 // Get all accounts
+  });
+  
+  const chartOfAccounts = accountsResponse?.data || [];
 
   // Filter accounts based on entry type
   const availableCategories = useMemo(() => {

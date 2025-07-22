@@ -489,7 +489,7 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
 
             {/* VAT/GST Number */}
             <div>
-              <Label htmlFor="vatNumber">VAT/GST Number</Label>
+              <Label htmlFor="vatNumber">Tax ID/VAT/GST Number</Label>
               <Input
                 id="vatNumber"
                 name="vatNumber"
@@ -499,7 +499,7 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
                 className="mt-1"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Your VAT/GST registration number (if applicable)
+                Your Tax ID/VAT/GST registration number (if applicable)
               </p>
             </div>
 
@@ -614,7 +614,7 @@ export const CompanySetupStep: React.FC<CompanySetupStepProps> = ({
                   <li>• <strong>Base Currency:</strong> The primary currency used for financial reporting and accounting (required)</li>
                   <li>• <strong>Business License Number:</strong> Additional license number if your business requires specific licensing (optional)</li>
                   <li>
-                    • <strong>VAT/GST Number:</strong> Value Added Tax (VAT) or Goods and Services Tax (GST) registration number.
+                    • <strong>Tax ID/VAT/GST Number:</strong> Tax ID, Value Added Tax (VAT) or Goods and Services Tax (GST) registration number.
                     <br />
                     <span className="ml-3">VAT is used in EU and other countries, GST is used in countries like Australia, Canada, and India.</span>
                     <br />

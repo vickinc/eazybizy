@@ -8,4 +8,4 @@ export * from './invoiceStorageService';
 export * from './journalEntryStorageService';
 export * from './productStorageService';
 export * from './settingsStorageService';
-export * from './vatTreatmentStorageService';
+export * from './taxTreatmentStorageService';

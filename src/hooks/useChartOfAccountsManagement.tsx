@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   ChartOfAccount,
@@ -10,7 +10,11 @@ import {
 } from '@/types/chartOfAccounts.types';
 import { ChartOfAccountsBusinessService } from '@/services/business/chartOfAccountsBusinessService';
 import { ChartOfAccountsValidationService } from '@/services/business/chartOfAccountsValidationService';
-import { ChartOfAccountsStorageService } from '@/services/storage';
+import { 
+  useChartOfAccounts, 
+  useChartOfAccountsOperations,
+  useBulkCreateChartOfAccounts
+} from '@/hooks/useChartOfAccountsAPI';
 
 export interface ChartOfAccountsManagementHook {
   // Data
@@ -49,6 +53,7 @@ export interface ChartOfAccountsManagementHook {
   exportToCSV: () => string;
   initializeDefaultData: () => void;
   forceRefreshCompleteDataset: () => void;
+  clearAllData: () => void;
 }
 
 const initialFormData: ChartOfAccountFormData = {
@@ -71,10 +76,6 @@ const initialFilter: ChartOfAccountsFilter = {
 };
 
 export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook => {
-  // Core Data State
-  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
   // Form State
   const [formData, setFormData] = useState<ChartOfAccountFormData>(initialFormData);
   const [editingAccount, setEditingAccount] = useState<ChartOfAccount | null>(null);
@@ -82,56 +83,60 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
   
   // Filter State
   const [filter, setFilter] = useState<ChartOfAccountsFilter>(initialFilter);
+  
+  // API Query parameters based on filter
+  const queryParams = useMemo(() => ({
+    search: filter.search,
+    type: filter.type,
+    category: filter.category,
+    isActive: filter.isActive,
+    accountType: filter.accountType,
+    take: 1000, // Get all accounts for now (can be paginated later)
+  }), [filter]);
+  
+  // API Hooks
+  const { data: accountsResponse, isLoading, error } = useChartOfAccounts(queryParams);
+  const { createAccount, updateAccount, deleteAccount, bulkDeleteAccounts } = useChartOfAccountsOperations();
+  const bulkCreate = useBulkCreateChartOfAccounts();
+  
+  // Derived state
+  const accounts = accountsResponse?.data || [];
+  const isLoaded = !isLoading;
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedAccounts = ChartOfAccountsStorageService.getAccounts();
-      
-      // If no accounts exist, initialize with default data
-      if (savedAccounts.length === 0) {
-        const defaultAccounts = ChartOfAccountsBusinessService.initializeDefaultAccounts();
-        setAccounts(defaultAccounts);
-      } else {
-        setAccounts(savedAccounts);
-      }
-      
-      setIsLoaded(true);
-    } catch (error) {
-      console.error('Error loading chart of accounts:', error);
-      setIsLoaded(true);
-    }
-  }, []);
-
-  // Save accounts to localStorage when changed
-  useEffect(() => {
-    if (isLoaded && accounts.length > 0) {
-      ChartOfAccountsStorageService.saveAccounts(accounts);
-    }
-  }, [accounts, isLoaded]);
-
-  // Filtered accounts calculation
+  // Filtered accounts are now handled by the API query, but we still enrich them
   const filteredAccounts = useMemo(() => {
-    // First enrich accounts with calculated fields including categories
+    // Enrich accounts with calculated fields
     const enriched = ChartOfAccountsBusinessService.enrichAccountsWithCalculatedFields(accounts);
-    // Then filter the enriched accounts
-    const filtered = ChartOfAccountsBusinessService.filterAccounts(enriched, filter);
-    // Finally sort using the new signature
-    return ChartOfAccountsBusinessService.sortAccounts(filtered, { field: 'code', direction: 'asc' });
-  }, [accounts, filter]);
-
-  // Stats calculation
-  const stats = useMemo(() => {
-    const enriched = ChartOfAccountsBusinessService.enrichAccountsWithCalculatedFields(accounts);
-    return ChartOfAccountsBusinessService.calculateStats(enriched);
+    // Sort the enriched accounts
+    return ChartOfAccountsBusinessService.sortAccounts(enriched, { field: 'code', direction: 'asc' });
   }, [accounts]);
+
+  // Stats calculation from API response or calculated locally
+  const stats = useMemo(() => {
+    if (accountsResponse?.statistics) {
+      // Use API statistics if available
+      return {
+        totalAccounts: accountsResponse.statistics.total,
+        activeAccounts: accountsResponse.statistics.activeStats?.active || 0,
+        inactiveAccounts: accountsResponse.statistics.activeStats?.inactive || 0,
+        totalBalance: accountsResponse.statistics.totalBalance,
+        averageBalance: accountsResponse.statistics.averageBalance,
+        accountsByType: accountsResponse.statistics.typeStats || {},
+        accountsByCategory: {} // Not provided by API yet
+      };
+    } else {
+      // Fallback to local calculation
+      const enriched = ChartOfAccountsBusinessService.enrichAccountsWithCalculatedFields(accounts);
+      return ChartOfAccountsBusinessService.calculateStats(enriched);
+    }
+  }, [accounts, accountsResponse?.statistics]);
 
   // Form Handlers
   const handleFormInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+  const handleFormSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     const validation = ChartOfAccountsValidationService.validateAccountForm(
@@ -144,28 +149,25 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
       return;
     }
 
-    if (editingAccount) {
-      // Update existing account
-      const updatedAccount = ChartOfAccountsBusinessService.updateAccountFromFormData(
-        editingAccount, 
-        formData
-      );
-      
-      setAccounts(prev => prev.map(account => 
-        account.id === editingAccount.id ? updatedAccount : account
-      ));
-      
-      toast.success('Account updated successfully');
-    } else {
-      // Add new account
-      const newAccount = ChartOfAccountsBusinessService.createAccountFromFormData(formData);
-      setAccounts(prev => [newAccount, ...prev]);
-      toast.success('Account added successfully');
-    }
+    try {
+      if (editingAccount) {
+        // Update existing account via API
+        await updateAccount.mutateAsync({
+          id: editingAccount.id,
+          data: formData
+        });
+      } else {
+        // Create new account via API
+        await createAccount.mutateAsync(formData);
+      }
 
-    resetForm();
-    setShowAccountDialog(false);
-  }, [formData, editingAccount]);
+      resetForm();
+      setShowAccountDialog(false);
+    } catch (error) {
+      // Error handling is done in the mutation hooks
+      console.error('Form submission error:', error);
+    }
+  }, [formData, editingAccount, updateAccount, createAccount]);
 
   const handleEditAccount = useCallback((account: ChartOfAccount) => {
     setEditingAccount(account);
@@ -181,7 +183,7 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
     setShowAccountDialog(true);
   }, []);
 
-  const handleDeleteAccount = useCallback((id: string) => {
+  const handleDeleteAccount = useCallback(async (id: string) => {
     if (confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
       const validation = ChartOfAccountsValidationService.validateAccountDeletion(id);
       
@@ -190,30 +192,37 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
         return;
       }
 
-      setAccounts(prev => prev.filter(account => account.id !== id));
-      toast.success('Account deleted successfully');
+      try {
+        await deleteAccount.mutateAsync(id);
+      } catch (error) {
+        console.error('Delete account error:', error);
+      }
     }
-  }, []);
+  }, [deleteAccount]);
 
-  const handleDeactivateAccount = useCallback((id: string) => {
+  const handleDeactivateAccount = useCallback(async (id: string) => {
     if (confirm('Are you sure you want to deactivate this account?')) {
-      setAccounts(prev => prev.map(account => 
-        account.id === id 
-          ? { ...account, isActive: false, updatedAt: new Date().toISOString() }
-          : account
-      ));
-      toast.success('Account deactivated successfully');
+      try {
+        await updateAccount.mutateAsync({
+          id,
+          data: { isActive: false }
+        });
+      } catch (error) {
+        console.error('Deactivate account error:', error);
+      }
     }
-  }, []);
+  }, [updateAccount]);
 
-  const handleReactivateAccount = useCallback((id: string) => {
-    setAccounts(prev => prev.map(account => 
-      account.id === id 
-        ? { ...account, isActive: true, updatedAt: new Date().toISOString() }
-        : account
-    ));
-    toast.success('Account reactivated successfully');
-  }, []);
+  const handleReactivateAccount = useCallback(async (id: string) => {
+    try {
+      await updateAccount.mutateAsync({
+        id,
+        data: { isActive: true }
+      });
+    } catch (error) {
+      console.error('Reactivate account error:', error);
+    }
+  }, [updateAccount]);
 
   const resetForm = useCallback(() => {
     setFormData(initialFormData);
@@ -242,21 +251,66 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
     return ChartOfAccountsBusinessService.exportToCSV(filteredAccounts);
   }, [filteredAccounts]);
 
-  const initializeDefaultData = useCallback(() => {
-    const defaultAccounts = ChartOfAccountsBusinessService.initializeDefaultAccounts();
-    setAccounts(defaultAccounts);
-    toast.success('Default chart of accounts loaded successfully');
-  }, []);
+  const initializeDefaultData = useCallback(async () => {
+    try {
+      // Get clean default accounts (no localStorage involved)
+      const defaultAccounts = ChartOfAccountsBusinessService.initializeDefaultAccounts();
+      const accountsToCreate = defaultAccounts.map(account => ({
+        code: account.code,
+        name: account.name,
+        type: account.type,
+        category: account.category,
+        subcategory: account.subcategory,
+        vat: account.vat,
+        relatedVendor: account.relatedVendor || '',
+        accountType: account.accountType,
+        ifrsReference: account.ifrsReference,
+      }));
+      
+      await bulkCreate.mutateAsync(accountsToCreate);
+      toast.success(`Successfully created ${accountsToCreate.length} default chart of accounts`);
+    } catch (error) {
+      console.error('Initialize default data error:', error);
+      toast.error('Failed to create default chart of accounts');
+    }
+  }, [bulkCreate]);
 
-  const forceRefreshCompleteDataset = useCallback(() => {
-    // Clear existing data first
-    ChartOfAccountsStorageService.clearAllAccounts();
-    
-    // Force reload with complete dataset
-    const completeAccounts = ChartOfAccountsBusinessService.initializeDefaultAccounts();
-    setAccounts(completeAccounts);
-    toast.success(`Complete chart of accounts loaded successfully (${completeAccounts.length} accounts)`);
-  }, []);
+  const forceRefreshCompleteDataset = useCallback(async () => {
+    try {
+      // Get complete default dataset (no localStorage involved)
+      const completeAccounts = ChartOfAccountsBusinessService.getCompleteDefaultDataset();
+      const accountsToCreate = completeAccounts.map(account => ({
+        code: account.code,
+        name: account.name,
+        type: account.type,
+        category: account.category,
+        subcategory: account.subcategory,
+        vat: account.vat,
+        relatedVendor: account.relatedVendor || '',
+        accountType: account.accountType,
+        ifrsReference: account.ifrsReference,
+      }));
+      
+      await bulkCreate.mutateAsync(accountsToCreate);
+      toast.success(`Force refreshed ${accountsToCreate.length} chart of accounts`);
+    } catch (error) {
+      console.error('Force refresh complete dataset error:', error);
+      toast.error('Failed to force refresh chart of accounts');
+    }
+  }, [bulkCreate]);
+
+  const clearAllData = useCallback(async () => {
+    if (confirm('Are you sure you want to clear all chart of accounts data? This action cannot be undone.')) {
+      try {
+        // Delete accounts with null companyId (the 218 accounts showing)
+        await bulkDeleteAccounts.mutateAsync('null');
+        toast.success('Successfully cleared all chart of accounts data');
+      } catch (error) {
+        console.error('Clear all data error:', error);
+        toast.error('Failed to clear chart of accounts data');
+      }
+    }
+  }, [bulkDeleteAccounts]);
 
   return {
     // Data
@@ -294,6 +348,7 @@ export const useChartOfAccountsManagement = (): ChartOfAccountsManagementHook =>
     searchAccounts,
     exportToCSV,
     initializeDefaultData,
-    forceRefreshCompleteDataset
+    forceRefreshCompleteDataset,
+    clearAllData
   };
 };

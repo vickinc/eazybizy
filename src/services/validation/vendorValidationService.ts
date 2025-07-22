@@ -50,9 +50,9 @@ export class VendorValidationService {
       errors.push('Please enter a valid phone number');
     }
 
-    // VAT number validation (if provided)
+    // Tax ID/VAT number validation (if provided)
     if (vendor.vatNr.trim() && vendor.vatNr.trim().length < 2) {
-      errors.push('VAT number must be at least 2 characters');
+      errors.push('Tax ID/VAT number must be at least 2 characters');
     }
 
     return {

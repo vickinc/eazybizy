@@ -9,7 +9,6 @@ import {
   TableSortConfig,
   ACCOUNT_CATEGORIES_BY_TYPE
 } from '@/types/chartOfAccounts.types';
-import { ChartOfAccountsStorageService } from '@/services/storage/chartOfAccountsStorageService';
 import { ChartOfAccountsParserService } from './chartOfAccountsParserService';
 
 export class ChartOfAccountsBusinessService {
@@ -143,53 +142,14 @@ export class ChartOfAccountsBusinessService {
   }
 
   static initializeDefaultAccounts(): ChartOfAccount[] {
-    const existingAccounts = ChartOfAccountsStorageService.getAccounts();
-    
-    // FORCE COMPLETE DATASET: Always load all 218 accounts if we don't have them
-    // This ensures users get the complete dataset even if they have partial data
-    const needsCompleteDataset = existingAccounts.length < 218;
-    
-    // console.log('Chart of Accounts initialization:', {
-    //   existingCount: existingAccounts.length,
-    //   needsCompleteDataset,
-    //   reason: existingAccounts.length === 0 ? 'no_accounts' : 
-    //           existingAccounts.length < 218 ? 'incomplete_dataset' : 'complete'
-    // });
-    
-    if (needsCompleteDataset) {
-      
-      // Clear any incomplete data first
-      if (existingAccounts.length > 0) {
-        ChartOfAccountsStorageService.clearAllAccounts();
-      }
-      
-      try {
-        const defaultAccounts = ChartOfAccountsParserService.getDefaultChartOfAccounts();
-        // console.log('Loading complete default accounts:', {
-        //   count: defaultAccounts.length, 
-        //   expectedCount: 218,
-        //   isComplete: defaultAccounts.length >= 218
-        // });
-        
-        if (defaultAccounts.length >= 218) {
-          ChartOfAccountsStorageService.saveAccounts(defaultAccounts);
-          return defaultAccounts;
-        } else {
-          console.error(`❌ Expected 218 accounts but got ${defaultAccounts.length}`);
-          // Still save whatever we got, but log the issue
-          ChartOfAccountsStorageService.saveAccounts(defaultAccounts);
-          return defaultAccounts;
-        }
-      } catch (error) {
-        console.error('Error parsing default accounts:', error);
-        // Fallback: create a few basic accounts
-        const fallbackAccounts = this.createFallbackAccounts();
-        ChartOfAccountsStorageService.saveAccounts(fallbackAccounts);
-        return fallbackAccounts;
-      }
+    try {
+      const defaultAccounts = ChartOfAccountsParserService.getDefaultChartOfAccounts();
+      return defaultAccounts;
+    } catch (error) {
+      console.error('Error parsing default accounts:', error);
+      // Fallback: create a few basic accounts
+      return this.createFallbackAccounts();
     }
-    
-    return existingAccounts;
   }
 
   static createFallbackAccounts(): ChartOfAccount[] {
@@ -257,50 +217,24 @@ export class ChartOfAccountsBusinessService {
     ];
   }
 
-  static getAccountByCode(code: string): ChartOfAccount | null {
-    return ChartOfAccountsStorageService.getAccountByCode(code);
+  static getAccountByCode(accounts: ChartOfAccount[], code: string): ChartOfAccount | null {
+    return accounts.find(account => account.code === code) || null;
   }
 
-  static getAccountById(id: string): ChartOfAccount | null {
-    return ChartOfAccountsStorageService.getAccountById(id);
+  static getAccountById(accounts: ChartOfAccount[], id: string): ChartOfAccount | null {
+    return accounts.find(account => account.id === id) || null;
   }
 
-  static forceRefreshCompleteDataset(): ChartOfAccount[] {
-    
-    // Clear all existing data
-    ChartOfAccountsStorageService.clearAllAccounts();
-    
-    // Load complete dataset
-    const defaultAccounts = ChartOfAccountsParserService.getDefaultChartOfAccounts();
-    
-    // Save and return
-    ChartOfAccountsStorageService.saveAccounts(defaultAccounts);
-    
-    return defaultAccounts;
+  static getCompleteDefaultDataset(): ChartOfAccount[] {
+    // Load complete dataset - no localStorage involved
+    return ChartOfAccountsParserService.getDefaultChartOfAccounts();
   }
 
-  static deactivateAccount(id: string): void {
-    const account = ChartOfAccountsStorageService.getAccountById(id);
-    if (account) {
-      const updatedAccount = {
-        ...account,
-        isActive: false,
-        updatedAt: new Date().toISOString()
-      };
-      ChartOfAccountsStorageService.updateAccount(updatedAccount);
-    }
-  }
-
-  static reactivateAccount(id: string): void {
-    const account = ChartOfAccountsStorageService.getAccountById(id);
-    if (account) {
-      const updatedAccount = {
-        ...account,
-        isActive: true,
-        updatedAt: new Date().toISOString()
-      };
-      ChartOfAccountsStorageService.updateAccount(updatedAccount);
-    }
+  static createAccountUpdateData(isActive: boolean) {
+    return {
+      isActive,
+      updatedAt: new Date().toISOString()
+    };
   }
 
   static searchAccounts(accounts: ChartOfAccount[], searchTerm: string): ChartOfAccount[] {
@@ -336,8 +270,7 @@ export class ChartOfAccountsBusinessService {
     return csvContent;
   }
 
-  static getNextAvailableCode(type: AccountType): string {
-    const accounts = ChartOfAccountsStorageService.getAccounts();
+  static getNextAvailableCode(accounts: ChartOfAccount[], type: AccountType): string {
     const typePrefix = this.getTypePrefix(type);
     
     // Find the highest existing code for this type
@@ -643,28 +576,16 @@ export class ChartOfAccountsBusinessService {
   }
 
   /**
-   * Get all accounts from storage, initializing defaults if needed
-   * This method is used by journal entry management for account selection
-   */
-  static getAllAccounts(): ChartOfAccount[] {
-    // Initialize accounts if they don't exist
-    const accounts = this.initializeDefaultAccounts();
-    
-    // Return enriched accounts with calculated fields
-    return this.enrichAccountsWithCalculatedFields(accounts);
-  }
-
-  /**
    * Get active accounts only (filtered for UI dropdowns)
    */
-  static getActiveAccounts(): ChartOfAccount[] {
-    return this.getAllAccounts().filter(account => account.isActive);
+  static getActiveAccounts(accounts: ChartOfAccount[]): ChartOfAccount[] {
+    return this.enrichAccountsWithCalculatedFields(accounts).filter(account => account.isActive);
   }
 
   /**
    * Get accounts suitable for journal entries (active accounts sorted by code)
    */
-  static getAccountsForJournalEntry(): ChartOfAccount[] {
-    return this.getActiveAccounts().sort((a, b) => a.code.localeCompare(b.code));
+  static getAccountsForJournalEntry(accounts: ChartOfAccount[]): ChartOfAccount[] {
+    return this.getActiveAccounts(accounts).sort((a, b) => a.code.localeCompare(b.code));
   }
 }

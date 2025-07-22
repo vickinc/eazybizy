@@ -156,14 +156,6 @@ export default function EquityChangesPage() {
             Regenerate
           </Button>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = '/accounting/accounting-settings'}
-          >
-            <SettingsIcon className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
         </div>
       </div>
 

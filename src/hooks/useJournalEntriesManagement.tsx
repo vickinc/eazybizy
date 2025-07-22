@@ -4,7 +4,7 @@ import { ChartOfAccount } from '@/types/chartOfAccounts.types';
 import { Company } from '@/types/company.types';
 import { BookkeepingBusinessService } from '@/services/business/bookkeepingBusinessService';
 import { ChartOfAccountsBusinessService } from '@/services/business/chartOfAccountsBusinessService';
-import { JournalEntryStorageService } from '@/services/storage';
+import { ChartOfAccountsStorageService, JournalEntryStorageService } from '@/services/storage';
 
 // Enhanced filtering interfaces
 export interface JournalEntryFilters {
@@ -81,8 +81,10 @@ export const useJournalEntriesManagement = (selectedCompany: number | 'all', com
         const entries = BookkeepingBusinessService.getJournalEntries(companyId);
         setJournalEntries(entries);
 
-        // Load chart of accounts
-        const accounts = ChartOfAccountsBusinessService.getAccountsForJournalEntry();
+        // Load chart of accounts from API or localStorage fallback
+        // First try to get from ChartOfAccountsStorageService (temporary fallback)
+        const allAccounts = ChartOfAccountsStorageService.getAccounts();
+        const accounts = ChartOfAccountsBusinessService.getAccountsForJournalEntry(allAccounts);
         setChartOfAccounts(accounts);
 
         setIsLoaded(true);

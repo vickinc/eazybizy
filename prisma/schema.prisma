@@ -41,6 +41,7 @@ model Company {
   bookkeepingEntries    BookkeepingEntry[]
   businessCards         BusinessCard[]
   calendarEvents        CalendarEvent[]
+  chartOfAccounts       ChartOfAccount[]
   clients               Client[]
   companyAccounts       CompanyAccount[]
   companyMemberships    CompanyMembership[]
@@ -52,6 +53,7 @@ model Company {
   products              Product[]
   representatives       Representative[]
   shareholders          Shareholder[]
+  taxTreatments         TaxTreatment[]
   transactions          Transaction[]
   vendors               Vendor[]
 
@@ -757,4 +759,58 @@ model BusinessCard {
   @@index([template, createdAt, id])
   @@index([createdAt, id])
   @@map("business_cards")
+}
+
+model ChartOfAccount {
+  id               String   @id @default(cuid())
+  code             String   @unique
+  name             String
+  type             String   // AccountType: 'Assets' | 'Liability' | 'Equity' | 'Revenue' | 'Expense'
+  category         String   // AccountCategory
+  subcategory      String?  // AccountSubcategory
+  vat              String   // TaxType (VAT/Sales Tax/GST)
+  relatedVendor    String?
+  accountType      String   // 'Detail' | 'Header'
+  isActive         Boolean  @default(true)
+  balance          Float    @default(0)
+  classification   String?
+  lastActivity     DateTime?
+  transactionCount Int      @default(0)
+  ifrsReference    String?
+  companyId        Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  company          Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([type, createdAt, id])
+  @@index([category, createdAt, id])
+  @@index([isActive, createdAt, id])
+  @@index([companyId, createdAt, id])
+  @@index([createdAt, id])
+  @@map("chart_of_accounts")
+}
+
+model TaxTreatment {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String
+  rate            Float    // Tax percentage (0-100)
+  category        String   // TaxCategory: 'standard' | 'reduced' | 'exempt' | 'special' | 'acquisition' | 'margin' | 'property'
+  applicability   String   // JSON array of TaxApplicability: ['sales', 'purchases', 'assets', 'services', 'import', 'export']
+  isActive        Boolean  @default(true)
+  isDefault       Boolean  @default(false) // Whether this is a system default treatment
+  companyId       Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  company         Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([category, createdAt, id])
+  @@index([isActive, createdAt, id])
+  @@index([companyId, createdAt, id])
+  @@index([rate, createdAt, id])
+  @@index([createdAt, id])
+  @@map("tax_treatments")
 }

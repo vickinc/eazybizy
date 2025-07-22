@@ -410,6 +410,53 @@ export class CacheInvalidationService {
   }
 
   /**
+   * Invalidate chart of accounts-related caches
+   */
+  static async invalidateChartOfAccounts(): Promise<number> {
+    try {
+      const deletedCount = await CacheService.delPattern('chart-of-accounts:*')
+      return deletedCount
+    } catch (error) {
+      console.error('Failed to invalidate chart of accounts caches:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Smart invalidation for chart of accounts mutations
+   */
+  static async invalidateOnChartOfAccountsMutation(accountId?: string | number, companyId?: string | number): Promise<void> {
+    try {
+      
+      await Promise.all([
+        this.invalidateChartOfAccounts(),
+        CacheService.delPattern('chart-of-accounts:count:*'),
+        CacheService.delPattern('chart-of-accounts:stats:*'),
+      ])
+
+      if (companyId) {
+        await this.invalidateOnCompanyMutation(companyId)
+      }
+
+    } catch (error) {
+      console.error('Smart invalidation failed for chart of accounts:', error)
+    }
+  }
+
+  /**
+   * Invalidate caches by pattern (generic method)
+   */
+  static async invalidatePattern(pattern: string): Promise<number> {
+    try {
+      const deletedCount = await CacheService.delPattern(`${pattern}:*`)
+      return deletedCount
+    } catch (error) {
+      console.error(`Failed to invalidate pattern ${pattern}:`, error)
+      return 0
+    }
+  }
+
+  /**
    * Emergency cache clear - removes all cached data
    */
   static async clearAll(): Promise<number> {

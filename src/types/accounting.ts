@@ -4,5 +4,5 @@
 export * from './bookkeeping.types';
 export * from './invoice.types';
 export * from './balance.types';
-export * from './vatTreatment.types';
+export * from './taxTreatment.types';
 export * from './journalTemplates.types';

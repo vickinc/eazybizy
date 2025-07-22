@@ -121,17 +121,17 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           {/* VAT Treatment */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">
-              VAT Treatment
+              Tax Treatment
             </Label>
             <Select 
               value={filter.vat} 
               onValueChange={(value) => onFilterChange('vat', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="All VAT" />
+                <SelectValue placeholder="All Tax Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All VAT Types</SelectItem>
+                <SelectItem value="all">All Tax Types</SelectItem>
                 {vatTypes.map(vat => {
                   const isCustom = VATTypesIntegrationService.isCustomVATTreatment(vat);
                   const displayText = vat.length > 30 ? `${vat.substring(0, 30)}...` : vat;

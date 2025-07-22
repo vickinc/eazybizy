@@ -14,5 +14,5 @@ export * from './fixedAssetsDepreciationService';
 export * from './fixedAssetsValidationService';
 export * from './invoiceBusinessService';
 export * from './paymentMethodService';
-export * from './vatTreatmentBusinessService';
-export * from './vatTreatmentValidationService';
+export * from './taxTreatmentBusinessService';
+export * from './taxTreatmentValidationService';

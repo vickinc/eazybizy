@@ -91,13 +91,13 @@ export const CompanyDialog: React.FC<CompanyDialogProps> = ({
             </div>
             
             <div>
-              <Label htmlFor="vatNumber">VAT Nr.</Label>
+              <Label htmlFor="vatNumber">Tax ID / VAT Nr.</Label>
               <Input
                 id="vatNumber"
                 name="vatNumber"
                 value={formData.vatNumber}
                 onChange={handleInputChange}
-                placeholder="Enter VAT number (optional)"
+                placeholder="Enter Tax ID/VAT number (optional)"
               />
             </div>
             

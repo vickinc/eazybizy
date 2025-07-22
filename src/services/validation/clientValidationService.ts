@@ -47,9 +47,9 @@ export class ClientValidationService {
       errors.push('Please enter a valid website URL');
     }
 
-    // VAT number validation (if provided)
+    // Tax ID/VAT number validation (if provided)
     if (clientData.vatNumber.trim() && clientData.vatNumber.trim().length < 2) {
-      errors.push('VAT number must be at least 2 characters');
+      errors.push('Tax ID/VAT number must be at least 2 characters');
     }
 
     // Date of birth validation for individuals (if provided)
@@ -191,7 +191,7 @@ export class ClientValidationService {
     if (!vatNumber.trim()) return null;
     
     if (vatNumber.trim().length < 2) {
-      return 'VAT number must be at least 2 characters';
+      return 'Tax ID/VAT number must be at least 2 characters';
     }
 
     return null;
@@ -258,7 +258,7 @@ export class ClientValidationService {
         errors.push('Individual clients should not have a registration number');
       }
       if (clientData.vatNumber.trim()) {
-        errors.push('Individual clients should not have a VAT number');
+        errors.push('Individual clients should not have a Tax ID/VAT number');
       }
     }
 

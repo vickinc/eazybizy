@@ -166,12 +166,12 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
                 <div>
                   <Label htmlFor="client-vat" className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <Hash className="h-4 w-4" />
-                    VAT Number
+                    Tax ID / VAT Number
                   </Label>
                   <Input 
                     id="client-vat" 
                     className="mt-1"
-                    placeholder="Enter VAT number (if applicable)"
+                    placeholder="Enter Tax ID/VAT number (if applicable)"
                     value={clientForm.vatNumber}
                     onChange={(e) => onClientFormChange('vatNumber', e.target.value)}
                   />
