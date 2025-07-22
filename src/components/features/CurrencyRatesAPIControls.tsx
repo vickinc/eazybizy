@@ -13,6 +13,8 @@ import Clock from "lucide-react/dist/esm/icons/clock";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
+import X from "lucide-react/dist/esm/icons/x";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { toast } from 'sonner';
 
 interface CurrencyRatesAPIControlsProps {
@@ -31,6 +33,41 @@ interface APIStatus {
 const RATE_LIMIT_HOURS = 4;
 const RATE_LIMIT_MS = RATE_LIMIT_HOURS * 60 * 60 * 1000;
 
+// Available currencies for selection
+const AVAILABLE_FIAT_CURRENCIES = [
+  { code: 'EUR', name: 'Euro' },
+  { code: 'GBP', name: 'British Pound' },
+  { code: 'JPY', name: 'Japanese Yen' },
+  { code: 'AUD', name: 'Australian Dollar' },
+  { code: 'CAD', name: 'Canadian Dollar' },
+  { code: 'CHF', name: 'Swiss Franc' },
+  { code: 'CNY', name: 'Chinese Yuan' },
+  { code: 'SEK', name: 'Swedish Krona' },
+  { code: 'NZD', name: 'New Zealand Dollar' },
+  { code: 'MXN', name: 'Mexican Peso' },
+  { code: 'SGD', name: 'Singapore Dollar' },
+  { code: 'HKD', name: 'Hong Kong Dollar' },
+  { code: 'NOK', name: 'Norwegian Krone' },
+  { code: 'DKK', name: 'Danish Krone' },
+  { code: 'PLN', name: 'Polish Zloty' },
+];
+
+const AVAILABLE_CRYPTO_CURRENCIES = [
+  { code: 'BTC', name: 'Bitcoin' },
+  { code: 'ETH', name: 'Ethereum' },
+  { code: 'BNB', name: 'Binance Coin' },
+  { code: 'ADA', name: 'Cardano' },
+  { code: 'XRP', name: 'Ripple' },
+  { code: 'SOL', name: 'Solana' },
+  { code: 'DOT', name: 'Polkadot' },
+  { code: 'DOGE', name: 'Dogecoin' },
+  { code: 'MATIC', name: 'Polygon' },
+  { code: 'LTC', name: 'Litecoin' },
+  { code: 'LINK', name: 'Chainlink' },
+  { code: 'USDT', name: 'Tether' },
+  { code: 'USDC', name: 'USD Coin' },
+];
+
 export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> = ({
   onRatesUpdated,
   isAPIConfigured
@@ -39,6 +76,10 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
   const [historicalStatus, setHistoricalStatus] = useState<APIStatus>({ loading: false });
   const [selectedDate, setSelectedDate] = useState('2025-07-21');
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Currency selection state
+  const [selectedFiatCurrencies, setSelectedFiatCurrencies] = useState<string[]>([]);
+  const [selectedCryptoCurrencies, setSelectedCryptoCurrencies] = useState<string[]>([]);
   
   // Set yesterday's date on client-side only
   useEffect(() => {
@@ -55,6 +96,63 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
     if (lastHistoricalUsed) {
       setHistoricalStatus(prev => ({ ...prev, lastUsed: lastHistoricalUsed }));
     }
+
+    // Load selected currencies from localStorage
+    const savedFiatCurrencies = localStorage.getItem('currency-api-selected-fiat');
+    const savedCryptoCurrencies = localStorage.getItem('currency-api-selected-crypto');
+
+    if (savedFiatCurrencies) {
+      try {
+        const parsed = JSON.parse(savedFiatCurrencies);
+        if (Array.isArray(parsed) && parsed.length <= 3) {
+          setSelectedFiatCurrencies(parsed);
+        }
+      } catch (error) {
+        console.warn('Failed to load saved FIAT currencies:', error);
+      }
+    }
+
+    if (savedCryptoCurrencies) {
+      try {
+        const parsed = JSON.parse(savedCryptoCurrencies);
+        if (Array.isArray(parsed) && parsed.length <= 3) {
+          setSelectedCryptoCurrencies(parsed);
+        }
+      } catch (error) {
+        console.warn('Failed to load saved crypto currencies:', error);
+      }
+    }
+  }, []);
+
+  // Save selected currencies to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('currency-api-selected-fiat', JSON.stringify(selectedFiatCurrencies));
+  }, [selectedFiatCurrencies]);
+
+  useEffect(() => {
+    localStorage.setItem('currency-api-selected-crypto', JSON.stringify(selectedCryptoCurrencies));
+  }, [selectedCryptoCurrencies]);
+
+  // Development helper to reset time limits
+  const resetTimeLimits = () => {
+    localStorage.removeItem('currency-api-latest-used');
+    localStorage.removeItem('currency-api-historical-used');
+    setLatestStatus(prev => ({ ...prev, lastUsed: undefined }));
+    setHistoricalStatus(prev => ({ ...prev, lastUsed: undefined }));
+    console.log('API time limits reset!');
+  };
+
+  // Add keyboard shortcut for development (Ctrl/Cmd + Shift + R)
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
+        event.preventDefault();
+        resetTimeLimits();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
   const canUseAPI = (lastUsed?: string): boolean => {
@@ -79,6 +177,45 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
     return `${minutes}m`;
   };
 
+  // Currency selection handlers
+  const toggleFiatCurrency = (code: string) => {
+    setSelectedFiatCurrencies(prev => {
+      if (prev.includes(code)) {
+        return prev.filter(c => c !== code);
+      } else if (prev.length < 3) {
+        return [...prev, code];
+      } else {
+        toast.warning('Maximum 3 FIAT currencies allowed');
+        return prev;
+      }
+    });
+  };
+
+  const toggleCryptoCurrency = (code: string) => {
+    setSelectedCryptoCurrencies(prev => {
+      if (prev.includes(code)) {
+        return prev.filter(c => c !== code);
+      } else if (prev.length < 3) {
+        return [...prev, code];
+      } else {
+        toast.warning('Maximum 3 crypto currencies allowed');
+        return prev;
+      }
+    });
+  };
+
+  const removeFiatCurrency = (code: string) => {
+    setSelectedFiatCurrencies(prev => prev.filter(c => c !== code));
+  };
+
+  const removeCryptoCurrency = (code: string) => {
+    setSelectedCryptoCurrencies(prev => prev.filter(c => c !== code));
+  };
+
+  const getCombinedCurrencies = () => {
+    return [...selectedFiatCurrencies, ...selectedCryptoCurrencies];
+  };
+
   const handleFetchLatestRates = async () => {
     if (!isAPIConfigured) {
       toast.error('Automatic rate updates are not available.');
@@ -91,10 +228,19 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
       return;
     }
 
+    const totalSelected = selectedFiatCurrencies.length + selectedCryptoCurrencies.length;
+    if (totalSelected === 0) {
+      toast.error('Please select at least one currency to update.');
+      return;
+    }
+
     setLatestStatus({ loading: true });
 
     try {
-      const response = await fetch('/api/currency-rates/latest', {
+      const selectedCurrencies = getCombinedCurrencies();
+      const currenciesParam = selectedCurrencies.length > 0 ? `?currencies=${selectedCurrencies.join(',')}` : '';
+      
+      const response = await fetch(`/api/currency-rates/latest${currenciesParam}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -111,14 +257,31 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
       const currentTime = new Date().toISOString();
       localStorage.setItem('currency-api-latest-used', currentTime);
 
+      // Check if there's a limitation warning
+      const cryptoCount = result.data?.filter((r: any) => r.type === 'crypto').length || 0;
+      const fiatCount = result.data?.filter((r: any) => r.type === 'fiat').length || 0;
+      
+      let successMessage = `Updated ${result.data.length} currencies (${selectedFiatCurrencies.length} FIAT, ${selectedCryptoCurrencies.length} crypto)`;
+      let toastMessage = `Updated ${result.data.length} selected currencies successfully!`;
+      
+      if (result.error && result.error.includes('premium subscription')) {
+        successMessage = `Updated ${cryptoCount} crypto prices (FIAT rates require premium)`;
+        toastMessage = `Updated ${cryptoCount} crypto prices. FIAT rates require API premium subscription.`;
+      }
+
       setLatestStatus({
         loading: false,
-        success: `Updated ${result.data.length} currencies`,
+        success: successMessage,
         lastUsed: currentTime
       });
 
       onRatesUpdated(result.data, 'latest');
-      toast.success(`Exchange rates updated successfully!`);
+      
+      if (result.error && result.error.includes('premium subscription')) {
+        toast.warning(toastMessage);
+      } else {
+        toast.success(toastMessage);
+      }
 
     } catch (error) {
       console.error('Error fetching latest rates:', error);
@@ -147,10 +310,19 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
       return;
     }
 
+    const totalSelected = selectedFiatCurrencies.length + selectedCryptoCurrencies.length;
+    if (totalSelected === 0) {
+      toast.error('Please select at least one currency to fetch historical data for.');
+      return;
+    }
+
     setHistoricalStatus({ loading: true });
 
     try {
-      const response = await fetch(`/api/currency-rates/historical?date=${selectedDate}`, {
+      const selectedCurrencies = getCombinedCurrencies();
+      const currenciesParam = selectedCurrencies.length > 0 ? `&currencies=${selectedCurrencies.join(',')}` : '';
+      
+      const response = await fetch(`/api/currency-rates/historical?date=${selectedDate}${currenciesParam}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -169,12 +341,12 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
 
       setHistoricalStatus({
         loading: false,
-        success: `Fetched ${result.data.length} currencies for ${selectedDate}`,
+        success: `Fetched ${result.data.length} currencies (${selectedFiatCurrencies.length} FIAT, ${selectedCryptoCurrencies.length} crypto) for ${selectedDate}`,
         lastUsed: currentTime
       });
 
       onRatesUpdated(result.data, 'historical');
-      toast.success(`Historical rates loaded for ${new Date(selectedDate).toLocaleDateString()}`);
+      toast.success(`Historical rates loaded for ${new Date(selectedDate).toLocaleDateString()} - ${result.data.length} selected currencies`);
 
     } catch (error) {
       console.error('Error fetching historical rates:', error);
@@ -202,23 +374,182 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
             <Zap className="h-5 w-5 text-lime-700" />
             <span>Automatic Rate Updates</span>
           </CardTitle>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-lime-700" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-lime-700" />
+          <div className="flex items-center space-x-1">
+            {/* Development reset button - only in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0 text-orange-600 hover:text-orange-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetTimeLimits();
+                }}
+                title="Reset API time limits (Dev only)"
+              >
+                ⏰
+              </Button>
             )}
-          </Button>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4 text-lime-700" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-lime-700" />
+              )}
+            </Button>
+          </div>
         </div>
         {!isExpanded && (
           <CardDescription className="text-sm text-lime-600">
-            Click to expand • Latest rates and historical data
+            Click to expand • Select currencies and update rates 
+            {(selectedFiatCurrencies.length + selectedCryptoCurrencies.length > 0) && 
+              <span className="font-medium"> • {selectedFiatCurrencies.length + selectedCryptoCurrencies.length} selected</span>
+            }
           </CardDescription>
         )}
       </CardHeader>
       
       {isExpanded && (
         <CardContent className="space-y-4 pt-2">
+          {/* Currency Selection */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-gray-900">Select Currencies to Update</h4>
+              <span className="text-xs text-gray-500">({selectedFiatCurrencies.length + selectedCryptoCurrencies.length}/6 selected)</span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* FIAT Currency Selection */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-gray-700">FIAT Currencies</Label>
+                  <span className="text-xs text-gray-500">({selectedFiatCurrencies.length}/3)</span>
+                </div>
+                
+                {/* Selected FIAT currencies display */}
+                {selectedFiatCurrencies.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedFiatCurrencies.map((code) => {
+                      const currency = AVAILABLE_FIAT_CURRENCIES.find(c => c.code === code);
+                      return (
+                        <div key={code} className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                          <span className="font-medium">{code}</span>
+                          <button
+                            onClick={() => removeFiatCurrency(code)}
+                            className="text-blue-600 hover:text-blue-800 ml-1"
+                            title={`Remove ${currency?.name || code}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* FIAT Selection Grid */}
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="grid grid-cols-3 gap-2">
+                    {AVAILABLE_FIAT_CURRENCIES.map((currency) => {
+                      const isSelected = selectedFiatCurrencies.includes(currency.code);
+                      const canSelect = selectedFiatCurrencies.length < 3;
+                      const isDisabled = !isSelected && !canSelect;
+                      
+                      return (
+                        <button
+                          key={currency.code}
+                          onClick={() => toggleFiatCurrency(currency.code)}
+                          disabled={isDisabled}
+                          className={`
+                            p-2 text-xs text-center rounded border transition-all
+                            ${isSelected 
+                              ? 'bg-blue-500 text-white border-blue-600 font-medium' 
+                              : isDisabled 
+                                ? 'bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300'
+                            }
+                          `}
+                          title={`${currency.name}${isDisabled ? ' (Max 3 FIAT currencies)' : ''}`}
+                        >
+                          <div className="font-medium">{currency.code}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Crypto Currency Selection */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium text-gray-700">Crypto Currencies</Label>
+                  <span className="text-xs text-gray-500">({selectedCryptoCurrencies.length}/3)</span>
+                </div>
+                
+                {/* Selected Crypto currencies display */}
+                {selectedCryptoCurrencies.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedCryptoCurrencies.map((code) => {
+                      const currency = AVAILABLE_CRYPTO_CURRENCIES.find(c => c.code === code);
+                      return (
+                        <div key={code} className="flex items-center space-x-1 bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
+                          <span className="font-medium">{code}</span>
+                          <button
+                            onClick={() => removeCryptoCurrency(code)}
+                            className="text-orange-600 hover:text-orange-800 ml-1"
+                            title={`Remove ${currency?.name || code}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Crypto Selection Grid */}
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="grid grid-cols-3 gap-2">
+                    {AVAILABLE_CRYPTO_CURRENCIES.map((currency) => {
+                      const isSelected = selectedCryptoCurrencies.includes(currency.code);
+                      const canSelect = selectedCryptoCurrencies.length < 3;
+                      const isDisabled = !isSelected && !canSelect;
+                      
+                      return (
+                        <button
+                          key={currency.code}
+                          onClick={() => toggleCryptoCurrency(currency.code)}
+                          disabled={isDisabled}
+                          className={`
+                            p-2 text-xs text-center rounded border transition-all
+                            ${isSelected 
+                              ? 'bg-orange-500 text-white border-orange-600 font-medium' 
+                              : isDisabled 
+                                ? 'bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-orange-50 hover:border-orange-300'
+                            }
+                          `}
+                          title={`${currency.name}${isDisabled ? ' (Max 3 crypto currencies)' : ''}`}
+                        >
+                          <div className="font-medium">{currency.code}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Helper message when no currencies selected */}
+          {(selectedFiatCurrencies.length + selectedCryptoCurrencies.length === 0) && (
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertDescription className="text-amber-800 text-sm">
+                💡 Select at least one currency above to enable automatic rate updates
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Latest Rates */}
             <div className="space-y-3">
@@ -328,7 +659,7 @@ export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> =
           {/* Compact Info Note */}
           <Alert className="py-2">
             <AlertDescription className="text-xs text-gray-600">
-              💡 Updates limited to once every {RATE_LIMIT_HOURS} hours. Custom settings preserved.
+              💡 Updates limited to once every {RATE_LIMIT_HOURS} hours. Select max 3 FIAT + 3 crypto currencies. Custom settings preserved.
             </AlertDescription>
           </Alert>
         </CardContent>

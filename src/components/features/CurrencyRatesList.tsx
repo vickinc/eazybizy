@@ -42,7 +42,7 @@ export const CurrencyRatesList: React.FC<CurrencyRatesListProps> = ({
         </CardTitle>
         <CardDescription>
           {type === 'fiat' 
-            ? 'Traditional government-issued currencies. Rates represent how much 1 unit of the currency equals in USD.'
+            ? 'Traditional government-issued currencies. Rates represent how much foreign currency 1 USD equals.'
             : 'Digital currencies and tokens. Rates represent how much USD 1 unit of the cryptocurrency equals.'
           }
         </CardDescription>

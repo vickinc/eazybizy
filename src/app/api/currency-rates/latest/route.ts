@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if API is configured
-    if (!CurrencyAPIService.isConfigured()) {
+    const apiStatus = CurrencyAPIService.getAPIStatus();
+    if (!apiStatus.crypto && !apiStatus.fiat) {
       return NextResponse.json(
-        { error: 'Currency API not configured. Please set FREE_CURRENCY_API_KEY environment variable.' },
+        { error: 'Currency APIs not configured. Please set API_NINJAS_KEY and FREE_CURRENCY_API_KEY environment variables.' },
         { status: 500 }
       );
     }
@@ -86,9 +87,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if API is configured
-    if (!CurrencyAPIService.isConfigured()) {
+    const apiStatus = CurrencyAPIService.getAPIStatus();
+    if (!apiStatus.crypto && !apiStatus.fiat) {
       return NextResponse.json(
-        { error: 'Currency API not configured. Please set FREE_CURRENCY_API_KEY environment variable.' },
+        { error: 'Currency APIs not configured. Please set API_NINJAS_KEY and FREE_CURRENCY_API_KEY environment variables.' },
         { status: 500 }
       );
     }

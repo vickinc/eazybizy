@@ -16,7 +16,7 @@ export default async function CurrencyRatesPage() {
   }
 
   // Check API configuration on server
-  const isAPIConfigured = process.env.FREE_CURRENCY_API_KEY ? true : false;
+  const isAPIConfigured = process.env.API_NINJAS_KEY ? true : false;
 
   // Fetch currency rates data on the server
   const initialData = await CurrencyRatesSSRService.getEnhancedRatesForSSR(

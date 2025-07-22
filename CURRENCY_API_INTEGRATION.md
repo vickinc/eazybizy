@@ -2,7 +2,7 @@
 
 ## Overview
 
-This implementation integrates the Free Currency API (freecurrencyapi.com) to provide automatic currency rate fetching for both current and historical exchange rates.
+This implementation integrates API Ninjas (api-ninjas.com) to provide automatic currency rate fetching for both current and historical exchange rates.
 
 ## Features Implemented
 
@@ -81,21 +81,21 @@ Response:
 ## Setup Instructions
 
 ### 1. Get API Key
-1. Visit [freecurrencyapi.com](https://freecurrencyapi.com/)
+1. Visit [api-ninjas.com](https://api-ninjas.com/)
 2. Sign up for a free account
 3. Get your API key from the dashboard
 
 ### 2. Environment Configuration
 Add to your `.env.local` file:
 ```env
-FREE_CURRENCY_API_KEY=your-api-key-here
+API_NINJAS_KEY=your-api-key-here
 ```
 
 ### 3. Rate Limits
 Free plan includes:
-- 5,000 requests per month
-- 10 requests per minute
-- All successful requests count against quota
+- 10,000 requests per month
+- Rate limits may vary by endpoint
+- Both exchange rates and crypto prices count against quota
 
 ## User Interface
 
@@ -270,6 +270,6 @@ When rates move from localStorage to database:
 ## Support
 
 For issues related to:
-- **Free Currency API**: Visit [freecurrencyapi.com/support](https://freecurrencyapi.com/support)
+- **API Ninjas**: Visit [api-ninjas.com](https://api-ninjas.com/) for documentation and support
 - **Implementation bugs**: Check application logs and browser console
 - **Feature requests**: Document in project issue tracker

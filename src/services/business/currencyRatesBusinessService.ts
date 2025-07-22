@@ -141,7 +141,9 @@ export class CurrencyRatesBusinessService {
       isBase,
       rateDescription: rate.type === 'crypto' 
         ? `1 ${rate.code} = ${safeRate.toLocaleString('en-US')} USD`
-        : `1 ${rate.code} = ${safeRate.toLocaleString('en-US')} USD`,
+        : safeRate !== 0 
+          ? `1 USD = ${safeRate.toLocaleString('en-US')} ${rate.code}`
+          : `1 USD = 0 ${rate.code}`,
       lastUpdatedFormatted: new Date(rate.lastUpdated).toLocaleDateString('en-GB', {
         day: '2-digit',
         month: '2-digit',
