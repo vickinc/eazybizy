@@ -333,8 +333,8 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
               </div>
             </div>
           </div>
-          {/* Revenue Reference Section - Income Only */}
-          {entryFormData.type === 'income' && (
+          {/* Revenue Reference Section - Revenue Only */}
+          {entryFormData.type === 'revenue' && (
             <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
@@ -653,7 +653,7 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
           )}
 
           {/* COGS Information Section - Only for Revenue */}
-          {entryFormData.type === 'income' && (
+          {entryFormData.type === 'revenue' && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
