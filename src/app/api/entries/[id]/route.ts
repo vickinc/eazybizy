@@ -83,6 +83,7 @@ export async function PUT(
         isFromInvoice: body.isFromInvoice !== undefined ? body.isFromInvoice : existingEntry.isFromInvoice,
         invoiceId: body.invoiceId,
         chartOfAccountsId: body.chartOfAccountsId,
+        linkedIncomeId: body.linkedIncomeId,
       },
       include: {
         company: {

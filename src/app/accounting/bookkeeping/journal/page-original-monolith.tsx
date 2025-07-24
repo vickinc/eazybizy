@@ -260,9 +260,9 @@ export default function EntriesPage() {
                     All Entries
                   </Button>
                   <Button
-                    variant={viewFilter === 'income' ? 'default' : 'ghost'}
+                    variant={viewFilter === 'revenue' ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setViewFilter('income')}
+                    onClick={() => setViewFilter('revenue')}
                     className="rounded-none border-0 text-green-600"
                   >
                     <ArrowUpCircle className="h-4 w-4 mr-1" />
@@ -514,7 +514,7 @@ export default function EntriesPage() {
                         const remainingAmount = entry.remainingAmount;
                         
                         // Use enhanced rendering for income entries in grouped view
-                        if (entry.type === 'income') {
+                        if (entry.type === 'revenue') {
                           return (
                             <div key={entry.id} id={`entry-${entry.id}`}>
                               <IncomeEntryCard
@@ -606,7 +606,7 @@ export default function EntriesPage() {
                                       {entry.type === 'expense' && entry.vendorInvoice && (
                                         <> • {entry.description}</>
                                       )}
-                                      {entry.type === 'income' && (
+                                      {entry.type === 'revenue' && (
                                         <> • {entry.description}</>
                                       )}
                                     </div>
@@ -614,7 +614,7 @@ export default function EntriesPage() {
                                 </div>
                                 <div className="flex items-center space-x-4" onClick={(e) => e.stopPropagation()}>
                                   <div className="text-right">
-                                    {entry.type === 'income' && linkedExpenses > 0 && entry.cogs ? (
+                                    {entry.type === 'revenue' && linkedExpenses > 0 && entry.cogs ? (
                                       // Enhanced display for income with linked expenses and COGS
                                       <div className="space-y-1">
                                         <div className="text-xs text-gray-600">
@@ -630,7 +630,7 @@ export default function EntriesPage() {
                                           A/P: {formatLargeCurrency(remainingAmount, getCOGSCurrency(entry))} remained to pay
                                         </div>
                                       </div>
-                                    ) : entry.type === 'income' && linkedExpenses > 0 ? (
+                                    ) : entry.type === 'revenue' && linkedExpenses > 0 ? (
                                       // Display for income with linked expenses but no COGS
                                       <div className="space-y-1">
                                         <div className="text-xs text-gray-600">
@@ -645,11 +645,11 @@ export default function EntriesPage() {
                                       </div>
                                     ) : (
                                       // Standard display
-                                      <div className={`font-bold text-sm ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                        {entry.type === 'income' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
+                                      <div className={`font-bold text-sm ${entry.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {entry.type === 'revenue' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
                                       </div>
                                     )}
-                                    {entry.type === 'income' && entry.cogs && remainingAmount > 0 && linkedExpenses === 0 && (
+                                    {entry.type === 'revenue' && entry.cogs && remainingAmount > 0 && linkedExpenses === 0 && (
                                       <div className="text-xs font-medium text-black">
                                         COGS A/P: {formatLargeCurrency(remainingAmount, getCOGSCurrency(entry))}
                                       </div>
@@ -701,7 +701,7 @@ export default function EntriesPage() {
                 const remainingAmount = entry.remainingAmount;
                 
                 // Use enhanced rendering for income entries
-                if (entry.type === 'income') {
+                if (entry.type === 'revenue') {
                   return (
                     <div key={entry.id} id={`entry-${entry.id}`} className={highlightedEntryId === entry.id ? 'bg-blue-100 transition-all duration-500' : ''}>
                       <IncomeEntryCard
@@ -871,13 +871,13 @@ export default function EntriesPage() {
                           </div>
                           <div>
                             <Label className="text-xs font-semibold text-gray-600">Amount</Label>
-                            <p className={`text-sm mt-1 font-semibold ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                              {entry.type === 'income' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
+                            <p className={`text-sm mt-1 font-semibold ${entry.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`}>
+                              {entry.type === 'revenue' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
                             </p>
                           </div>
                         </div>
                         {/* Linked Expenses Information for Income Entries */}
-                        {entry.type === 'income' && linkedExpenses > 0 && (
+                        {entry.type === 'revenue' && linkedExpenses > 0 && (
                           <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                             <Label className="text-xs font-semibold text-blue-700 mb-2 block">Linked Expenses Summary</Label>
                             {entry.cogs ? (
@@ -942,7 +942,7 @@ export default function EntriesPage() {
                         )}
                         
                         {/* COGS Information for Income Entries */}
-                        {entry.type === 'income' && entry.cogs && linkedExpenses === 0 && (
+                        {entry.type === 'revenue' && entry.cogs && linkedExpenses === 0 && (
                           <div className="bg-white p-3 rounded-lg border">
                             <Label className="text-xs font-semibold text-gray-600 mb-2 block">Cost of Goods Sold (COGS)</Label>
                             <div className="grid grid-cols-3 gap-4 text-sm">
@@ -1084,12 +1084,12 @@ export default function EntriesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Type</Label>
-                <Select value={entryFormData.type} onValueChange={(value: 'income' | 'expense') => updateEntryFormData('type', value)}>
+                <Select value={entryFormData.type} onValueChange={(value: 'revenue' | 'expense') => updateEntryFormData('type', value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="income">Income</SelectItem>
+                    <SelectItem value="revenue">Income</SelectItem>
                     <SelectItem value="expense">Expense</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1101,7 +1101,7 @@ export default function EntriesPage() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(entryFormData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
+                    {(entryFormData.type === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1109,7 +1109,7 @@ export default function EntriesPage() {
               </div>
             </div>
             {/* Reference field - required for income, optional for expenses */}
-            {entryFormData.type === 'income' && (
+            {entryFormData.type === 'revenue' && (
               <div>
                 <Label>Reference *</Label>
                 <div className="relative">
@@ -1212,7 +1212,7 @@ export default function EntriesPage() {
             )}
             
             <div>
-              <Label>Description {entryFormData.type === 'income' ? '(Optional)' : ''}</Label>
+              <Label>Description {entryFormData.type === 'revenue' ? '(Optional)' : ''}</Label>
               <Input
                 value={entryFormData.description}
                 onChange={(e) => updateEntryFormData('description', e.target.value)}
@@ -1412,7 +1412,7 @@ export default function EntriesPage() {
             )}
 
             {/* COGS fields for income entries */}
-            {entryFormData.type === 'income' && (
+            {entryFormData.type === 'revenue' && (
               <>
                 <div>
                   <div className="flex items-center justify-between">
@@ -1482,7 +1482,7 @@ export default function EntriesPage() {
                   <Copy className="h-5 w-5 text-gray-700" />
                   <div>
                     <h2 className="text-lg font-bold text-gray-900">
-                      Bulk Add {bulkAddType === 'income' ? 'Income' : 'Expense'} Entries
+                      Bulk Add {bulkAddType === 'revenue' ? 'Income' : 'Expense'} Entries
                     </h2>
                     <p className="text-sm text-gray-600">
                       Add multiple {bulkAddType} entries at once. Fill in the required fields and use the + button to add more rows.
@@ -1510,7 +1510,7 @@ export default function EntriesPage() {
                 <div className="space-y-2">
                   {bulkEntries.map((entry, index) => (
                     <div key={index} className="bg-white border border-gray-200 rounded p-2 shadow-sm hover:shadow-md transition-all duration-200">
-                      <div className="grid gap-2 items-end" style={{gridTemplateColumns: bulkAddType === 'income' ? '2fr 3fr 1.5fr 1fr 1.5fr 1fr 2fr 1.5fr 100px' : '2fr 3fr 1.5fr 1fr 2fr 1.5fr 100px'}}>
+                      <div className="grid gap-2 items-end" style={{gridTemplateColumns: bulkAddType === 'revenue' ? '2fr 3fr 1.5fr 1fr 1.5fr 1fr 2fr 1.5fr 100px' : '2fr 3fr 1.5fr 1fr 2fr 1.5fr 100px'}}>
                         {/* First field - Vendor Invoice for expenses, Reference for income */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -1566,7 +1566,7 @@ export default function EntriesPage() {
                           </Select>
                         </div>
                         {/* COGS field - only for income entries */}
-                        {bulkAddType === 'income' && (
+                        {bulkAddType === 'revenue' && (
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">COGS {index === 0 && <span className="text-gray-500">(Optional)</span>}</label>
                             <Input
@@ -1580,7 +1580,7 @@ export default function EntriesPage() {
                           </div>
                         )}
                         {/* COGS Currency field - only for income entries when COGS > 0.01 */}
-                        {bulkAddType === 'income' && parseFloat((entry as any).cogs || '0') > 0.01 && (
+                        {bulkAddType === 'revenue' && parseFloat((entry as any).cogs || '0') > 0.01 && (
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">COGS Currency</label>
                             <Select value={(entry as any).cogsCurrency || 'USD'} onValueChange={(value) => updateBulkEntry(index, 'cogsCurrency', value)}>
@@ -1605,7 +1605,7 @@ export default function EntriesPage() {
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
-                              {(bulkAddType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
+                              {(bulkAddType === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
                                 <SelectItem key={category} value={category}>{category}</SelectItem>
                               ))}
                             </SelectContent>
@@ -1673,7 +1673,7 @@ export default function EntriesPage() {
               </Button>
               <Button 
                 onClick={handleBulkCreate} 
-                className={`px-8 py-3 text-lg h-12 ${bulkAddType === 'income' ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
+                className={`px-8 py-3 text-lg h-12 ${bulkAddType === 'revenue' ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
               >
                 <Copy className="h-5 w-5 mr-3" />
                 Create {validBulkEntriesCount} Entries
@@ -1704,7 +1704,7 @@ export default function EntriesPage() {
                   <span className="truncate">
                     {entry.display}
                   </span>
-                  <span className={`font-medium ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-medium ${entry.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`}>
                     {formatLargeCurrency(entry.amount, entry.currency)}
                   </span>
                 </div>
@@ -1754,9 +1754,9 @@ export default function EntriesPage() {
                       : entryToDelete.description}
                   </span>
                   <span className={`font-medium ml-2 ${
-                    entryToDelete.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    entryToDelete.type === 'revenue' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {entryToDelete.type === 'income' ? '+' : '-'}
+                    {entryToDelete.type === 'revenue' ? '+' : '-'}
                     {formatLargeCurrency(entryToDelete.amount, entryToDelete.currency)}
                   </span>
                 </div>

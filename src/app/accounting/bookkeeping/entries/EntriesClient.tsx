@@ -4,6 +4,8 @@ import React, { useState, useMemo, useCallback, Suspense, lazy } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
 import { useEntriesManagement } from '@/hooks/useEntriesManagement';
@@ -102,7 +104,18 @@ export default function EntriesClient({
     confirmDelete,
     confirmBulkDelete,
     formatCurrency,
+    getCOGSCurrency,
     highlightedEntryId: hookHighlightedId,
+    // Link functions
+    handleLinkToIncome,
+    handleViewRelatedIncomeEntry,
+    showLinkDialog,
+    setShowLinkDialog,
+    expenseToLink,
+    selectedIncomeForLink,
+    setSelectedIncomeForLink,
+    handleConfirmLink,
+    handleCancelLink,
     // Mutations
     bulkCreateMutation,
   } = useEntriesManagement({
@@ -137,7 +150,7 @@ export default function EntriesClient({
 
   // Entry form state - using useMemo to prevent infinite loops
   const initialEntryFormData = useMemo(() => ({
-    type: 'income' as 'income' | 'expense',
+    type: 'revenue' as 'revenue' | 'expense',
     category: '',
     subcategory: '',
     amount: '',
@@ -164,13 +177,55 @@ export default function EntriesClient({
     setEntryFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  // Clean form data before submission (remove circular references)
+  const cleanFormDataForSubmission = useCallback(() => {
+    const {
+      selectedInvoiceData,
+      vendorData,
+      productData,
+      ...cleanData
+    } = entryFormData;
+    
+    // Convert to proper format for API
+    return {
+      type: cleanData.type,
+      category: cleanData.category,
+      subcategory: cleanData.subcategory,
+      amount: parseFloat(cleanData.amount) || 0,
+      currency: cleanData.currency,
+      description: cleanData.description,
+      date: cleanData.date,
+      companyId: cleanData.companyId ? parseInt(cleanData.companyId) : null,
+      reference: cleanData.reference || null,
+      accountId: cleanData.accountId || null,
+      accountType: cleanData.accountType,
+      cogs: parseFloat(cleanData.cogs) || 0,
+      cogsPaid: parseFloat(cleanData.cogsPaid) || 0,
+      linkedIncomeId: cleanData.linkedIncomeId || null,
+      vendorInvoice: cleanData.vendorInvoice || null,
+      // Add relevant data from complex objects if needed
+      invoiceId: selectedInvoiceData?.id || null,
+    };
+  }, [entryFormData]);
+
+  // Wrapped handlers for create/update
+  const handleCreateEntryWrapper = useCallback(() => {
+    const cleanData = cleanFormDataForSubmission();
+    handleSubmitEntry(cleanData);
+  }, [cleanFormDataForSubmission, handleSubmitEntry]);
+
+  const handleUpdateEntryWrapper = useCallback(() => {
+    const cleanData = cleanFormDataForSubmission();
+    handleSubmitEntry(cleanData);
+  }, [cleanFormDataForSubmission, handleSubmitEntry]);
+
   // Reset form when dialog opens/closes
   React.useEffect(() => {
     if (showEntryDialog) {
       if (editingEntry) {
         // When editing, populate with existing entry data
         setEntryFormData({
-          type: editingEntry.type as 'income' | 'expense',
+          type: editingEntry.type as 'revenue' | 'expense',
           category: editingEntry.category || '',
           subcategory: editingEntry.subcategory || '',
           amount: editingEntry.amount?.toString() || '',
@@ -294,12 +349,6 @@ export default function EntriesClient({
     }
     setIsAllExpanded(!isAllExpanded);
   }, [isAllExpanded, entries, groupedEntries]);
-
-  // Get COGS currency helper
-  const getCOGSCurrency = useCallback((entry: any) => {
-    if (!entry.invoiceId || !entry.invoice) return entry.currency;
-    return entry.invoice.currency || entry.currency;
-  }, []);
 
   // Bulk add handlers
   const updateBulkEntry = useCallback((index: number, field: string, value: string) => {
@@ -667,8 +716,8 @@ export default function EntriesClient({
                 toggleEntrySelection={toggleEntrySelection}
                 handleEditEntry={handleEditEntry}
                 handleDeleteEntry={handleDeleteEntry}
-                handleLinkToIncome={() => {}} // Implement if needed
-                handleViewRelatedIncomeEntry={() => {}} // Implement if needed
+                handleLinkToIncome={handleLinkToIncome}
+                handleViewRelatedIncomeEntry={handleViewRelatedIncomeEntry}
                 formatCurrency={formatCurrency}
                 getCOGSCurrency={getCOGSCurrency}
               />
@@ -708,8 +757,8 @@ export default function EntriesClient({
                 handleCancelEdit: () => {
                   setShowEntryDialog(false);
                 },
-                handleCreateEntry: handleSubmitEntry,
-                handleUpdateEntry: handleSubmitEntry,
+                handleCreateEntry: handleCreateEntryWrapper,
+                handleUpdateEntry: handleUpdateEntryWrapper,
               }}
               utilityProps={{
                 formatLargeCurrency: formatCurrency,
@@ -756,7 +805,7 @@ export default function EntriesClient({
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           entry.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {entry.type === 'income' ? 'revenue' : entry.type}
+                          {entry.type === 'revenue' ? 'revenue' : entry.type}
                         </span>
                         <span className="font-medium text-blue-600">
                           {formatCurrency(entry.amount, entry.currency)}
@@ -788,7 +837,7 @@ export default function EntriesClient({
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         entryToDelete.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {entryToDelete.type === 'income' ? 'revenue' : entryToDelete.type}
+                        {entryToDelete.type === 'revenue' ? 'revenue' : entryToDelete.type}
                       </span>
                     </div>
                     <div className="text-gray-600">{entryToDelete.category}</div>
@@ -799,6 +848,77 @@ export default function EntriesClient({
                 </div>
               </div>
             </ConfirmationDialog>
+          )}
+
+          {/* Link to Revenue Dialog */}
+          {showLinkDialog && expenseToLink && (
+            <Dialog open={showLinkDialog} onOpenChange={handleCancelLink}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Link Expense to Revenue Entry</DialogTitle>
+                  <DialogDescription>
+                    Select a revenue entry to link this expense to. This will track the expense against the revenue.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  {/* Expense Entry Info */}
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h4 className="font-medium text-red-900 mb-2">Expense Entry</h4>
+                    <div className="text-sm text-red-800">
+                      <p><strong>Description:</strong> {expenseToLink.description || 'No description'}</p>
+                      <p><strong>Amount:</strong> -{formatCurrency(expenseToLink.amount, expenseToLink.currency)}</p>
+                      <p><strong>Category:</strong> {expenseToLink.category}</p>
+                    </div>
+                  </div>
+
+                  {/* Revenue Entry Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Revenue Entry to Link To:
+                    </label>
+                    <Select value={selectedIncomeForLink} onValueChange={setSelectedIncomeForLink}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a revenue entry..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {entries.filter(entry => 
+                          entry.type === 'revenue' && 
+                          entry.companyId === expenseToLink.companyId &&
+                          entry.id !== expenseToLink.id
+                        ).map((revenueEntry) => (
+                          <SelectItem key={revenueEntry.id} value={revenueEntry.id}>
+                            <div className="flex justify-between items-center w-full">
+                              <span className="truncate">
+                                {revenueEntry.reference || revenueEntry.description || 'No description'}
+                                {revenueEntry.category && ` (${revenueEntry.category})`}
+                              </span>
+                              <span className="ml-2 text-green-600 font-medium">
+                                +{formatCurrency(revenueEntry.amount, revenueEntry.currency)}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Dialog Actions */}
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button variant="outline" onClick={handleCancelLink}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleConfirmLink}
+                      disabled={!selectedIncomeForLink}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Link Entries
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </Suspense>
       </div>

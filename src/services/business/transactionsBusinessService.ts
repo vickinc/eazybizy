@@ -255,7 +255,7 @@ export class TransactionsBusinessService {
     companyId: number | 'all'
   ): BookkeepingEntry[] {
     const linkedEntryIds = new Set(transactions.map(t => t.linkedEntryId).filter(Boolean));
-    const typeToLink = bulkAddType === 'incoming' ? 'income' : 'expense';
+    const typeToLink = bulkAddType === 'incoming' ? 'revenue' : 'expense';
     
     return entries.filter(e => 
       e.type === typeToLink && 
@@ -273,7 +273,7 @@ export class TransactionsBusinessService {
     
     return {
       income: entries.filter(e => 
-        e.type === 'income' && 
+        e.type === 'revenue' && 
         !linkedEntryIds.has(e.id) && 
         (companyId === 'all' || e.companyId === companyId)
       ),
@@ -367,7 +367,7 @@ export class TransactionsBusinessService {
       description: transaction.description,
       notes: transaction.notes,
       linkedEntryId: transaction.linkedEntryId || undefined,
-      linkedEntryType: transaction.linkedEntryId ? (isIncoming ? 'income' : 'expense') : undefined,
+      linkedEntryType: transaction.linkedEntryId ? (isIncoming ? 'revenue' : 'expense') : undefined,
       accountId: accountId,
       accountType: bankAccounts.some(b => b.id === accountId) ? 'bank' : 'wallet',
       createdAt: new Date().toISOString(),

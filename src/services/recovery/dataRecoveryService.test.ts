@@ -46,9 +46,9 @@ export class DataRecoveryTests {
     
     // Create mock data with suspicious patterns
     const mockEntries = [
-      { type: 'income', amount: 1000, category: 'Sales' },
-      { type: 'income', amount: 2000, category: 'Services' },
-      { type: 'income', amount: 1500, category: 'Consulting' },
+      { type: 'revenue', amount: 1000, category: 'Sales' },
+      { type: 'revenue', amount: 2000, category: 'Services' },
+      { type: 'revenue', amount: 1500, category: 'Consulting' },
       // No expense entries - this should trigger data loss detection
     ];
 
@@ -89,7 +89,7 @@ export class DataRecoveryTests {
     
     // Test with valid entries
     const validEntries = [
-      { type: 'income', amount: 1000, category: 'Sales' },
+      { type: 'revenue', amount: 1000, category: 'Sales' },
       { type: 'expense', amount: 500, category: 'Rent' },
     ];
     
@@ -100,9 +100,9 @@ export class DataRecoveryTests {
     
     // Test with problematic entries
     const problematicEntries = [
-      { type: 'income', amount: 1000, category: 'Sales' },
-      { type: 'income', amount: 2000, category: 'Services' },
-      { type: 'income', amount: 1500, category: 'Consulting' },
+      { type: 'revenue', amount: 1000, category: 'Sales' },
+      { type: 'revenue', amount: 2000, category: 'Services' },
+      { type: 'revenue', amount: 1500, category: 'Consulting' },
       // Missing expenses
     ];
     

@@ -57,9 +57,9 @@ export const EntriesFilterBar: React.FC<EntriesFilterBarProps> = ({
                   All Entries
                 </Button>
                 <Button
-                  variant={viewFilter === 'income' ? 'default' : 'ghost'}
+                  variant={viewFilter === 'revenue' ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewFilter('income')}
+                  onClick={() => setViewFilter('revenue')}
                   className="rounded-none border-0 text-green-600"
                 >
                   <ArrowUpCircle className="h-4 w-4 mr-1" />

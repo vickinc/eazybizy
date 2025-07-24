@@ -100,6 +100,32 @@ export async function GET(request: NextRequest) {
               type: true,
               category: true,
             }
+          },
+          linkedIncome: {
+            select: {
+              id: true,
+              type: true,
+              category: true,
+              description: true,
+              reference: true,
+              amount: true,
+              currency: true,
+              date: true,
+              cogs: true,
+            }
+          },
+          linkedExpenses: {
+            select: {
+              id: true,
+              type: true,
+              category: true,
+              description: true,
+              reference: true,
+              amount: true,
+              currency: true,
+              date: true,
+              vendorInvoice: true,
+            }
           }
         }
       }),
@@ -124,7 +150,7 @@ export async function GET(request: NextRequest) {
     // Calculate income/expense breakdown
     const [incomeStats, expenseStats] = await Promise.all([
       prisma.bookkeepingEntry.aggregate({
-        where: { ...where, type: 'income' },
+        where: { ...where, type: 'revenue' },
         _sum: { amount: true },
         _count: { _all: true }
       }),
@@ -175,19 +201,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('POST /api/entries - Request body:', body);
     
     // Validate required fields
-    const { companyId, type, category, description, amount, currency, date } = body;
+    const { companyId, type, category, amount, currency, date } = body;
     
-    if (!companyId || !type || !category || !description || !amount || !currency || !date) {
+    if (!companyId || !type || !category || !amount || !currency || !date) {
+      const missingFields = [];
+      if (!companyId) missingFields.push('companyId');
+      if (!type) missingFields.push('type');
+      if (!category) missingFields.push('category');
+      if (!amount) missingFields.push('amount');
+      if (!currency) missingFields.push('currency');
+      if (!date) missingFields.push('date');
+      
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: `Missing required fields: ${missingFields.join(', ')}` },
         { status: 400 }
       );
     }
     
     // Validate type
-    if (!['income', 'expense'].includes(type)) {
+    if (!['revenue', 'expense'].includes(type)) {
       return NextResponse.json(
         { error: 'Invalid entry type' },
         { status: 400 }
@@ -195,19 +230,28 @@ export async function POST(request: NextRequest) {
     }
     
     // Create the entry
+    console.log('Creating entry with data:', {
+      companyId: parseInt(companyId),
+      type,
+      category,
+      amount: parseFloat(amount),
+      currency,
+      date: new Date(date),
+    });
+    
     const entry = await prisma.bookkeepingEntry.create({
       data: {
         companyId: parseInt(companyId),
         type,
         category,
         subcategory: body.subcategory,
-        description,
+        description: body.description || null,
         amount: parseFloat(amount),
         currency,
         date: new Date(date),
         reference: body.reference,
         notes: body.notes,
-        accountId: body.accountId,
+        accountId: body.accountId || null,
         accountType: body.accountType,
         cogs: body.cogs ? parseFloat(body.cogs) : 0,
         cogsPaid: body.cogsPaid ? parseFloat(body.cogsPaid) : 0,
@@ -234,8 +278,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {
     console.error('Error creating entry:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error details:', errorMessage);
+    
     return NextResponse.json(
-      { error: 'Failed to create entry' },
+      { 
+        error: 'Failed to create entry',
+        details: errorMessage 
+      },
       { status: 500 }
     );
   }

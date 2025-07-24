@@ -96,7 +96,7 @@ export class DataRecoveryService {
         case 'expense':
           expenseEntries++;
           break;
-        case 'income':
+        case 'revenue':
           incomeEntries++;
           break;
         case 'cogs':
@@ -193,7 +193,7 @@ export class DataRecoveryService {
     const suggestions: string[] = [];
 
     const expenseEntries = entries.filter(entry => entry.type === 'expense');
-    const incomeEntries = entries.filter(entry => entry.type === 'income');
+    const incomeEntries = entries.filter(entry => entry.type === 'revenue');
 
     // Check for suspicious patterns
     if (incomeEntries.length > 0 && expenseEntries.length === 0) {

@@ -46,7 +46,7 @@ export interface CompanyDigitalWallet {
 
 export interface BookkeepingEntry {
   id: string;
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory?: string;
   amount: number;
@@ -81,7 +81,7 @@ export interface CompanyAccount {
 }
 
 export interface BookkeepingFormData {
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory: string;
   amount: string;

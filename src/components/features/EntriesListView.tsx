@@ -14,7 +14,7 @@ import Link from "lucide-react/dist/esm/icons/link";
 
 interface EnhancedBookkeepingEntry {
   id: string;
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory?: string;
   amount: number;
@@ -157,7 +157,7 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
                   const remainingAmount = entry.remainingAmount;
                   
                   // Use enhanced rendering for income entries in grouped view
-                  if (entry.type === 'income') {
+                  if (entry.type === 'revenue') {
                     return (
                       <div key={entry.id} id={`entry-${entry.id}`}>
                         <IncomeEntryCard
@@ -219,7 +219,7 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
         const remainingAmount = entry.remainingAmount;
         
         // Use enhanced rendering for income entries
-        if (entry.type === 'income') {
+        if (entry.type === 'revenue') {
           return (
             <div key={entry.id} id={`entry-${entry.id}`} className={highlightedEntryId === entry.id ? 'bg-blue-100 transition-all duration-500' : ''}>
               <IncomeEntryCard

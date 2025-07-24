@@ -121,7 +121,7 @@ export class BookkeepingStorageService {
     
     return entries.map((entry: unknown) => {
       // Fix COGS entries and round to 2 decimal places
-      if (entry.type === 'income' && entry.isFromInvoice) {
+      if (entry.type === 'revenue' && entry.isFromInvoice) {
         return {
           ...entry,
           cogs: entry.cogs ? this.roundToTwoDecimals(entry.cogs) : 0,
@@ -227,7 +227,7 @@ export class BookkeepingStorageService {
         case 'expense':
           stats.expenses++;
           break;
-        case 'income':
+        case 'revenue':
           stats.income++;
           break;
         case 'cogs':
@@ -271,7 +271,7 @@ export class BookkeepingStorageService {
       if (!entry.id) {
         issues.push(`Entry at index ${index} missing required ID`);
       }
-      if (!entry.type || !['income', 'expense', 'cogs'].includes(entry.type)) {
+      if (!entry.type || !['revenue', 'expense', 'cogs'].includes(entry.type)) {
         issues.push(`Entry at index ${index} has invalid type: ${entry.type}`);
       }
       if (!entry.amount || typeof entry.amount !== 'number') {

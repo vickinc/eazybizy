@@ -120,10 +120,10 @@ export class ChartOfAccountsBusinessService {
     return accounts.filter(account => account.type === type && account.isActive);
   }
 
-  static getAccountsForBookkeeping(accounts: ChartOfAccount[], entryType: 'income' | 'expense'): ChartOfAccount[] {
+  static getAccountsForBookkeeping(accounts: ChartOfAccount[], entryType: 'revenue' | 'expense'): ChartOfAccount[] {
     // For income entries, suggest Revenue accounts
     // For expense entries, suggest Expense accounts
-    const targetType: AccountType = entryType === 'income' ? 'Revenue' : 'Expense';
+    const targetType: AccountType = entryType === 'revenue' ? 'Revenue' : 'Expense';
     return this.getAccountsByType(accounts, targetType);
   }
 

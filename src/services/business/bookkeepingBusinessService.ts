@@ -110,7 +110,7 @@ export class BookkeepingBusinessService {
       accountId: formData.accountId || undefined,
       accountType: formData.accountType,
       chartOfAccountsId: formData.chartOfAccountsId || undefined,
-      ...(formData.type === 'income' && {
+      ...(formData.type === 'revenue' && {
         cogs: formData.cogs ? this.roundToTwoDecimals(parseFloat(formData.cogs)) : undefined,
         cogsPaid: formData.cogsPaid ? this.roundToTwoDecimals(parseFloat(formData.cogsPaid)) : undefined
       }),
@@ -199,11 +199,11 @@ export class BookkeepingBusinessService {
     const validEntries = (entries || []).filter(entry => entry && typeof entry.amount === 'number' && !isNaN(entry.amount));
     
     const income = validEntries
-      .filter(entry => entry.type === 'income')
+      .filter(entry => entry.type === 'revenue')
       .reduce((sum, entry) => sum + entry.amount, 0);
     
     const cogs = validEntries
-      .filter(entry => entry.type === 'income' && entry.cogs)
+      .filter(entry => entry.type === 'revenue' && entry.cogs)
       .reduce((sum, entry) => sum + (entry.cogs || 0), 0);
     
     const actualExpenses = validEntries
@@ -211,7 +211,7 @@ export class BookkeepingBusinessService {
       .reduce((sum, entry) => sum + entry.amount, 0);
     
     const actualCogsPaid = validEntries
-      .filter(entry => entry.type === 'income' && entry.cogsPaid)
+      .filter(entry => entry.type === 'revenue' && entry.cogsPaid)
       .reduce((sum, entry) => sum + (entry.cogsPaid || 0), 0);
     
     const totalActualExpenses = actualExpenses + actualCogsPaid;
@@ -266,7 +266,7 @@ export class BookkeepingBusinessService {
   ): BookkeepingEntry {
     return {
       id: `auto_${invoice.id}_${Date.now()}`,
-      type: 'income',
+      type: 'revenue',
       category: 'Sales Revenue',
       amount: invoice.totalAmount,
       currency: invoice.currency,
@@ -286,10 +286,10 @@ export class BookkeepingBusinessService {
   static updateAccountBalance(
     account: CompanyAccount, 
     amount: number, 
-    type: 'income' | 'expense'
+    type: 'revenue' | 'expense'
   ): CompanyAccount {
     let balanceChange = 0;
-    if (type === 'income') {
+    if (type === 'revenue') {
       balanceChange = amount;
     } else if (type === 'expense') {
       balanceChange = -amount;
@@ -312,14 +312,14 @@ export class BookkeepingBusinessService {
   }
 
   static getAccountsPayable(entry: BookkeepingEntry): number {
-    if (entry.type === 'income' && entry.cogs) {
+    if (entry.type === 'revenue' && entry.cogs) {
       return (entry.cogs || 0) - (entry.cogsPaid || 0);
     }
     return 0;
   }
 
   static shouldRecalculateCOGS(entry: BookkeepingEntry, calculatedCOGS: COGSCalculation): boolean {
-    return entry.type === 'income' && 
+    return entry.type === 'revenue' && 
            entry.isFromInvoice && 
            entry.invoiceId && 
            entry.cogs !== undefined &&
@@ -453,14 +453,14 @@ export class BookkeepingBusinessService {
     expenseEntry: BookkeepingEntry
   ): BookkeepingEntry[] {
     return entries.filter(entry => 
-      entry.type === 'income' && 
+      entry.type === 'revenue' && 
       entry.companyId === expenseEntry.companyId &&
       entry.id !== expenseEntry.id
     );
   }
 
   // Additional filtering functions
-  static filterEntriesByType(entries: BookkeepingEntry[], type: 'all' | 'income' | 'expense'): BookkeepingEntry[] {
+  static filterEntriesByType(entries: BookkeepingEntry[], type: 'all' | 'revenue' | 'expense'): BookkeepingEntry[] {
     if (type === 'all') return entries;
     return entries.filter(entry => entry.type === type);
   }
@@ -774,7 +774,7 @@ export class BookkeepingBusinessService {
   ): JournalEntry {
     const lines: JournalEntryLine[] = [];
 
-    if (entry.type === 'income') {
+    if (entry.type === 'revenue') {
       // Income Entry: Debit Bank/Receivables, Credit Revenue
       const bankAccount = this.findBankAccount(chartOfAccounts);
       const revenueAccount = this.findRevenueAccount(entry.category, chartOfAccounts);
@@ -864,7 +864,7 @@ export class BookkeepingBusinessService {
       totalDebits: this.roundToTwoDecimals(totalDebits),
       totalCredits: this.roundToTwoDecimals(totalCredits),
       isBalanced: Math.abs(totalDebits - totalCredits) < 0.01,
-      source: entry.type === 'income' ? 'auto-income' : 'auto-expense',
+      source: entry.type === 'revenue' ? 'auto-income' : 'auto-expense',
       sourceId: entry.id,
       status: 'posted',
       createdAt: new Date().toISOString(),

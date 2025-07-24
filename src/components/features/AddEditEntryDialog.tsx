@@ -37,7 +37,7 @@ interface Vendor {
 }
 
 interface ExtendedEntryFormData {
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory: string;
   amount: string;
@@ -233,12 +233,12 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="type" className="text-sm font-medium">Type *</Label>
-                <Select value={entryFormData.type} onValueChange={(value: 'income' | 'expense') => updateEntryFormData('type', value)}>
+                <Select value={entryFormData.type} onValueChange={(value: 'revenue' | 'expense') => updateEntryFormData('type', value)}>
                   <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="income">Revenue</SelectItem>
+                    <SelectItem value="revenue">Revenue</SelectItem>
                     <SelectItem value="expense">Expense</SelectItem>
                   </SelectContent>
                 </Select>
@@ -250,7 +250,7 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(entryFormData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
+                    {(entryFormData.type === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -384,22 +384,20 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
                       
                       {/* Invoice Options */}
                       {invoices.length === 0 ? (
-                        <div className="text-center py-4 px-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex flex-col items-center space-y-2">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-blue-900">No invoices available</p>
-                              <p className="text-xs text-blue-700">Create invoices first to link them here</p>
+                        <div className="py-2 px-3 bg-blue-50 border-b">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <span className="text-sm text-blue-900">No invoices available</span>
                             </div>
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
                               onClick={() => window.open('/sales/invoices', '_blank')}
-                              className="text-blue-600 border-blue-300 hover:bg-blue-100 mt-2"
+                              className="text-xs text-blue-600 hover:bg-blue-100 h-7 px-2"
                             >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Go to Invoices
+                              Create invoice →
                             </Button>
                           </div>
                         </div>
@@ -520,22 +518,20 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
                         
                         {/* Invoice Options */}
                         {invoices.length === 0 ? (
-                          <div className="text-center py-4 px-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex flex-col items-center space-y-2">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium text-blue-900">No invoices available</p>
-                                <p className="text-xs text-blue-700">Create invoices first to link them here</p>
+                          <div className="py-2 px-3 bg-blue-50 border-b">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm text-blue-900">No invoices available</span>
                               </div>
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => window.open('/sales/invoices', '_blank')}
-                                className="text-blue-600 border-blue-300 hover:bg-blue-100 mt-2"
+                                className="text-xs text-blue-600 hover:bg-blue-100 h-7 px-2"
                               >
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Go to Invoices
+                                Create invoice →
                               </Button>
                             </div>
                           </div>

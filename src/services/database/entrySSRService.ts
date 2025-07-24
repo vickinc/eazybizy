@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 
 interface EntryFilters {
   companyId?: string;
-  type?: 'income' | 'expense';
+  type?: 'revenue' | 'expense';
   category?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -100,6 +100,7 @@ export class EntrySSRService {
               isFromInvoice: true,
               companyId: true,
               createdAt: true,
+              linkedIncomeId: true,
               // Include minimal related data
               company: {
                 select: {
@@ -113,6 +114,32 @@ export class EntrySSRService {
                   id: true,
                   code: true,
                   name: true,
+                }
+              },
+              linkedIncome: {
+                select: {
+                  id: true,
+                  type: true,
+                  category: true,
+                  description: true,
+                  reference: true,
+                  amount: true,
+                  currency: true,
+                  date: true,
+                  cogs: true,
+                }
+              },
+              linkedExpenses: {
+                select: {
+                  id: true,
+                  type: true,
+                  category: true,
+                  description: true,
+                  reference: true,
+                  amount: true,
+                  currency: true,
+                  date: true,
+                  vendorInvoice: true,
                 }
               }
             }
@@ -190,7 +217,7 @@ export class EntrySSRService {
         // Income stats
         executeWithRetry(() =>
           prisma.bookkeepingEntry.aggregate({
-            where: { ...where, type: 'income' },
+            where: { ...where, type: 'revenue' },
             _sum: { amount: true },
             _count: { _all: true },
           })

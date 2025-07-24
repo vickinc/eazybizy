@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     // Get basic stats
     const [incomeCount, expenseCount] = await Promise.all([
       prisma.bookkeepingEntry.count({
-        where: { companyId: parseInt(companyId), type: 'income' }
+        where: { companyId: parseInt(companyId), type: 'revenue' }
       }),
       prisma.bookkeepingEntry.count({
         where: { companyId: parseInt(companyId), type: 'expense' }

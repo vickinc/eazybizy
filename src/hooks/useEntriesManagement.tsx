@@ -11,6 +11,7 @@ import {
   entryApiService 
 } from '@/services/api/entryApiService';
 import { BookkeepingEntry } from '@/types/bookkeeping.types';
+import { BookkeepingBusinessService } from '@/services/business/bookkeepingBusinessService';
 
 interface UseEntriesManagementProps {
   companyId?: string;
@@ -42,6 +43,11 @@ export function useEntriesManagement({
   const [entryToDelete, setEntryToDelete] = useState<BookkeepingEntry | null>(null);
   const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  
+  // Link to revenue state
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [expenseToLink, setExpenseToLink] = useState<BookkeepingEntry | null>(null);
+  const [selectedIncomeForLink, setSelectedIncomeForLink] = useState('');
 
   // Handle URL-based highlighting
   const highlightedEntryId = searchParams.get('highlight');
@@ -271,6 +277,74 @@ export function useEntriesManagement({
     return Object.values(grouped);
   }, [entries]);
 
+  // Link to revenue handlers
+  const handleLinkToIncome = useCallback((expenseEntry: BookkeepingEntry) => {
+    const availableIncomeEntries = BookkeepingBusinessService.getAvailableIncomeEntriesForLinking(entries, expenseEntry);
+
+    if (availableIncomeEntries.length === 0) {
+      toast.error('No revenue entries available to link to');
+      return;
+    }
+
+    setExpenseToLink(expenseEntry);
+    setSelectedIncomeForLink('');
+    setShowLinkDialog(true);
+  }, [entries]);
+
+  const handleConfirmLink = useCallback(() => {
+    if (!expenseToLink || !selectedIncomeForLink) {
+      toast.error('Please select a revenue entry to link to');
+      return;
+    }
+
+    const selectedIncomeEntry = entries.find(entry => entry.id === selectedIncomeForLink);
+    if (!selectedIncomeEntry) {
+      toast.error('Selected revenue entry not found');
+      return;
+    }
+
+    // Update the entry with linkedIncomeId using the update mutation
+    updateEntryMutation.mutate({
+      id: expenseToLink.id,
+      data: { linkedIncomeId: selectedIncomeEntry.id }
+    }, {
+      onSuccess: () => {
+        // Refetch entries to show updated linked status
+        refetch();
+        toast.success(`Expense linked to revenue entry: ${selectedIncomeEntry.reference || selectedIncomeEntry.description}`);
+      },
+      onError: (error) => {
+        console.error('Failed to link entries:', error);
+        toast.error('Failed to link entries. Please try again.');
+      }
+    });
+    
+    setShowLinkDialog(false);
+    setExpenseToLink(null);
+    setSelectedIncomeForLink('');
+  }, [expenseToLink, selectedIncomeForLink, entries, updateEntryMutation, refetch]);
+
+  const handleCancelLink = useCallback(() => {
+    setShowLinkDialog(false);
+    setExpenseToLink(null);
+    setSelectedIncomeForLink('');
+  }, []);
+
+  const handleViewRelatedIncomeEntry = useCallback((incomeId: string) => {
+    // Navigate to highlight the income entry
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('highlight', incomeId);
+    router.push(`?${newSearchParams.toString()}`, { scroll: false });
+    
+    // Scroll to the entry after navigation
+    setTimeout(() => {
+      const element = document.getElementById(`entry-${incomeId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  }, [router, searchParams]);
+
   // Format currency helper
   const formatCurrency = useCallback((amount: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
@@ -279,6 +353,11 @@ export function useEntriesManagement({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
+  }, []);
+
+  // Simple COGS currency helper - for now just return the entry currency
+  const getCOGSCurrency = useCallback((entry: BookkeepingEntry) => {
+    return entry.currency || 'USD';
   }, []);
 
   return {
@@ -326,6 +405,17 @@ export function useEntriesManagement({
     confirmBulkDelete,
     refetch,
 
+    // Link actions
+    handleLinkToIncome,
+    handleConfirmLink,
+    handleCancelLink,
+    handleViewRelatedIncomeEntry,
+    showLinkDialog,
+    setShowLinkDialog,
+    expenseToLink,
+    selectedIncomeForLink,
+    setSelectedIncomeForLink,
+
     // Mutations
     createEntryMutation,
     updateEntryMutation,
@@ -335,6 +425,7 @@ export function useEntriesManagement({
 
     // Utilities
     formatCurrency,
+    getCOGSCurrency,
     highlightedEntryId,
   };
 }

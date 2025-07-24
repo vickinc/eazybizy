@@ -2,7 +2,7 @@ import { BookkeepingEntry } from '@/types/bookkeeping.types';
 
 export interface EntryFilters {
   companyId?: string;
-  type?: 'income' | 'expense';
+  type?: 'revenue' | 'expense';
   category?: string;
   search?: string;
   dateFrom?: string;
@@ -50,7 +50,7 @@ export interface EntryListResponse {
 
 export interface CreateEntryData {
   companyId: number;
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory?: string;
   description: string;
@@ -67,6 +67,7 @@ export interface CreateEntryData {
   isFromInvoice?: boolean;
   invoiceId?: string;
   chartOfAccountsId?: string;
+  linkedIncomeId?: string;
 }
 
 export interface UpdateEntryData extends Partial<CreateEntryData> {}

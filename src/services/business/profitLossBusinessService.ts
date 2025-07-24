@@ -948,7 +948,7 @@ export class ProfitLossBusinessService {
     name: string, 
     categories: string[], 
     filteredEntries: BookkeepingEntry[], 
-    type: 'income' | 'expense'
+    type: 'revenue' | 'expense'
   ): PLSection {
     const sectionEntries = filteredEntries.filter(entry => 
       entry.type === type && categories.includes(entry.category)
@@ -978,11 +978,11 @@ export class ProfitLossBusinessService {
 
   static calculatePLData(filteredEntries: BookkeepingEntry[]): PLData {
     // Revenue
-    const revenue = this.createPLSection('Revenue', this.REVENUE_CATEGORIES, filteredEntries, 'income');
+    const revenue = this.createPLSection('Revenue', this.REVENUE_CATEGORIES, filteredEntries, 'revenue');
     
     // Add COGS from income entries (invoice-based COGS)
     const incomeWithCogs = filteredEntries.filter(entry => 
-      entry.type === 'income' && entry.cogs && entry.cogs > 0
+      entry.type === 'revenue' && entry.cogs && entry.cogs > 0
     );
     const invoiceCogs = incomeWithCogs.reduce((sum, entry) => sum + (entry.cogs || 0), 0);
 
@@ -1004,7 +1004,7 @@ export class ProfitLossBusinessService {
     const operatingExpenses = this.createPLSection('Operating Expenses', this.OPERATING_EXPENSE_CATEGORIES, filteredEntries, 'expense');
     
     // Other income
-    const otherIncome = this.createPLSection('Other Income', this.OTHER_INCOME_CATEGORIES, filteredEntries, 'income');
+    const otherIncome = this.createPLSection('Other Income', this.OTHER_INCOME_CATEGORIES, filteredEntries, 'revenue');
     
     // Other expenses
     const otherExpenses = this.createPLSection('Other Expenses', this.OTHER_EXPENSE_CATEGORIES, filteredEntries, 'expense');

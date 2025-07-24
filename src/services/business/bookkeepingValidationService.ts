@@ -28,7 +28,7 @@ export class BookkeepingValidationService {
     }
 
     // Validate COGS fields if income type
-    if (formData.type === 'income') {
+    if (formData.type === 'revenue') {
       if (formData.cogs && parseFloat(formData.cogs) < 0) {
         errors.push('COGS amount cannot be negative');
       }

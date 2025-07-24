@@ -203,7 +203,7 @@ export class ProfitLossStorageService {
       }
 
       // Validate entry type (allow income, expense, and cogs)
-      if (!['income', 'expense', 'cogs'].includes(entryObj.type as string)) {
+      if (!['revenue', 'expense', 'cogs'].includes(entryObj.type as string)) {
         console.warn('Invalid entry type, skipping:', entry);
         return false;
       }

@@ -53,7 +53,7 @@ interface BulkAddDialogProps {
   onClose: () => void;
   
   // Bulk add state
-  bulkAddType: 'income' | 'expense';
+  bulkAddType: 'revenue' | 'expense';
   bulkEntries: BulkEntryFormData[];
   validBulkEntriesCount: number;
   
@@ -97,10 +97,10 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
               <Copy className="h-5 w-5 text-gray-700" />
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Bulk Add {bulkAddType === 'income' ? 'Revenue' : 'Expense'} Entries
+                  Bulk Add {bulkAddType === 'revenue' ? 'Revenue' : 'Expense'} Entries
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Add multiple {bulkAddType === 'income' ? 'revenue' : bulkAddType} entries at once. Fill in the required fields and use the + button to add more rows.
+                  Add multiple {bulkAddType === 'revenue' ? 'revenue' : bulkAddType} entries at once. Fill in the required fields and use the + button to add more rows.
                 </p>
               </div>
             </div>
@@ -125,7 +125,7 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
             <div className="space-y-2">
               {bulkEntries.map((entry, index) => (
                 <div key={index} className="bg-white border border-gray-200 rounded p-2 shadow-sm hover:shadow-md transition-all duration-200">
-                  <div className="grid gap-2 items-end" style={{gridTemplateColumns: bulkAddType === 'income' ? '2fr 3fr 1.5fr 1fr 1.5fr 1fr 2fr 1.5fr 100px' : '2fr 3fr 1.5fr 1fr 2fr 1.5fr 100px'}}>
+                  <div className="grid gap-2 items-end" style={{gridTemplateColumns: bulkAddType === 'revenue' ? '2fr 3fr 1.5fr 1fr 1.5fr 1fr 2fr 1.5fr 100px' : '2fr 3fr 1.5fr 1fr 2fr 1.5fr 100px'}}>
                     {/* First field - Vendor Invoice for expenses, Reference for income */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -181,7 +181,7 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
                       </Select>
                     </div>
                     {/* COGS field - only for revenue entries */}
-                    {bulkAddType === 'income' && (
+                    {bulkAddType === 'revenue' && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">COGS {index === 0 && <span className="text-gray-500">(Optional)</span>}</label>
                         <Input
@@ -195,7 +195,7 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
                       </div>
                     )}
                     {/* COGS Currency field - only for revenue entries when COGS > 0.01 */}
-                    {bulkAddType === 'income' && parseFloat((entry as any).cogs || '0') > 0.01 && (
+                    {bulkAddType === 'revenue' && parseFloat((entry as any).cogs || '0') > 0.01 && (
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">COGS Currency</label>
                         <Select value={(entry as any).cogsCurrency || 'USD'} onValueChange={(value) => updateBulkEntry(index, 'cogsCurrency', value)}>
@@ -220,7 +220,7 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(bulkAddType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
+                          {(bulkAddType === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
                             <SelectItem key={category} value={category}>{category}</SelectItem>
                           ))}
                         </SelectContent>
@@ -288,7 +288,7 @@ export const BulkAddDialog: React.FC<BulkAddDialogProps> = ({
           </Button>
           <Button 
             onClick={handleBulkCreate} 
-            className={`px-8 py-3 text-lg h-12 ${bulkAddType === 'income' ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
+            className={`px-8 py-3 text-lg h-12 ${bulkAddType === 'revenue' ? 'bg-green-100 hover:bg-green-200 text-green-700' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
           >
             <Copy className="h-5 w-5 mr-3" />
             Create {validBulkEntriesCount} Entries

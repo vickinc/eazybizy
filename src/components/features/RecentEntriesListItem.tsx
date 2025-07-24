@@ -11,7 +11,7 @@ import { formatDateForDisplay } from '@/utils';
 
 interface EnrichedEntry {
   id: string;
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   description: string;
   category: string;
   date: string;
@@ -63,8 +63,8 @@ export const RecentEntriesListItem: React.FC<RecentEntriesListItemProps> = ({
               {isExpanded ? <ChevronUp className="h-2.5 w-2.5" /> : <ChevronDown className="h-2.5 w-2.5" />}
             </Button>
             
-            <div className={`p-1 rounded-full flex-shrink-0 ${entry.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
-              {entry.type === 'income' ? 
+            <div className={`p-1 rounded-full flex-shrink-0 ${entry.type === 'revenue' ? 'bg-green-100' : 'bg-red-100'}`}>
+              {entry.type === 'revenue' ? 
                 <ArrowUpCircle className="h-2.5 w-2.5 text-green-600" /> :
                 <ArrowDownCircle className="h-2.5 w-2.5 text-red-600" />
               }
@@ -107,10 +107,10 @@ export const RecentEntriesListItem: React.FC<RecentEntriesListItemProps> = ({
             
             <div className="flex items-center space-x-2 flex-shrink-0">
               <div className="text-right">
-                <div className={`font-bold text-xs ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                  {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount, entry.currency)}
+                <div className={`font-bold text-xs ${entry.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`}>
+                  {entry.type === 'revenue' ? '+' : '-'}{formatCurrency(entry.amount, entry.currency)}
                 </div>
-                {entry.type === 'income' && entry.cogs && entry.accountsPayable > 0 && (
+                {entry.type === 'revenue' && entry.cogs && entry.accountsPayable > 0 && (
                   <div className="text-xs text-orange-600 font-medium">
                     A/P: {formatCurrency(entry.accountsPayable, entry.currency)}
                   </div>
@@ -149,7 +149,7 @@ export const RecentEntriesListItem: React.FC<RecentEntriesListItemProps> = ({
           </div>
           
           {/* COGS Information for Income Entries */}
-          {entry.type === 'income' && entry.cogs && (
+          {entry.type === 'revenue' && entry.cogs && (
             <div className="bg-white p-2 rounded border">
               <Label className="text-xs font-semibold text-gray-600 mb-2 block">COGS Breakdown</Label>
               <div className="grid grid-cols-3 gap-2 text-xs">

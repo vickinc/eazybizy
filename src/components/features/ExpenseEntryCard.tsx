@@ -8,7 +8,6 @@ import Square from "lucide-react/dist/esm/icons/square";
 import Edit from "lucide-react/dist/esm/icons/edit";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2";
 import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
-import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import Link from "lucide-react/dist/esm/icons/link";
 import ArrowUpCircle from "lucide-react/dist/esm/icons/arrow-up-circle";
 
@@ -83,13 +82,6 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                   <Square className="h-4 w-4 text-gray-400" />
                 )}
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1 h-6 w-6 pointer-events-none"
-              >
-                {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              </Button>
               {entry.linkedIncomeId && (
                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                   Linked
@@ -98,11 +90,11 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
               {company && (
                 <Badge variant="outline" className="flex items-center gap-1 text-xs">
                   <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
-                    company.logo.startsWith('data:') || company.logo.includes('http') 
+                    company.logo && (company.logo.startsWith('data:') || company.logo.includes('http'))
                       ? '' 
                       : 'bg-gradient-to-br from-blue-500 to-purple-600'
                   }`}>
-                    {company.logo.startsWith('data:') || company.logo.includes('http') ? (
+                    {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http')) ? (
                       <img 
                         src={company.logo} 
                         alt={`${company.tradingName} logo`} 
@@ -142,12 +134,15 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleLinkToIncome(entry)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLinkToIncome(entry);
+                    }}
                     className="h-7 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0"
-                    title="Link to income entry"
+                    title="Link to revenue entry"
                   >
                     <Link className="h-3 w-3 mr-1" />
-                    <span className="hidden sm:inline">Link to Income</span>
+                    <span className="hidden sm:inline">Link to Revenue</span>
                     <span className="sm:hidden">Link</span>
                   </Button>
                 )}
@@ -210,13 +205,6 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                 <Square className="h-4 w-4 text-gray-400" />
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 h-6 w-6 pointer-events-none"
-            >
-              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </Button>
             {entry.linkedIncomeId && (
               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                 Linked
@@ -225,11 +213,11 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
             {company && (
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
                 <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
-                  company.logo.startsWith('data:') || company.logo.includes('http') 
+                  company.logo && (company.logo.startsWith('data:') || company.logo.includes('http'))
                     ? '' 
                     : 'bg-gradient-to-br from-blue-500 to-purple-600'
                 }`}>
-                  {company.logo.startsWith('data:') || company.logo.includes('http') ? (
+                  {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http')) ? (
                     <img 
                       src={company.logo} 
                       alt={`${company.tradingName} logo`} 
@@ -269,12 +257,15 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleLinkToIncome(entry)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLinkToIncome(entry);
+                  }}
                   className="h-7 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0"
-                  title="Link to income entry"
+                  title="Link to revenue entry"
                 >
                   <Link className="h-3 w-3 mr-1" />
-                  <span className="hidden sm:inline">Link to Income</span>
+                  <span className="hidden sm:inline">Link to Revenue</span>
                   <span className="sm:hidden">Link</span>
                 </Button>
               )}
@@ -327,49 +318,48 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
           </div>
           <div>
             <Label className="text-xs font-semibold text-gray-600">Amount</Label>
-            <p className={`text-sm mt-1 font-semibold ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-              {entry.type === 'income' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
+            <p className={`text-sm mt-1 font-semibold ${entry.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`}>
+              {entry.type === 'revenue' ? '+' : '-'}{formatLargeCurrency(entry.amount, entry.currency)}
             </p>
           </div>
         </div>
 
-        {/* Linked Income Information for Expense Entries */}
+        {/* Linked Revenue Information for Expense Entries */}
         {entry.type === 'expense' && entry.linkedIncomeId && entry.linkedIncome && (
           <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-            <Label className="text-xs font-semibold text-green-700 mb-2 block">Linked to Income Entry</Label>
+            <Label className="text-xs font-semibold text-green-700 mb-2 block">Linked to Revenue Entry</Label>
             {(() => {
               const linkedIncome = entry.linkedIncome;
               return linkedIncome ? (
-                <div className="text-sm space-y-2">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="text-sm space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p><span className="font-medium">Income:</span> {linkedIncome.description}</p>
-                      <p><span className="font-medium">Income Amount:</span> {formatLargeCurrency(linkedIncome.amount, linkedIncome.currency)}</p>
-                      {linkedIncome.cogs && (
-                        <p><span className="font-medium">COGS:</span> {formatLargeCurrency(linkedIncome.cogs, getCOGSCurrency(linkedIncome))}</p>
-                      )}
+                      <p><span className="font-medium">Revenue Description:</span> {linkedIncome.description || linkedIncome.reference || 'No description'}</p>
+                      <p><span className="font-medium">Revenue Amount:</span> <span className="text-green-600 font-bold">+{formatLargeCurrency(linkedIncome.amount, linkedIncome.currency)}</span></p>
+                      <p><span className="font-medium">Revenue Category:</span> {linkedIncome.category}</p>
+                      <p><span className="font-medium">Revenue Date:</span> {formatDateForDisplay(linkedIncome.date)}</p>
                     </div>
                     <div>
-                      <p><span className="font-medium">Total Expenses:</span> {formatLargeCurrency(linkedIncome.totalLinkedExpenses, getCOGSCurrency(linkedIncome))}</p>
-                      {linkedIncome.cogs ? (
-                        <p><span className="font-medium text-black">Remaining A/P:</span> <span className="text-black">{formatLargeCurrency(linkedIncome.remainingAmount, getCOGSCurrency(linkedIncome))}</span></p>
-                      ) : (
-                        <p><span className="font-medium">Net Remaining:</span> {formatLargeCurrency(linkedIncome.amount - linkedIncome.totalLinkedExpenses, linkedIncome.currency)}</p>
+                      {linkedIncome.cogs && linkedIncome.cogs > 0 && (
+                        <p><span className="font-medium">COGS Amount:</span> <span className="text-purple-600 font-bold">{formatLargeCurrency(linkedIncome.cogs, getCOGSCurrency(linkedIncome))}</span></p>
                       )}
+                      <p><span className="font-medium">Revenue Reference:</span> {linkedIncome.reference || 'None'}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewRelatedIncomeEntry(linkedIncome.id)}
-                    className="text-green-600 border-green-200 hover:bg-green-50"
-                  >
-                    <ArrowUpCircle className="h-4 w-4 mr-2" />
-                    View Related Income Entry
-                  </Button>
+                  <div className="pt-2 border-t border-green-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewRelatedIncomeEntry(linkedIncome.id)}
+                      className="text-green-600 border-green-200 hover:bg-green-50"
+                    >
+                      <ArrowUpCircle className="h-4 w-4 mr-2" />
+                      View Related Revenue Entry
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Linked income entry not found</p>
+                <p className="text-sm text-gray-500">Linked revenue entry not found</p>
               );
             })()}
           </div>

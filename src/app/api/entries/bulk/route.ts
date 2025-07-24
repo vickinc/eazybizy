@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         }`);
       }
       
-      if (!['income', 'expense'].includes(type)) {
+      if (!['revenue', 'expense'].includes(type)) {
         throw new Error(`Entry at index ${index} has invalid type: ${type}`);
       }
       

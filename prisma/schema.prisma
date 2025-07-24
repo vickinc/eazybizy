@@ -467,10 +467,10 @@ model DigitalWallet {
 model BookkeepingEntry {
   id                 String           @id @default(cuid())
   companyId          Int
-  type               String           // 'income' | 'expense'
+  type               String           // 'revenue' | 'expense'
   category           String
   subcategory        String?
-  description        String
+  description        String?
   amount             Float
   currency           String
   date               DateTime
@@ -484,6 +484,7 @@ model BookkeepingEntry {
   isFromInvoice      Boolean          @default(false)
   invoiceId          String?
   chartOfAccountsId  String?
+  linkedIncomeId     String?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   
@@ -492,6 +493,8 @@ model BookkeepingEntry {
   company            Company          @relation(fields: [companyId], references: [id])
   invoice            Invoice?         @relation(fields: [invoiceId], references: [id])
   chartOfAccount     ChartOfAccount?  @relation(fields: [chartOfAccountsId], references: [id])
+  linkedIncome       BookkeepingEntry? @relation("LinkedEntries", fields: [linkedIncomeId], references: [id])
+  linkedExpenses     BookkeepingEntry[] @relation("LinkedEntries")
   transaction        Transaction?
   
   // Indexes for performance

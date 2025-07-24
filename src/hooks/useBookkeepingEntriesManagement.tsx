@@ -41,7 +41,7 @@ interface Vendor {
 
 // Extended form data interface for entries page
 interface ExtendedEntryFormData {
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   subcategory: string;
   amount: string;
@@ -107,7 +107,7 @@ export interface BookkeepingEntriesManagementHook {
   isLoaded: boolean;
   selectedPeriod: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom';
   customDateRange: { start: string; end: string };
-  viewFilter: 'all' | 'income' | 'expense';
+  viewFilter: 'all' | 'revenue' | 'expense';
   groupedView: boolean;
   expandedGroups: Set<string>;
   expandedEntries: Set<string>;
@@ -118,7 +118,7 @@ export interface BookkeepingEntriesManagementHook {
   filters: {
     selectedPeriod: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom';
     customDateRange: { start: string; end: string };
-    viewFilter: 'all' | 'income' | 'expense';
+    viewFilter: 'all' | 'revenue' | 'expense';
     searchTerm: string | null;
   };
   
@@ -133,7 +133,7 @@ export interface BookkeepingEntriesManagementHook {
   // Form States
   entryFormData: ExtendedEntryFormData;
   bulkEntries: BulkEntryFormData[];
-  bulkAddType: 'income' | 'expense';
+  bulkAddType: 'revenue' | 'expense';
   editingEntry: BookkeepingEntry | null;
   entryToDelete: BookkeepingEntry | null;
   expenseToLink: BookkeepingEntry | null;
@@ -182,7 +182,7 @@ export interface BookkeepingEntriesManagementHook {
   // Filter Actions
   setSelectedPeriod: (period: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom') => void;
   setCustomDateRange: (range: { start: string; end: string }) => void;
-  setViewFilter: (filter: 'all' | 'income' | 'expense') => void;
+  setViewFilter: (filter: 'all' | 'revenue' | 'expense') => void;
   setGroupedView: (grouped: boolean) => void;
   setSearchTerm: (term: string | null) => void;
   
@@ -210,7 +210,7 @@ export interface BookkeepingEntriesManagementHook {
   setSelectedIncomeForLink: (incomeId: string) => void;
   
   // Additional UI Actions
-  setBulkAddType: (type: 'income' | 'expense') => void;
+  setBulkAddType: (type: 'revenue' | 'expense') => void;
   
   // Missing handler functions from the component
   toggleGroupedView: () => void;
@@ -287,7 +287,7 @@ export const useBookkeepingEntriesManagement = (
   // Filter States
   const [selectedPeriod, setSelectedPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom'>('thisMonth');
   const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
-  const [viewFilter, setViewFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [viewFilter, setViewFilter] = useState<'all' | 'revenue' | 'expense'>('all');
   const [groupedView, setGroupedView] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string | null>(null);
   
@@ -308,7 +308,7 @@ export const useBookkeepingEntriesManagement = (
   // Form States
   const [entryFormData, setEntryFormData] = useState<ExtendedEntryFormData>(initialEntryFormData);
   const [bulkEntries, setBulkEntries] = useState<BulkEntryFormData[]>([initialBulkEntryData]);
-  const [bulkAddType, setBulkAddType] = useState<'income' | 'expense'>('income');
+  const [bulkAddType, setBulkAddType] = useState<'revenue' | 'expense'>('revenue');
   const [editingEntry, setEditingEntry] = useState<BookkeepingEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<BookkeepingEntry | null>(null);
   const [expenseToLink, setExpenseToLink] = useState<BookkeepingEntry | null>(null);
@@ -328,7 +328,7 @@ export const useBookkeepingEntriesManagement = (
           entries = [];
         } else {
           entries = entries.map((entry: BookkeepingEntry) => {
-            if (entry.type === 'income' && entry.isFromInvoice) {
+            if (entry.type === 'revenue' && entry.isFromInvoice) {
               return {
                 ...entry,
                 cogs: entry.cogs ? BookkeepingBusinessService.roundToTwoDecimals(entry.cogs) : 0,
@@ -428,7 +428,7 @@ export const useBookkeepingEntriesManagement = (
     const recalculateCOGSForExistingEntries = () => {
       setEntries(prevEntries => {
         const updatedEntries = prevEntries.map(entry => {
-          if (entry.type === 'income' && entry.isFromInvoice && entry.invoiceId && entry.cogs) {
+          if (entry.type === 'revenue' && entry.isFromInvoice && entry.invoiceId && entry.cogs) {
             const invoice = invoices.find(inv => inv.id === entry.invoiceId);
             if (invoice) {
               const calculatedCOGS = BookkeepingBusinessService.calculateInvoiceCOGS(invoice, products);
@@ -529,15 +529,15 @@ export const useBookkeepingEntriesManagement = (
     
     // Enhance entries with pre-calculated values
     return filtered.map(entry => {
-      const linkedExpensesList = entry.type === 'income' 
+      const linkedExpensesList = entry.type === 'revenue' 
         ? BookkeepingBusinessService.getLinkedExpenses(entries, entry.id)
         : [];
       
-      const totalLinkedExpenses = entry.type === 'income'
+      const totalLinkedExpenses = entry.type === 'revenue'
         ? BookkeepingBusinessService.getTotalLinkedExpenses(entries, entry.id)
         : 0;
       
-      const remainingAmount = entry.type === 'income'
+      const remainingAmount = entry.type === 'revenue'
         ? BookkeepingBusinessService.getRemainingAmount(entry, entries)
         : 0;
       
@@ -584,7 +584,7 @@ export const useBookkeepingEntriesManagement = (
   const linkedExpensesMap = React.useMemo(() => {
     const map = new Map<string, BookkeepingEntry[]>();
     filteredEntries
-      .filter(entry => entry.type === 'income')
+      .filter(entry => entry.type === 'revenue')
       .forEach(incomeEntry => {
         const linkedExpenses = BookkeepingBusinessService.getLinkedExpenses(entries, incomeEntry.id);
         map.set(incomeEntry.id, linkedExpenses);
@@ -596,7 +596,7 @@ export const useBookkeepingEntriesManagement = (
   const remainingAmountsMap = React.useMemo(() => {
     const map = new Map<string, number>();
     filteredEntries
-      .filter(entry => entry.type === 'income')
+      .filter(entry => entry.type === 'revenue')
       .forEach(incomeEntry => {
         const remaining = BookkeepingBusinessService.getRemainingAmount(incomeEntry, entries);
         map.set(incomeEntry.id, remaining);
@@ -621,7 +621,7 @@ export const useBookkeepingEntriesManagement = (
   // Computed totals
   const totalIncome = React.useMemo(() => {
     return filteredEntries
-      .filter(entry => entry.type === 'income')
+      .filter(entry => entry.type === 'revenue')
       .reduce((sum, entry) => sum + entry.amount, 0);
   }, [filteredEntries]);
 
@@ -649,7 +649,7 @@ export const useBookkeepingEntriesManagement = (
       : selectedPeriod === 'lastYear' ? 'Last Year'
       : 'All Time';
     
-    const typeText = viewFilter === 'income' ? 'Income'
+    const typeText = viewFilter === 'revenue' ? 'Income'
       : viewFilter === 'expense' ? 'Expense'
       : 'Financial';
     
@@ -660,7 +660,7 @@ export const useBookkeepingEntriesManagement = (
     const entryCount = filteredEntries.length;
     const companyText = selectedCompany === 'all' ? 'all companies' : 'selected company';
     
-    if (viewFilter === 'income') {
+    if (viewFilter === 'revenue') {
       return `Showing ${entryCount} revenue entries for ${companyText}. Total revenue: ${formatCurrency(totalIncome)}.`;
     } else if (viewFilter === 'expense') {
       return `Showing ${entryCount} expense entries for ${companyText}. Total expenses: ${formatCurrency(totalExpenses)}.`;
@@ -723,7 +723,7 @@ export const useBookkeepingEntriesManagement = (
     if (!expenseToLink) return [];
     
     return filteredEntries.filter(entry => 
-      entry.type === 'income' && 
+      entry.type === 'revenue' && 
       entry.companyId === expenseToLink.companyId &&
       entry.id !== expenseToLink.id
     ).map(entry => ({
@@ -751,7 +751,7 @@ export const useBookkeepingEntriesManagement = (
   // Entry Management Actions
   const handleCreateEntry = useCallback(() => {
     // For income entries, reference is required instead of description
-    if (entryFormData.type === 'income') {
+    if (entryFormData.type === 'revenue') {
       if (!entryFormData.reference || !entryFormData.amount || !entryFormData.companyId) {
         toast.error('Please fill in all required fields (reference, amount, and company are required for income entries)');
         return;
@@ -771,7 +771,7 @@ export const useBookkeepingEntriesManagement = (
       subcategory: entryFormData.subcategory,
       amount: parseFloat(entryFormData.amount),
       currency: entryFormData.currency,
-      description: entryFormData.description || (entryFormData.type === 'income' ? entryFormData.reference : ''),
+      description: entryFormData.description || (entryFormData.type === 'revenue' ? entryFormData.reference : ''),
       date: entryFormData.date,
       companyId: parseInt(entryFormData.companyId),
       reference: entryFormData.reference,
@@ -779,8 +779,8 @@ export const useBookkeepingEntriesManagement = (
       accountType: entryFormData.accountType,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      cogs: entryFormData.type === 'income' && entryFormData.cogs ? parseFloat(entryFormData.cogs) : undefined,
-      cogsPaid: entryFormData.type === 'income' && entryFormData.cogsPaid ? parseFloat(entryFormData.cogsPaid) : undefined,
+      cogs: entryFormData.type === 'revenue' && entryFormData.cogs ? parseFloat(entryFormData.cogs) : undefined,
+      cogsPaid: entryFormData.type === 'revenue' && entryFormData.cogsPaid ? parseFloat(entryFormData.cogsPaid) : undefined,
       linkedIncomeId: entryFormData.linkedIncomeId || undefined,
       vendorInvoice: entryFormData.type === 'expense' && entryFormData.vendorInvoice ? entryFormData.vendorInvoice : undefined
     };
@@ -795,7 +795,7 @@ export const useBookkeepingEntriesManagement = (
     if (!editingEntry) return;
     
     // Same validation as create
-    if (entryFormData.type === 'income') {
+    if (entryFormData.type === 'revenue') {
       if (!entryFormData.reference || !entryFormData.amount || !entryFormData.companyId) {
         toast.error('Please fill in all required fields (reference, amount, and company are required for income entries)');
         return;
@@ -814,15 +814,15 @@ export const useBookkeepingEntriesManagement = (
       subcategory: entryFormData.subcategory,
       amount: parseFloat(entryFormData.amount),
       currency: entryFormData.currency,
-      description: entryFormData.description || (entryFormData.type === 'income' ? entryFormData.reference : ''),
+      description: entryFormData.description || (entryFormData.type === 'revenue' ? entryFormData.reference : ''),
       date: entryFormData.date,
       companyId: parseInt(entryFormData.companyId),
       reference: entryFormData.reference,
       accountId: entryFormData.accountId,
       accountType: entryFormData.accountType,
       updatedAt: new Date().toISOString(),
-      cogs: entryFormData.type === 'income' && entryFormData.cogs ? parseFloat(entryFormData.cogs) : undefined,
-      cogsPaid: entryFormData.type === 'income' && entryFormData.cogsPaid ? parseFloat(entryFormData.cogsPaid) : undefined,
+      cogs: entryFormData.type === 'revenue' && entryFormData.cogs ? parseFloat(entryFormData.cogs) : undefined,
+      cogsPaid: entryFormData.type === 'revenue' && entryFormData.cogsPaid ? parseFloat(entryFormData.cogsPaid) : undefined,
       linkedIncomeId: entryFormData.linkedIncomeId || undefined,
       vendorInvoice: entryFormData.type === 'expense' && entryFormData.vendorInvoice ? entryFormData.vendorInvoice : undefined
     };
@@ -906,7 +906,7 @@ export const useBookkeepingEntriesManagement = (
       companyId: selectedCompany !== 'all' ? selectedCompany : parseInt(bulkEntries[0]?.companyId || '1'),
       reference: bulkEntry.reference,
       vendorInvoice: bulkAddType === 'expense' ? bulkEntry.vendorInvoice : undefined,
-      cogs: bulkAddType === 'income' && bulkEntry.cogs ? parseFloat(bulkEntry.cogs) : undefined,
+      cogs: bulkAddType === 'revenue' && bulkEntry.cogs ? parseFloat(bulkEntry.cogs) : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }));
@@ -1089,10 +1089,14 @@ export const useBookkeepingEntriesManagement = (
 
   // Link Actions
   const handleLinkToIncome = useCallback((expenseEntry: BookkeepingEntry) => {
+    console.log('handleLinkToIncome called with:', expenseEntry);
+    console.log('Current entries:', entries);
+    
     const availableIncomeEntries = BookkeepingBusinessService.getAvailableIncomeEntriesForLinking(entries, expenseEntry);
+    console.log('Available income entries:', availableIncomeEntries);
 
     if (availableIncomeEntries.length === 0) {
-      toast.error('No income entries available to link to');
+      toast.error('No revenue entries available to link to');
       return;
     }
 
@@ -1103,7 +1107,7 @@ export const useBookkeepingEntriesManagement = (
 
   const handleConfirmLink = useCallback(() => {
     if (!expenseToLink || !selectedIncomeForLink) {
-      toast.error('Please select an income entry to link to');
+      toast.error('Please select a revenue entry to link to');
       return;
     }
 
@@ -1119,7 +1123,7 @@ export const useBookkeepingEntriesManagement = (
         : entry
     ));
 
-    toast.success(`Expense linked to income entry: ${selectedIncomeEntry.reference || selectedIncomeEntry.description}`);
+    toast.success(`Expense linked to revenue entry: ${selectedIncomeEntry.reference || selectedIncomeEntry.description}`);
     
     setShowLinkDialog(false);
     setExpenseToLink(null);
@@ -1139,7 +1143,7 @@ export const useBookkeepingEntriesManagement = (
   }, [invoices, products]);
 
   // Additional UI Actions
-  const setBulkAddTypeFunc = useCallback((type: 'income' | 'expense') => {
+  const setBulkAddTypeFunc = useCallback((type: 'revenue' | 'expense') => {
     setBulkAddType(type);
   }, []);
 
@@ -1160,7 +1164,7 @@ export const useBookkeepingEntriesManagement = (
       const monthName = monthNames[parseInt(month) - 1];
       
       // Calculate group totals
-      const totalIncome = entries.filter(e => e.type === 'income').reduce((sum, e) => sum + e.amount, 0);
+      const totalIncome = entries.filter(e => e.type === 'revenue').reduce((sum, e) => sum + e.amount, 0);
       const totalExpenses = entries.filter(e => e.type === 'expense').reduce((sum, e) => sum + e.amount, 0);
       
       return {
@@ -1211,7 +1215,7 @@ export const useBookkeepingEntriesManagement = (
       toast.error('Please select a specific company to add entries.');
       return;
     }
-    setBulkAddTypeFunc('income');
+    setBulkAddTypeFunc('revenue');
     setShowBulkAddDialog(true);
   }, [selectedCompany, setBulkAddTypeFunc]);
 

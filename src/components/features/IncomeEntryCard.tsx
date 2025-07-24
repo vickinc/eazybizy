@@ -44,7 +44,9 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
   handleEditEntry,
   handleDeleteEntry
 }) => {
-  const linkedExpensesList = entry.linkedExpensesList || [];
+  // Calculate actual linked expenses from the entry data
+  const actualLinkedExpenses = entry.linkedExpenses ? entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) : 0;
+  const actualRemainingAmount = entry.cogs ? Math.max(0, entry.cogs - actualLinkedExpenses) : 0;
   
   // Helper function for currency formatting
   const formatLargeCurrency = (amount: number, currency: string = 'USD'): string => {
@@ -54,13 +56,13 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
   if (!isExpanded) {
     // Collapsed view - Ultra compact
     return (
-      <div className={`shadow-sm border-l-4 ${
+      <div className={`border-l-4 border-l-green-500 border-r border-t border-b border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 ${
         entry.isFromInvoice 
-          ? 'bg-blue-50 border-l-blue-500' 
-          : 'bg-white border-l-green-500'
+          ? 'bg-blue-50' 
+          : 'bg-white'
       } ${highlightedEntryId === entry.id ? 'bg-blue-100' : ''}`}>
         <div 
-          className="py-1 px-2 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="p-3 cursor-pointer"
           onClick={() => toggleEntryExpansion(entry.id)}
         >
           {/* Date in top left corner */}
@@ -92,11 +94,11 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
               {company && (
                 <Badge variant="outline" className="flex items-center gap-1 text-xs">
                   <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
-                    company.logo.startsWith('data:') || company.logo.includes('http') 
+                    company.logo && (company.logo.startsWith('data:') || company.logo.includes('http'))
                       ? '' 
                       : 'bg-gradient-to-br from-blue-500 to-purple-600'
                   }`}>
-                    {company.logo.startsWith('data:') || company.logo.includes('http') ? (
+                    {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http')) ? (
                       <img 
                         src={company.logo} 
                         alt={`${company.tradingName} logo`} 
@@ -114,6 +116,14 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
                   Auto
                 </Badge>
               )}
+              <div className="flex-1">
+                <div className="font-medium text-sm truncate">
+                  {entry.reference ? entry.reference : entry.description}
+                  {entry.category && (
+                    <span className="text-gray-500"> ({entry.category})</span>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
@@ -123,15 +133,15 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
                 </div>
                 {/* Quick Status Summary */}
                 <div className="text-xs text-gray-600 mt-1">
-                  {remainingAmount > 0 && (
+                  {actualRemainingAmount > 0 && (
                     <span className="text-orange-600 font-medium">
-                      A/P: {formatLargeCurrency(remainingAmount, getCOGSCurrency(entry))}
+                      A/P: {formatLargeCurrency(actualRemainingAmount, getCOGSCurrency(entry))}
                     </span>
                   )}
-                  {linkedExpenses > 0 && remainingAmount === 0 && (
+                  {actualLinkedExpenses > 0 && actualRemainingAmount === 0 && (
                     <span className="text-green-600 font-medium">✅ Fully Paid</span>
                   )}
-                  {linkedExpenses === 0 && entry.cogs && entry.cogs > 0 && (
+                  {actualLinkedExpenses === 0 && entry.cogs && entry.cogs > 0 && (
                     <span className="text-purple-600 font-medium">🏷️ COGS: {formatLargeCurrency(entry.cogs, getCOGSCurrency(entry))}</span>
                   )}
                 </div>
@@ -162,32 +172,38 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
             </div>
           </div>
           
-          {/* Main Title */}
-          <div className="mb-1">
-            <h3 className="text-base font-semibold text-gray-900">
-              {entry.reference ? entry.reference : entry.description}
-              {entry.category && (
-                <span className="text-gray-500"> ({entry.category})</span>
-              )}
-            </h3>
-          </div>
-          
-          {/* Related Expenses Preview */}
-          {linkedExpenses > 0 && (
+          {/* Linked Expenses Preview */}
+          {entry.linkedExpenses && entry.linkedExpenses.length > 0 && (
             <div className="mt-2">
-              <p className="text-sm text-blue-600 font-medium">
-                Related Expenses ({linkedExpensesList.length})
+              <p className="text-sm text-red-600 font-medium">
+                Linked Expenses ({entry.linkedExpenses.length})
               </p>
               <div className="text-xs text-gray-500 mt-1 space-y-1">
-                {linkedExpensesList.slice(0, 2).map((expense) => (
+                {entry.linkedExpenses.slice(0, 2).map((expense) => (
                   <div key={expense.id} className="flex justify-between">
-                    <span>{expense.vendorInvoice || expense.description}</span>
+                    <span>{expense.vendorInvoice || expense.description || expense.reference || 'No description'}</span>
                     <span className="text-red-600 font-medium">-{formatLargeCurrency(expense.amount, expense.currency)}</span>
                   </div>
                 ))}
-                {linkedExpensesList.length > 2 && (
-                  <p className="text-gray-400">...and {linkedExpensesList.length - 2} more</p>
+                {entry.linkedExpenses.length > 2 && (
+                  <p className="text-gray-400">...and {entry.linkedExpenses.length - 2} more</p>
                 )}
+                <div className="pt-1 border-t border-gray-200 mt-2">
+                  <div className="flex justify-between font-medium text-xs">
+                    <span>Net Amount:</span>
+                    <span className={
+                      entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) > 0 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }>
+                      {entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) > 0 ? '+' : ''}
+                      {formatLargeCurrency(
+                        entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0),
+                        entry.currency
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -198,9 +214,9 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
   
   // Expanded view - detailed version matching expense layout
   return (
-    <div className={`bg-white shadow-sm border-l-4 border-l-green-500 ${highlightedEntryId === entry.id ? 'bg-blue-100' : ''}`}>
+    <div className={`border-l-4 border-l-green-500 border-r border-t border-b border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 ${highlightedEntryId === entry.id ? 'bg-blue-100' : 'bg-white'}`}>
       <div 
-        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors border-b"
+        className="p-3 cursor-pointer"
         onClick={() => toggleEntryExpansion(entry.id)}
       >
         <div className="flex items-center justify-between">
@@ -264,8 +280,8 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
           <div>
             <label className="text-sm font-medium text-gray-700">Entry Type</label>
             <p className="text-sm mt-1">
-              <Badge className={entry.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                {entry.type === 'income' ? 'Revenue' : 'Expense'}
+              <Badge className={entry.type === 'revenue' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                {entry.type === 'revenue' ? 'Revenue' : 'Expense'}
               </Badge>
             </p>
           </div>
@@ -356,39 +372,45 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
             <div className="text-center">
               <p className="text-sm text-gray-600">Expenses Paid</p>
               <p className="text-lg font-bold text-red-600">
-                {formatLargeCurrency(linkedExpenses, entry.currency)}
+                {formatLargeCurrency(
+                  entry.linkedExpenses ? entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) : 0, 
+                  entry.currency
+                )}
               </p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-600">Net Profit</p>
               <p className={`text-lg font-bold ${
-                (entry.amount - (entry.cogs || 0) - linkedExpenses) > 0 ? 'text-green-600' : 'text-red-600'
+                (entry.amount - (entry.cogs || 0) - (entry.linkedExpenses ? entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) : 0)) > 0 ? 'text-green-600' : 'text-red-600'
               }`}>
-                {formatLargeCurrency(entry.amount - (entry.cogs || 0) - linkedExpenses, entry.currency)}
+                {formatLargeCurrency(
+                  entry.amount - (entry.cogs || 0) - (entry.linkedExpenses ? entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) : 0), 
+                  entry.currency
+                )}
               </p>
             </div>
           </div>
-          {remainingAmount > 0 && (
+          {actualRemainingAmount > 0 && (
             <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded">
               <p className="text-sm text-orange-800">
-                <strong>Outstanding A/P:</strong> {formatLargeCurrency(remainingAmount, getCOGSCurrency(entry))} remaining to be paid
+                <strong>Outstanding A/P:</strong> {formatLargeCurrency(actualRemainingAmount, getCOGSCurrency(entry))} remaining to be paid
               </p>
             </div>
           )}
         </div>
         
-        {/* Related Expenses List */}
-        {linkedExpenses > 0 && (
+        {/* Linked Expenses List */}
+        {entry.linkedExpenses && entry.linkedExpenses.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-blue-700 mb-3">
-              Related Expenses ({linkedExpensesList.length})
+            <h4 className="text-sm font-semibold text-red-700 mb-3">
+              Linked Expenses ({entry.linkedExpenses.length})
             </h4>
             <div className="space-y-2">
-              {linkedExpensesList.map((expense) => (
+              {entry.linkedExpenses.map((expense) => (
                 <div key={expense.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      {expense.vendorInvoice || expense.description}
+                      {expense.vendorInvoice || expense.description || expense.reference || 'No description'}
                     </p>
                     <p className="text-xs text-gray-500">
                       {expense.category} • {formatDateForDisplay(expense.date)}
@@ -401,6 +423,31 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="flex justify-between items-center text-sm">
+                <span className="font-medium text-gray-700">Total Linked Expenses:</span>
+                <span className="font-bold text-red-600">
+                  -{formatLargeCurrency(
+                    entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0),
+                    entry.currency
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm mt-1">
+                <span className="font-medium text-gray-700">Net Amount:</span>
+                <span className={`font-bold ${
+                  entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) > 0 
+                    ? 'text-green-600' 
+                    : 'text-red-600'
+                }`}>
+                  {entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0) > 0 ? '+' : ''}
+                  {formatLargeCurrency(
+                    entry.amount - entry.linkedExpenses.reduce((sum, exp) => sum + exp.amount, 0),
+                    entry.currency
+                  )}
+                </span>
+              </div>
             </div>
           </div>
         )}

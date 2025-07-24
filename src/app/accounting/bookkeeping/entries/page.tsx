@@ -47,7 +47,7 @@ export default async function EntriesPage(props: {
   // Parse filters from search params
   const filters = {
     companyId: searchParams.companyId || 'all',
-    type: searchParams.type as 'income' | 'expense' | undefined,
+    type: searchParams.type as 'revenue' | 'expense' | undefined,
     category: searchParams.category,
     dateFrom: searchParams.dateFrom,
     dateTo: searchParams.dateTo,

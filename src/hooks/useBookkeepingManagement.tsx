@@ -219,7 +219,7 @@ export const useBookkeepingManagement = (
 
     setEntries(prevEntries => {
       return prevEntries.map(entry => {
-        if (entry.type === 'income' && entry.isFromInvoice && entry.invoiceId && entry.cogs) {
+        if (entry.type === 'revenue' && entry.isFromInvoice && entry.invoiceId && entry.cogs) {
           const invoice = invoices.find(inv => inv.id === entry.invoiceId);
           if (invoice) {
             const calculatedCOGS = BookkeepingBusinessService.calculateInvoiceCOGS(invoice, products);
@@ -271,7 +271,7 @@ export const useBookkeepingManagement = (
     
     // Calculate actual COGS paid
     const actualCogsPaid = filteredEntries
-      .filter(entry => entry.type === 'income' && entry.cogsPaid)
+      .filter(entry => entry.type === 'revenue' && entry.cogsPaid)
       .reduce((sum, entry) => sum + (entry.cogsPaid || 0), 0);
     
     // Calculate projected net profit

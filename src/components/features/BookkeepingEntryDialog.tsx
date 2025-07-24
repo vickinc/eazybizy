@@ -22,7 +22,7 @@ interface Invoice {
 }
 
 interface EntryFormData {
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   category: string;
   description: string;
   amount: string;
@@ -75,7 +75,7 @@ export const BookkeepingEntryDialog: React.FC<BookkeepingEntryDialogProps> = ({
 
   // Filter accounts based on entry type
   const availableCategories = useMemo(() => {
-    const targetType = entryFormData.type === 'income' ? 'Revenue' : 'Expense';
+    const targetType = entryFormData.type === 'revenue' ? 'Revenue' : 'Expense';
     const accounts = chartOfAccounts.filter(account => 
       account.type === targetType && 
       account.isActive &&
@@ -84,7 +84,7 @@ export const BookkeepingEntryDialog: React.FC<BookkeepingEntryDialogProps> = ({
     
     // If no Chart of Accounts available, fall back to hardcoded categories
     if (accounts.length === 0) {
-      return entryFormData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+      return entryFormData.type === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
     }
     
     return accounts;
@@ -123,7 +123,7 @@ export const BookkeepingEntryDialog: React.FC<BookkeepingEntryDialogProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="revenue">Income</SelectItem>
                   <SelectItem value="expense">Expense</SelectItem>
                 </SelectContent>
               </Select>
@@ -279,7 +279,7 @@ export const BookkeepingEntryDialog: React.FC<BookkeepingEntryDialogProps> = ({
           </div>
 
           {/* COGS fields for income entries */}
-          {entryFormData.type === 'income' && (
+          {entryFormData.type === 'revenue' && (
             <>
               <div>
                 <Label>COGS Amount (Optional)</Label>

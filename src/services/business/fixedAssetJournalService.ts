@@ -92,7 +92,7 @@ export class FixedAssetJournalService {
     // Create cash/payable credit entry
     const paymentEntry: BookkeepingEntry = {
       id: BookkeepingBusinessService.generateEntryId(),
-      type: 'income', // Using income type to decrease cash/increase payable
+      type: 'revenue', // Using income type to decrease cash/increase payable
       category: params.paymentMethod === 'cash' ? 'Cash' : 'Accounts Payable',
       subcategory: params.paymentMethod === 'cash' ? 'Cash Payment' : 'Trade Payables',
       amount: -params.acquisitionAmount, // Negative to represent credit
@@ -164,7 +164,7 @@ export class FixedAssetJournalService {
     // Create accumulated depreciation credit entry
     const accumulatedDepreciationEntry: BookkeepingEntry = {
       id: BookkeepingBusinessService.generateEntryId(),
-      type: 'income', // Using income type to increase accumulated depreciation (contra-asset)
+      type: 'revenue', // Using income type to increase accumulated depreciation (contra-asset)
       category: 'Fixed Assets',
       subcategory: 'Accumulated Depreciation',
       amount: -params.depreciationAmount, // Negative to represent credit
@@ -239,7 +239,7 @@ export class FixedAssetJournalService {
     // 2. Remove asset cost (credit)
     const assetEntry: BookkeepingEntry = {
       id: BookkeepingBusinessService.generateEntryId(),
-      type: 'income',
+      type: 'revenue',
       category: 'Fixed Assets',
       subcategory: asset.category,
       amount: -asset.acquisitionCost,
@@ -259,7 +259,7 @@ export class FixedAssetJournalService {
       const cashAccountId = params.cashAccountId || await this.findCashAccount();
       cashEntry = {
         id: BookkeepingBusinessService.generateEntryId(),
-        type: 'income',
+        type: 'revenue',
         category: 'Cash',
         subcategory: 'Asset Disposal',
         amount: params.disposalPrice,
@@ -280,7 +280,7 @@ export class FixedAssetJournalService {
       const gainLossAccount = await this.findOrCreateGainLossAccount();
       gainLossEntry = {
         id: BookkeepingBusinessService.generateEntryId(),
-        type: disposalGainLoss > 0 ? 'income' : 'expense',
+        type: disposalGainLoss > 0 ? 'revenue' : 'expense',
         category: 'Other Income/Expenses',
         subcategory: disposalGainLoss > 0 ? 'Gain on Asset Disposal' : 'Loss on Asset Disposal',
         amount: Math.abs(disposalGainLoss),
