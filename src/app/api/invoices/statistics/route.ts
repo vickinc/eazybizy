@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
         take: 10
       }),
 
-      // Monthly trends (last 12 months) - SQLite compatible
+      // Monthly trends (last 12 months)
       prisma.$queryRaw`
         SELECT 
           DATE(issueDate, 'start of month') as month,
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
         }
       }),
 
-      // Payment analysis (paid invoices) - SQLite compatible
+      // Payment analysis (paid invoices)
       prisma.$queryRaw`
         SELECT 
           AVG(JULIANDAY(paidDate) - JULIANDAY(issueDate)) as avg_payment_days,
@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
           ${companyId ? Prisma.sql`AND fromCompanyId = ${companyId}` : Prisma.empty}
       `,
 
-      // Calculate additional average statistics - SQLite compatible
+      // Calculate additional average statistics
       prisma.$queryRaw`
         SELECT 
           AVG(JULIANDAY(dueDate) - JULIANDAY(issueDate)) as avg_payment_terms,
@@ -236,9 +236,28 @@ export async function GET(request: NextRequest) {
     ])
 
     // Calculate derived metrics - convert BigInt to Number
-    const totalInvoices = Number(overallStats._count)
-    const totalValue = Number(overallStats._sum.totalAmount || 0)
-    const averageInvoiceValue = Number(overallStats._avg.totalAmount || 0)
+    // For totals, we need to exclude archived invoices (handle both cases)
+    const activeInvoicesFilter = { 
+      ...where, 
+      status: { 
+        notIn: ['ARCHIVED', 'archived'] 
+      } 
+    }
+    
+    const activeStats = await prisma.invoice.aggregate({
+      where: activeInvoicesFilter,
+      _sum: {
+        totalAmount: true,
+      },
+      _avg: {
+        totalAmount: true,
+      },
+      _count: true,
+    })
+    
+    const totalInvoices = Number(activeStats._count)
+    const totalValue = Number(activeStats._sum.totalAmount || 0)
+    const averageInvoiceValue = Number(activeStats._avg.totalAmount || 0)
 
     // Status percentages - convert BigInt to Number
     const statusStats = statusBreakdown.reduce((acc, status) => {

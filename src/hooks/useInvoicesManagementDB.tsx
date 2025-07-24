@@ -514,6 +514,20 @@ export function useInvoicesManagementDB(
     },
   });
 
+  // Mark Paid Mutation
+  const markPaidMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: { paidDate?: string; paidAmount?: number; paymentMethod?: string; transactionReference?: string; notes?: string } }) => 
+      invoicesApiService.markInvoicePaid(id, data || {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-statistics'] });
+      toast.success('Invoice marked as paid successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark invoice as paid: ${error.message}`);
+    },
+  });
+
   // Delete Invoice Mutation
   const deleteInvoiceMutation = useMutation({
     mutationFn: (id: string) => invoicesApiService.deleteInvoice(id),
@@ -812,14 +826,33 @@ export function useInvoicesManagementDB(
   }, [updateInvoiceMutation]);
 
   const handleMarkAsPaid = useCallback(async (id: string) => {
-    await updateInvoiceMutation.mutateAsync({
-      id,
-      data: { 
-        status: 'PAID',
-        paidDate: new Date().toISOString()
+    try {
+      // Find the invoice to check its status
+      const invoice = filteredInvoices.find(inv => inv.id === id);
+      
+      if (!invoice) {
+        toast.error('Invoice not found');
+        return;
       }
-    });
-  }, [updateInvoiceMutation]);
+      
+      // If invoice is already PAID, show info message
+      if (invoice.status === 'PAID') {
+        toast.info('Invoice is already marked as paid');
+        return;
+      }
+      
+      // Use the PUT endpoint instead of mark-paid endpoint to avoid database issues
+      await updateInvoiceMutation.mutateAsync({
+        id,
+        data: { 
+          status: 'PAID',
+          paidDate: new Date().toISOString()
+        }
+      });
+    } catch (error: unknown) {
+      toast.error(`Failed to mark invoice as paid: ${error.message}`);
+    }
+  }, [updateInvoiceMutation, filteredInvoices]);
 
   const handleMarkAsSent = useCallback(async (id: string) => {
     await updateInvoiceMutation.mutateAsync({
@@ -875,23 +908,38 @@ export function useInvoicesManagementDB(
     }
 
     try {
-      await Promise.all(ids.map(id => 
-        updateInvoiceMutation.mutateAsync({
-          id,
-          data: { 
-            status: 'PAID',
-            paidDate: new Date().toISOString()
-          }
-        })
-      ));
+      // Get the selected invoices to check their status
+      const selectedInvoicesList = filteredInvoices.filter(inv => ids.includes(inv.id));
+      
+      // Filter out already paid invoices
+      const alreadyPaidInvoices = selectedInvoicesList.filter(inv => inv.status === 'PAID');
+      const invoicesToMarkPaid = selectedInvoicesList.filter(inv => inv.status !== 'PAID');
+      
+      if (alreadyPaidInvoices.length > 0) {
+        toast.info(`${alreadyPaidInvoices.length} invoice(s) are already marked as paid`);
+      }
+      
+      // Mark all non-paid invoices as paid using PUT endpoint
+      if (invoicesToMarkPaid.length > 0) {
+        await Promise.all(invoicesToMarkPaid.map(inv => 
+          updateInvoiceMutation.mutateAsync({
+            id: inv.id,
+            data: { 
+              status: 'PAID',
+              paidDate: new Date().toISOString()
+            }
+          })
+        ));
+        
+        toast.success(`${invoicesToMarkPaid.length} invoice(s) marked as paid successfully`);
+      }
       
       // Clear selection after successful operation
       setSelectedInvoices(new Set());
-      toast.success(`${ids.length} invoice(s) marked as paid successfully`);
     } catch (error: unknown) {
       toast.error(`Failed to mark invoices as paid: ${error.message}`);
     }
-  }, [selectedInvoices, updateInvoiceMutation]);
+  }, [selectedInvoices, filteredInvoices, updateInvoiceMutation]);
 
   const handleBulkMarkSent = useCallback(async () => {
     const ids = Array.from(selectedInvoices);

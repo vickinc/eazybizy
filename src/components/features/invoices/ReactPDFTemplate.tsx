@@ -254,7 +254,8 @@ const styles = StyleSheet.create({
   paymentLabel: {
     fontSize: 8,
     fontWeight: 'bold',
-    width: 80,
+    width: 120,
+    flexShrink: 0,
   },
   paymentValue: {
     fontSize: 8,
@@ -471,68 +472,76 @@ export function ReactPDFTemplate({
               {paymentMethods.map((method, index) => (
                 <View key={index} style={styles.paymentMethod}>
                   <View style={styles.paymentRow}>
-                    <Text style={styles.paymentLabel}>Payment Method:</Text>
+                    <Text style={styles.paymentLabel}>Payment Method: </Text>
                     <Text style={styles.paymentValue}>
                       {method.type === 'bank' ? 'Bank Transfer' : method.name}{method.type !== 'bank' && method.currency && !method.name.includes(`(${method.currency})`) ? ` (${method.currency})` : ''}
                     </Text>
                   </View>
                   {method.accountName && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Account Name:</Text>
+                      <Text style={styles.paymentLabel}>{method.type === 'bank' ? 'Beneficiary Name: ' : 'Account Name: '}</Text>
                       <Text style={styles.paymentValue}>{method.accountName}</Text>
+                    </View>
+                  )}
+                  {method.type === 'bank' && method.accountName && companyInfo && (
+                    <View style={styles.paymentRow}>
+                      <Text style={styles.paymentLabel}>Beneficiary Address: </Text>
+                      <Text style={styles.paymentValue}>
+                        {companyInfo.address}{companyInfo.city && `, ${companyInfo.city}`}{companyInfo.zipCode && `, ${companyInfo.zipCode}`}{companyInfo.country && `, ${companyInfo.country}`}
+                      </Text>
                     </View>
                   )}
                   {method.bankName && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Bank Name:</Text>
+                      <Text style={styles.paymentLabel}>Bank Name: </Text>
                       <Text style={styles.paymentValue}>{method.bankName}</Text>
                     </View>
                   )}
                   {method.bankAddress && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Bank Address:</Text>
+                      <Text style={styles.paymentLabel}>Bank Address: </Text>
                       <Text style={styles.paymentValue}>{method.bankAddress}</Text>
                     </View>
                   )}
                   {method.iban && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>IBAN{method.currency ? ` (${method.currency})` : ''}:</Text>
+                      <Text style={styles.paymentLabel}>IBAN{method.currency ? ` (${method.currency})` : ''}: </Text>
                       <Text style={styles.paymentValue}>{method.iban}</Text>
                     </View>
                   )}
                   {method.swiftCode && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>SWIFT Code:</Text>
+                      <Text style={styles.paymentLabel}>SWIFT Code: </Text>
                       <Text style={styles.paymentValue}>{method.swiftCode}</Text>
                     </View>
                   )}
                   {method.accountNumber && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Account Number{method.currency ? ` (${method.currency})` : ''}:</Text>
+                      <Text style={styles.paymentLabel}>Account Number{method.currency ? ` (${method.currency})` : ''}: </Text>
                       <Text style={styles.paymentValue}>{method.accountNumber}</Text>
                     </View>
                   )}
                   {method.sortCode && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Sort Code:</Text>
+                      <Text style={styles.paymentLabel}>Sort Code: </Text>
                       <Text style={styles.paymentValue}>{method.sortCode}</Text>
                     </View>
                   )}
                   {method.routingNumber && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Routing Number:</Text>
+                      <Text style={styles.paymentLabel}>Routing Number: </Text>
                       <Text style={styles.paymentValue}>{method.routingNumber}</Text>
                     </View>
                   )}
                   {method.walletAddress && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Wallet Address:</Text>
+                      <Text style={styles.paymentLabel}>Wallet Address: </Text>
                       <Text style={styles.paymentValue}>{method.walletAddress}</Text>
                     </View>
                   )}
                   {method.type === 'bank' && (
                     <View style={styles.paymentRow}>
-                      <Text style={styles.paymentLabel}>Details:</Text>
+                      <Text style={styles.paymentLabel}>Details: </Text>
                       <Text style={styles.paymentValue}>
                         As a reference to the payment, please write: <Text style={{ fontWeight: 'bold' }}>Invoice Nr. {invoice.invoiceNumber}</Text>
                       </Text>
@@ -544,19 +553,25 @@ export function ReactPDFTemplate({
           ) : (
             <View>
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentLabel}>Account Name:</Text>
+                <Text style={styles.paymentLabel}>Beneficiary Name: </Text>
                 <Text style={styles.paymentValue}>{defaultCompanyInfo.name}</Text>
               </View>
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentLabel}>Bank Name:</Text>
+                <Text style={styles.paymentLabel}>Beneficiary Address: </Text>
+                <Text style={styles.paymentValue}>
+                  {companyInfo?.address}{companyInfo?.city && `, ${companyInfo.city}`}{companyInfo?.zipCode && `, ${companyInfo.zipCode}`}{companyInfo?.country && `, ${companyInfo.country}`}
+                </Text>
+              </View>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentLabel}>Bank Name: </Text>
                 <Text style={styles.paymentValue}>Business Bank</Text>
               </View>
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentLabel}>Account #:</Text>
+                <Text style={styles.paymentLabel}>Account #: </Text>
                 <Text style={styles.paymentValue}>12345678</Text>
               </View>
               <View style={styles.paymentRow}>
-                <Text style={styles.paymentLabel}>Sort Code:</Text>
+                <Text style={styles.paymentLabel}>Sort Code: </Text>
                 <Text style={styles.paymentValue}>12-34-56</Text>
               </View>
             </View>

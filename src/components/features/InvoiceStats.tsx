@@ -12,14 +12,18 @@ interface InvoiceStatsProps {
 }
 
 export const InvoiceStats: React.FC<InvoiceStatsProps> = ({ statistics }) => {
-  // Extract values from the actual API response structure
+  // Handle both SSR and API response structures
+  // SSR structure has summary.totalInvoices, statusBreakdown.sent.count, etc.
+  // API structure also has summary.totalInvoices, statusBreakdown.sent.count, etc.
+  
   const totalInvoices = statistics?.summary?.totalInvoices || 0;
   
   // The API uses lowercase keys in statusBreakdown
   const sentInvoices = statistics?.statusBreakdown?.sent?.count || 0;
   
-  // For paid invoices, use the paymentAnalysis section
-  const paidInvoices = statistics?.paymentAnalysis?.paidInvoicesCount || 0;
+  // For paid invoices, check both paymentAnalysis and statusBreakdown
+  const paidInvoices = statistics?.paymentAnalysis?.paidInvoicesCount || 
+                       statistics?.statusBreakdown?.paid?.count || 0;
   
   const totalValue = statistics?.summary?.totalValue || 0;
 

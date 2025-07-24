@@ -297,27 +297,102 @@ export function InvoiceTemplate({
               {paymentMethods.map((method, index) => (
                 <div key={index} className="mb-3 pb-3 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
                   <div className="space-y-0.5">
-                    <div><strong>Payment Method:</strong> {method.type === 'bank' ? 'Bank Transfer' : method.name}{method.type !== 'bank' && method.currency && !method.name.includes(`(${method.currency})`) ? ` (${method.currency})` : ''}</div>
-                    {method.accountName && <div><strong>Account Name:</strong> {method.accountName}</div>}
-                    {method.bankName && <div><strong>Bank Name:</strong> {method.bankName}</div>}
-                    {method.bankAddress && <div><strong>Bank Address:</strong> {method.bankAddress}</div>}
-                    {method.iban && <div><strong>IBAN{method.currency ? ` (${method.currency})` : ''}:</strong> {method.iban}</div>}
-                    {method.swiftCode && <div><strong>SWIFT Code:</strong> {method.swiftCode}</div>}
-                    {method.accountNumber && <div><strong>Account Number{method.currency ? ` (${method.currency})` : ''}:</strong> {method.accountNumber}</div>}
-                    {method.sortCode && <div><strong>Sort Code:</strong> {method.sortCode}</div>}
-                    {method.routingNumber && <div><strong>Routing Number:</strong> {method.routingNumber}</div>}
-                    {method.walletAddress && <div><strong>Wallet Address:</strong> <span className="break-all">{method.walletAddress}</span></div>}
-                    {method.type === 'bank' && <div><strong>Details:</strong> As a reference to the payment, please write: <strong>Invoice Nr. {invoice.invoiceNumber}</strong></div>}
+                    <div className="flex">
+                      <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Payment Method:</div>
+                      <div className="flex-1">{method.type === 'bank' ? 'Bank Transfer' : method.name}{method.type !== 'bank' && method.currency && !method.name.includes(`(${method.currency})`) ? ` (${method.currency})` : ''}</div>
+                    </div>
+                    {method.accountName && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">{method.type === 'bank' ? 'Beneficiary Name' : 'Account Name'}:</div>
+                        <div className="flex-1">{method.accountName}</div>
+                      </div>
+                    )}
+                    {method.type === 'bank' && method.accountName && companyInfo && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Beneficiary Address:</div>
+                        <div className="flex-1">{companyInfo.address}{companyInfo.city && `, ${companyInfo.city}`}{companyInfo.zipCode && `, ${companyInfo.zipCode}`}{companyInfo.country && `, ${companyInfo.country}`}</div>
+                      </div>
+                    )}
+                    {method.bankName && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Bank Name:</div>
+                        <div className="flex-1">{method.bankName}</div>
+                      </div>
+                    )}
+                    {method.bankAddress && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Bank Address:</div>
+                        <div className="flex-1">{method.bankAddress}</div>
+                      </div>
+                    )}
+                    {method.iban && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">IBAN{method.currency ? ` (${method.currency})` : ''}:</div>
+                        <div className="flex-1">{method.iban}</div>
+                      </div>
+                    )}
+                    {method.swiftCode && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">SWIFT Code:</div>
+                        <div className="flex-1">{method.swiftCode}</div>
+                      </div>
+                    )}
+                    {method.accountNumber && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Account Number{method.currency ? ` (${method.currency})` : ''}:</div>
+                        <div className="flex-1">{method.accountNumber}</div>
+                      </div>
+                    )}
+                    {method.sortCode && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Sort Code:</div>
+                        <div className="flex-1">{method.sortCode}</div>
+                      </div>
+                    )}
+                    {method.routingNumber && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Routing Number:</div>
+                        <div className="flex-1">{method.routingNumber}</div>
+                      </div>
+                    )}
+                    {method.walletAddress && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Wallet Address:</div>
+                        <div className="flex-1 break-all">{method.walletAddress}</div>
+                      </div>
+                    )}
+                    {method.type === 'bank' && (
+                      <div className="flex">
+                        <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Details:</div>
+                        <div className="flex-1">As a reference to the payment, please write: <strong>Invoice Nr. {invoice.invoiceNumber}</strong></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="space-y-0.5">
-              <div><strong>Account Name:</strong> {defaultCompanyInfo.accountName}</div>
-              <div><strong>Bank Name:</strong> {defaultCompanyInfo.bankName}</div>
-              <div><strong>Account #:</strong> {defaultCompanyInfo.accountNumber}</div>
-              <div><strong>Sort Code:</strong> {defaultCompanyInfo.sortCode}</div>
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Beneficiary Name:</div>
+                <div className="flex-1">{defaultCompanyInfo.accountName}</div>
+              </div>
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Beneficiary Address:</div>
+                <div className="flex-1">{companyInfo.address}{companyInfo.city && `, ${companyInfo.city}`}{companyInfo.zipCode && `, ${companyInfo.zipCode}`}{companyInfo.country && `, ${companyInfo.country}`}</div>
+              </div>
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Bank Name:</div>
+                <div className="flex-1">{defaultCompanyInfo.bankName}</div>
+              </div>
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Account #:</div>
+                <div className="flex-1">{defaultCompanyInfo.accountNumber}</div>
+              </div>
+              <div className="flex">
+                <div className="w-32 flex-shrink-0 font-semibold whitespace-nowrap">Sort Code:</div>
+                <div className="flex-1">{defaultCompanyInfo.sortCode}</div>
+              </div>
             </div>
           )}
         </div>

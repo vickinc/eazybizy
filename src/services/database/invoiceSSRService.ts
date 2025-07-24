@@ -418,10 +418,17 @@ export class InvoiceSSRService {
    * Get invoice statistics separately (for async loading)
    * This expensive operation is separated from the main list query
    */
-  static async getInvoiceStatistics(): Promise<InvoiceStatistics> {
+  static async getInvoiceStatistics(companyId?: number | 'all'): Promise<InvoiceStatistics> {
     try {
+      // Build where clause for company filtering
+      const where: any = {}
+      if (companyId && companyId !== 'all') {
+        where.fromCompanyId = companyId
+      }
+
       const [allInvoices, statusCounts] = await Promise.all([
         prisma.invoice.findMany({
+          where,
           select: {
             status: true,
             totalAmount: true,
@@ -435,6 +442,7 @@ export class InvoiceSSRService {
         }),
         prisma.invoice.groupBy({
           by: ['status'],
+          where,
           _count: {
             status: true,
           },
@@ -444,9 +452,13 @@ export class InvoiceSSRService {
         }),
       ])
 
-      // Calculate summary statistics
-      const totalInvoices = allInvoices.length
-      const totalValue = allInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0)
+      // Calculate summary statistics (excluding archived invoices)
+      // Check for all possible case variations of 'archived'
+      const activeInvoices = allInvoices.filter(i => 
+        i.status.toLowerCase() !== 'archived'
+      )
+      const totalInvoices = activeInvoices.length
+      const totalValue = activeInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0)
       const averageValue = totalInvoices > 0 ? totalValue / totalInvoices : 0
 
       // Calculate status breakdown
@@ -459,19 +471,19 @@ export class InvoiceSSRService {
       }
 
       statusCounts.forEach(statusCount => {
-        const status = statusCount.status as keyof typeof statusBreakdown
+        const status = statusCount.status.toLowerCase() as keyof typeof statusBreakdown
         if (statusBreakdown[status]) {
           statusBreakdown[status].count = statusCount._count.status
           statusBreakdown[status].value = statusCount._sum.totalAmount || 0
         }
       })
 
-      // Calculate payment analysis
-      const paidInvoices = allInvoices.filter(i => i.status === 'paid')
-      const unpaidInvoices = allInvoices.filter(i => i.status !== 'paid' && i.status !== 'archived')
+      // Calculate payment analysis (using activeInvoices to exclude archived)
+      const paidInvoices = activeInvoices.filter(i => i.status.toLowerCase() === 'paid')
+      const unpaidInvoices = activeInvoices.filter(i => i.status.toLowerCase() !== 'paid')
       const now = new Date()
-      const overdueInvoices = allInvoices.filter(i => 
-        i.status !== 'paid' && i.status !== 'archived' && i.dueDate < now
+      const overdueInvoices = activeInvoices.filter(i => 
+        i.status.toLowerCase() !== 'paid' && i.dueDate < now
       )
 
       const paymentAnalysis = {
@@ -489,12 +501,12 @@ export class InvoiceSSRService {
       const thisYear = new Date(now.getFullYear(), 0, 1)
       const lastYear = new Date(now.getFullYear() - 1, 0, 1)
 
-      const thisMonthInvoices = allInvoices.filter(i => i.issueDate >= thisMonth)
-      const lastMonthInvoices = allInvoices.filter(i => 
+      const thisMonthInvoices = activeInvoices.filter(i => i.issueDate >= thisMonth)
+      const lastMonthInvoices = activeInvoices.filter(i => 
         i.issueDate >= lastMonth && i.issueDate < thisMonth
       )
-      const thisYearInvoices = allInvoices.filter(i => i.issueDate >= thisYear)
-      const lastYearInvoices = allInvoices.filter(i => 
+      const thisYearInvoices = activeInvoices.filter(i => i.issueDate >= thisYear)
+      const lastYearInvoices = activeInvoices.filter(i => 
         i.issueDate >= lastYear && i.issueDate < thisYear
       )
 
@@ -517,11 +529,11 @@ export class InvoiceSSRService {
         }
       }
 
-      // Calculate currency and client breakdowns
+      // Calculate currency and client breakdowns (excluding archived invoices)
       const byCurrency: Record<string, { count: number; value: number }> = {}
       const byClient: Record<string, { count: number; value: number }> = {}
 
-      allInvoices.forEach(invoice => {
+      activeInvoices.forEach(invoice => {
         // Currency breakdown
         if (!byCurrency[invoice.currency]) {
           byCurrency[invoice.currency] = { count: 0, value: 0 }
@@ -537,8 +549,8 @@ export class InvoiceSSRService {
         byClient[invoice.clientName].value += invoice.totalAmount
       })
 
-      // Calculate new invoices this month
-      const newThisMonth = allInvoices.filter(
+      // Calculate new invoices this month (excluding archived invoices)
+      const newThisMonth = activeInvoices.filter(
         invoice => invoice.createdAt >= thisMonth
       ).length
 
