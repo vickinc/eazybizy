@@ -179,18 +179,18 @@ export async function GET(request: NextRequest) {
       // Monthly trends (last 12 months)
       prisma.$queryRaw`
         SELECT 
-          DATE(issueDate, 'start of month') as month,
+          DATE_TRUNC('month', "issueDate") as month,
           status,
           COUNT(*) as invoice_count,
-          SUM(totalAmount) as total_amount,
-          AVG(totalAmount) as avg_amount,
-          SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END) as paid_amount,
-          SUM(CASE WHEN status = 'OVERDUE' THEN totalAmount ELSE 0 END) as overdue_amount
-        FROM invoices 
-        WHERE issueDate >= DATE('now', '-12 months')
-          ${companyId ? Prisma.sql`AND fromCompanyId = ${companyId}` : Prisma.empty}
-          ${params.currency ? Prisma.sql`AND currency = ${params.currency}` : Prisma.empty}
-        GROUP BY DATE(issueDate, 'start of month'), status
+          SUM("totalAmount") as total_amount,
+          AVG("totalAmount") as avg_amount,
+          SUM(CASE WHEN status = 'PAID' THEN "totalAmount" ELSE 0 END) as paid_amount,
+          SUM(CASE WHEN status = 'OVERDUE' THEN "totalAmount" ELSE 0 END) as overdue_amount
+        FROM "invoices" 
+        WHERE "issueDate" >= NOW() - INTERVAL '12 months'
+          ${companyId ? Prisma.sql`AND "fromCompanyId" = ${companyId}` : Prisma.empty}
+          ${params.currency ? Prisma.sql`AND "currency" = ${params.currency}` : Prisma.empty}
+        GROUP BY DATE_TRUNC('month', "issueDate"), status
         ORDER BY month DESC, status
       `,
 
@@ -212,26 +212,26 @@ export async function GET(request: NextRequest) {
       // Payment analysis (paid invoices)
       prisma.$queryRaw`
         SELECT 
-          AVG(JULIANDAY(paidDate) - JULIANDAY(issueDate)) as avg_payment_days,
-          MIN(JULIANDAY(paidDate) - JULIANDAY(issueDate)) as fastest_payment_days,
-          MAX(JULIANDAY(paidDate) - JULIANDAY(issueDate)) as slowest_payment_days,
+          AVG(EXTRACT(EPOCH FROM ("paidDate" - "issueDate")) / 86400) as avg_payment_days,
+          MIN(EXTRACT(EPOCH FROM ("paidDate" - "issueDate")) / 86400) as fastest_payment_days,
+          MAX(EXTRACT(EPOCH FROM ("paidDate" - "issueDate")) / 86400) as slowest_payment_days,
           COUNT(*) as paid_count
-        FROM invoices 
+        FROM "invoices" 
         WHERE status = 'PAID' 
-          AND paidDate IS NOT NULL 
-          AND issueDate IS NOT NULL
-          ${companyId ? Prisma.sql`AND fromCompanyId = ${companyId}` : Prisma.empty}
+          AND "paidDate" IS NOT NULL 
+          AND "issueDate" IS NOT NULL
+          ${companyId ? Prisma.sql`AND "fromCompanyId" = ${companyId}` : Prisma.empty}
       `,
 
       // Calculate additional average statistics
       prisma.$queryRaw`
         SELECT 
-          AVG(JULIANDAY(dueDate) - JULIANDAY(issueDate)) as avg_payment_terms,
-          COUNT(DISTINCT clientId) as unique_clients,
+          AVG(EXTRACT(EPOCH FROM ("dueDate" - "issueDate")) / 86400) as avg_payment_terms,
+          COUNT(DISTINCT "clientId") as unique_clients,
           COUNT(DISTINCT currency) as currencies_used
-        FROM invoices 
+        FROM "invoices" 
         WHERE 1=1
-          ${companyId ? Prisma.sql`AND fromCompanyId = ${companyId}` : Prisma.empty}
+          ${companyId ? Prisma.sql`AND "fromCompanyId" = ${companyId}` : Prisma.empty}
       `
     ])
 
@@ -283,6 +283,16 @@ export async function GET(request: NextRequest) {
       paid_count: 0
     }
 
+    // Convert monthly trends BigInt values to Numbers
+    const monthlyTrendsConverted = Array.isArray(monthlyTrends) ? monthlyTrends.map(trend => ({
+      ...trend,
+      invoice_count: Number(trend.invoice_count || 0),
+      total_amount: Number(trend.total_amount || 0),
+      avg_amount: Number(trend.avg_amount || 0),
+      paid_amount: Number(trend.paid_amount || 0),
+      overdue_amount: Number(trend.overdue_amount || 0)
+    })) : []
+
     const additionalMetrics = Array.isArray(averageStats) && averageStats[0] ? {
       avg_payment_terms: Number(averageStats[0].avg_payment_terms || 30),
       unique_clients: Number(averageStats[0].unique_clients || 0),
@@ -315,7 +325,15 @@ export async function GET(request: NextRequest) {
       
       statusBreakdown: statusStats,
       
-      currencyBreakdown,
+      currencyBreakdown: currencyBreakdown.map(curr => ({
+        ...curr,
+        _sum: {
+          totalAmount: Number(curr._sum.totalAmount || 0),
+          subtotal: Number(curr._sum.subtotal || 0),
+          taxAmount: Number(curr._sum.taxAmount || 0)
+        },
+        _count: Number(curr._count)
+      })),
       
       clientBreakdown: clientBreakdown.map(client => ({
         clientId: client.clientId,
@@ -340,7 +358,7 @@ export async function GET(request: NextRequest) {
       },
       
       trends: {
-        monthly: monthlyTrends
+        monthly: monthlyTrendsConverted
       },
       
       insights: {
@@ -353,8 +371,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching invoice statistics:', error)
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Failed to fetch invoice statistics' },
+      { 
+        error: 'Failed to fetch invoice statistics',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }

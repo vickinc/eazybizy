@@ -80,42 +80,39 @@ export class DataRecoveryService {
   }
 
   private static analyzeEntries(entries: unknown[]): Omit<DataRecoveryReport, 'storageFormat' | 'recommendations'> {
-    const expenseEntries = 0;
-    const incomeEntries = 0;
-    const cogsEntries = 0;
-    const invalidEntries = 0;
-    const possibleDataLoss = false;
+    // Initialize counters with let to allow mutations
+    let expenseEntries = 0;
+    let incomeEntries = 0;
+    let cogsEntries = 0;
+    let invalidEntries = 0;
+    let possibleDataLoss = false;
 
-    entries.forEach(entry => {
+    // Process each entry
+    for (const entry of entries) {
       if (!entry || typeof entry !== 'object') {
-        invalidEntries++;
-        return;
+        invalidEntries = invalidEntries + 1;
+        continue;
       }
 
-      switch (entry.type) {
-        case 'expense':
-          expenseEntries++;
-          break;
-        case 'revenue':
-          incomeEntries++;
-          break;
-        case 'cogs':
-          cogsEntries++;
-          break;
-        default:
-          invalidEntries++;
+      const typedEntry = entry as { type?: string };
+      const entryType = typedEntry.type;
+      
+      if (entryType === 'expense') {
+        expenseEntries = expenseEntries + 1;
+      } else if (entryType === 'revenue') {
+        incomeEntries = incomeEntries + 1;
+      } else if (entryType === 'cogs') {
+        cogsEntries = cogsEntries + 1;
+      } else {
+        invalidEntries = invalidEntries + 1;
       }
-    });
+    }
 
     // Check for suspicious patterns that might indicate data loss
-    const totalValidEntries = expenseEntries + incomeEntries + cogsEntries;
-    
-    // If we have income but very few or no expenses, this might indicate data loss
     if (incomeEntries > 0 && expenseEntries === 0) {
       possibleDataLoss = true;
     }
     
-    // If we have many income entries but suspiciously few expenses (less than 10% ratio)
     if (incomeEntries > 10 && expenseEntries < incomeEntries * 0.1) {
       possibleDataLoss = true;
     }

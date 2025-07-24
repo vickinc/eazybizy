@@ -21,26 +21,48 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
-  // Initialize from URL search params or default to 'all'
-  const initialCompanyId = searchParams.get('companyId') || 'all';
-  const [selectedCompany, setSelectedCompanyState] = useState<number | 'all'>(
-    initialCompanyId === 'all' ? 'all' : parseInt(initialCompanyId)
-  );
+  // Initialize from localStorage first, then URL params if present
+  const getInitialCompanyId = (): number | 'all' => {
+    // Check URL first
+    const urlCompanyId = searchParams.get('companyId');
+    if (urlCompanyId) {
+      return urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
+    }
+    
+    // Fallback to localStorage
+    if (typeof window !== 'undefined') {
+      const savedCompanyId = localStorage.getItem('selectedCompanyId');
+      if (savedCompanyId && savedCompanyId !== 'null') {
+        return savedCompanyId === 'all' ? 'all' : parseInt(savedCompanyId);
+      }
+    }
+    
+    return 'all';
+  };
 
-  // Sync with URL search params when they change
+  const [selectedCompany, setSelectedCompanyState] = useState<number | 'all'>(getInitialCompanyId);
+
+  // Sync with URL search params when they change (only if URL has the parameter)
   useEffect(() => {
-    const urlCompanyId = searchParams.get('companyId') || 'all';
-    const parsedCompanyId = urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
-    if (parsedCompanyId !== selectedCompany) {
-      setSelectedCompanyState(parsedCompanyId);
+    const urlCompanyId = searchParams.get('companyId');
+    if (urlCompanyId !== null) {
+      const parsedCompanyId = urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
+      if (parsedCompanyId !== selectedCompany) {
+        setSelectedCompanyState(parsedCompanyId);
+      }
     }
   }, [searchParams, selectedCompany]);
 
-  // Enhanced setSelectedCompany that updates URL
+  // Enhanced setSelectedCompany that updates URL and localStorage
   const setSelectedCompany = (companyId: number | 'all') => {
     setSelectedCompanyState(companyId);
     
-    // Update URL search params
+    // Save to localStorage for persistence across navigation
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('selectedCompanyId', companyId.toString());
+    }
+    
+    // Update URL search params without navigation
     const params = new URLSearchParams(searchParams.toString());
     if (companyId === 'all') {
       params.delete('companyId');
@@ -49,7 +71,9 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
     }
     
     const newUrl = `${pathname}${params.toString() ? '?' + params.toString() : ''}`;
-    router.push(newUrl);
+    
+    // Use replaceState to update URL without causing navigation/page reload
+    window.history.replaceState(null, '', newUrl);
   };
   
   // Use API-based companies hook instead of localStorage

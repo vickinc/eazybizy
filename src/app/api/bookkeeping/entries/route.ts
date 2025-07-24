@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
               id: true,
               tradingName: true,
               legalName: true,
+              logo: true,
             },
           },
           account: {
@@ -254,6 +255,7 @@ export async function POST(request: NextRequest) {
             id: true,
             tradingName: true,
             legalName: true,
+            logo: true,
           },
         },
         account: true,

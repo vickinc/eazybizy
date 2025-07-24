@@ -796,7 +796,7 @@ export default function EntriesClient({
               <div className="space-y-2">
                 <div className="text-sm font-medium">Entries to be deleted:</div>
                 <div className="max-h-48 overflow-y-auto space-y-1 bg-gray-50 p-3 rounded">
-                  {entriesToDeleteDetails.map(entry => entry && (
+                  {entriesToDeleteDetails.filter(entry => entry !== null).map(entry => (
                     <div key={entry.id} className="text-sm flex items-center justify-between">
                       <span className="truncate">
                         {entry.display}

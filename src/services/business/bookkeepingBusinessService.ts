@@ -241,13 +241,15 @@ export class BookkeepingBusinessService {
   }
 
   static calculateInvoiceCOGS(invoice: Invoice, products: Product[]): COGSCalculation {
-    const totalCOGS = 0;
+    let totalCOGS = 0;
     let cogsCurrency = 'USD';
     
-    invoice.items.forEach(item => {
+    invoice.items.forEach((item) => {
       const product = products.find(p => p.id === item.productId);
       if (product) {
-        totalCOGS += product.cost * item.quantity;
+        const itemCOGS = product.cost * item.quantity;
+        totalCOGS += itemCOGS;
+        
         if (cogsCurrency === 'USD' && product.costCurrency) {
           cogsCurrency = product.costCurrency;
         }
@@ -385,7 +387,7 @@ export class BookkeepingBusinessService {
     const invoiceProducts = products.filter(p => 
       invoice.items.some((item: unknown) => item.productId === p.id)
     );
-    const totalCOGS = 0;
+    let totalCOGS = 0;
     let cogsCurrency = 'USD';
     
     invoice.items.forEach((item: unknown) => {
