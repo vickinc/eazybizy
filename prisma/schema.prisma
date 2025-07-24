@@ -319,6 +319,7 @@ model Invoice {
   company               Company                @relation(fields: [fromCompanyId], references: [id])
   paymentMethodInvoices PaymentMethodInvoice[]
   paymentSources        InvoicePaymentSource[]
+  bookkeepingEntries    BookkeepingEntry[]
 
   @@index([fromCompanyId, createdAt])
   @@index([status, createdAt])
@@ -464,29 +465,44 @@ model DigitalWallet {
 }
 
 model BookkeepingEntry {
-  id          String          @id @default(cuid())
-  companyId   Int
-  type        String
-  category    String
-  subcategory String?
-  description String
-  amount      Float
-  currency    String
-  date        DateTime
-  reference   String?
-  notes       String?
-  accountId   String?
-  accountType String?
-  cogs        Float           @default(0)
-  cogsPaid    Float           @default(0)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  account     CompanyAccount? @relation(fields: [accountId], references: [id])
-  company     Company         @relation(fields: [companyId], references: [id])
-  transaction Transaction?
-
+  id                 String           @id @default(cuid())
+  companyId          Int
+  type               String           // 'income' | 'expense'
+  category           String
+  subcategory        String?
+  description        String
+  amount             Float
+  currency           String
+  date               DateTime
+  reference          String?
+  notes              String?
+  accountId          String?
+  accountType        String?          // 'bank' | 'wallet'
+  cogs               Float            @default(0)
+  cogsPaid           Float            @default(0)
+  vendorInvoice      String?
+  isFromInvoice      Boolean          @default(false)
+  invoiceId          String?
+  chartOfAccountsId  String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  
+  // Relations
+  account            CompanyAccount?  @relation(fields: [accountId], references: [id])
+  company            Company          @relation(fields: [companyId], references: [id])
+  invoice            Invoice?         @relation(fields: [invoiceId], references: [id])
+  chartOfAccount     ChartOfAccount?  @relation(fields: [chartOfAccountsId], references: [id])
+  transaction        Transaction?
+  
+  // Indexes for performance
   @@index([companyId, date])
   @@index([companyId, type, category])
+  @@index([companyId, createdAt])
+  @@index([type, createdAt])
+  @@index([category])
+  @@index([description])
+  @@index([date])
+  @@index([chartOfAccountsId])
   @@map("bookkeeping_entries")
 }
 
@@ -781,6 +797,7 @@ model ChartOfAccount {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   company          Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bookkeepingEntries BookkeepingEntry[]
 
   @@index([code])
   @@index([type, createdAt, id])

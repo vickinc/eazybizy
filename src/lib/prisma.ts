@@ -23,7 +23,13 @@ export const prisma =
 
 // Handle database connection errors gracefully
 prisma.$on('error', (e) => {
-  console.error('Prisma error:', e)
+  console.error('Prisma error:', {
+    message: e.message || 'Unknown Prisma error',
+    target: e.target,
+    timestamp: new Date().toISOString(),
+    // Convert the event object to see its properties
+    event: JSON.stringify(e, null, 2)
+  });
 })
 
 // Improve connection reliability with retry logic

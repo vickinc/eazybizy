@@ -47,6 +47,10 @@ import AlertCircleIcon from "lucide-react/dist/esm/icons/alert-circle";
 import PlusIcon from "lucide-react/dist/esm/icons/plus";
 import ChevronDownIcon from "lucide-react/dist/esm/icons/chevron-down";
 import ChevronUpIcon from "lucide-react/dist/esm/icons/chevron-up";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Tag from "lucide-react/dist/esm/icons/tag";
+import Calculator from "lucide-react/dist/esm/icons/calculator";
+import Settings from "lucide-react/dist/esm/icons/settings";
 
 interface CategoryDialogProps {
   isOpen: boolean;
@@ -216,10 +220,19 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            {isEditing ? '✏️ Edit Account' : '➕ Add New Account'}
+          <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+            <div className="p-2 bg-lime-100 rounded-lg">
+              {isEditing ? (
+                <Settings className="h-6 w-6 text-lime-600" />
+              ) : (
+                <FileText className="h-6 w-6 text-lime-600" />
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {isEditing ? '✏️ Edit Account' : '➕ Add New Account'}
+            </div>
           </DialogTitle>
           <DialogDescription className="text-base text-muted-foreground">
             {isEditing 
@@ -227,34 +240,12 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
               : 'Create a new account by filling out the required information. Fields marked with * are required.'
             }
           </DialogDescription>
-          {!isEditing && (
-            <div className="mt-3 p-3 bg-lime-50 border border-lime-200 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-lime-900">Progress</span>
-                <span className="text-sm font-medium text-lime-900">{progress}%</span>
-              </div>
-              <div className="w-full bg-lime-200 rounded-full h-2">
-                <div 
-                  className="bg-lime-600 h-2 rounded-full transition-all duration-300" 
-                  style={{width: `${progress}%`}}
-                />
-              </div>
-              <div className="text-xs text-lime-700 mt-1">
-                {completedFields.length} of {requiredFields.length} required fields completed
-              </div>
-            </div>
-          )}
         </DialogHeader>
 
-        <form onSubmit={onFormSubmit} className="space-y-8">
+        <form onSubmit={onFormSubmit} className="space-y-4">
           {/* Section 1: Basic Information */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-blue-600">1</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Basic Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Account Code */}
@@ -310,13 +301,8 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
           </Card>
 
           {/* Section 2: Classification */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-green-600">2</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Account Classification</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Account Classification</h3>
 
             <div className="space-y-6">
               {/* Account Type */}
@@ -451,13 +437,8 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
           </Card>
 
           {/* Section 3: Tax Treatment */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-purple-600">3</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Tax Treatment</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Tax Treatment</h3>
 
             <div className="space-y-6">
               {/* Tax Treatment Selection */}
@@ -721,14 +702,8 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
           </Card>
 
           {/* Section 4: Advanced Settings (Collapsible) */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-orange-600">4</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Advanced Settings</h3>
-              <Badge variant="outline" className="ml-auto">Optional</Badge>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Advanced Settings</h3>
 
             <div className="space-y-6">
               {/* Related Vendor */}
@@ -831,13 +806,28 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
           </Card>
 
           {/* Summary Section */}
-          <Card className="p-6 bg-gray-50 border-dashed">
-            <div className="flex items-center space-x-2 mb-3">
-              <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
-                <CheckCircleIcon className="h-4 w-4 text-white" />
+          <Card className="p-3 bg-gray-50 border-dashed">
+            <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+            
+            {/* Progress Card */}
+            {!isEditing && (
+              <div className="mb-4 p-3 bg-lime-50 border border-lime-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-lime-900">Progress</span>
+                  <span className="text-sm font-medium text-lime-900">{progress}%</span>
+                </div>
+                <div className="w-full bg-lime-200 rounded-full h-2">
+                  <div 
+                    className="bg-lime-600 h-2 rounded-full transition-all duration-300" 
+                    style={{width: `${progress}%`}}
+                  />
+                </div>
+                <div className="text-xs text-lime-700 mt-1">
+                  {completedFields.length} of {requiredFields.length} required fields completed
+                </div>
               </div>
-              <h4 className="font-semibold text-gray-900">Summary</h4>
-            </div>
+            )}
+            
             {progress < 100 ? (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-600 mb-2">Complete all required fields to proceed</p>
@@ -864,7 +854,7 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
                   <span className="text-right">{formData.category}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">VAT Treatment:</span>
+                  <span className="text-gray-600">Tax Treatment:</span>
                   <span className="text-right">{formData.vat}</span>
                 </div>
                 <div className="flex justify-between">
@@ -887,7 +877,7 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
             <Button 
               type="submit"
               disabled={progress < 100}
-              className="w-full sm:w-auto order-1 sm:order-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="w-full sm:w-auto order-1 sm:order-2 min-w-[140px] bg-gradient-to-r from-lime-600 to-green-600 hover:from-lime-700 hover:to-green-700"
             >
               {progress < 100 ? (
                 <span className="flex items-center space-x-2">

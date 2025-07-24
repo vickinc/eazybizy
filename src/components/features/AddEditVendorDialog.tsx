@@ -120,7 +120,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Company Selection Section */}
           {!editingVendor && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
                 <div className="w-1.5 h-4 bg-yellow-500 rounded-full"></div>
                 Company Assignment
@@ -139,9 +139,9 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           )}
 
           {/* Basic Information Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Basic Information
             </h3>
             
@@ -155,7 +155,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
                     placeholder="e.g., ABC Supplies Ltd, John's Services"
                     value={vendorForm.companyName}
                     onChange={(e) => onVendorFormChange('companyName', e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -172,7 +172,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
                     placeholder="e.g., John Smith, Sarah Johnson"
                     value={vendorForm.contactPerson}
                     onChange={(e) => onVendorFormChange('contactPerson', e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -183,9 +183,9 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           </div>
 
           {/* Contact Information Section */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Contact Information
             </h3>
             
@@ -200,7 +200,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
                     placeholder="contact@vendor.com"
                     value={vendorForm.contactEmail}
                     onChange={(e) => onVendorFormChange('contactEmail', e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -269,9 +269,9 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           </div>
 
           {/* Legal & Business Information Section */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Legal & Business Information
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>
@@ -329,9 +329,9 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           </div>
 
           {/* Payment & Terms Section */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Payment & Terms
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>
@@ -429,7 +429,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           </div>
 
           {/* Address Information Section */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
               <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
               Address Information
@@ -458,7 +458,7 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           {/* Products Selection Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Products & Services
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>
@@ -571,9 +571,9 @@ export const AddEditVendorDialog: React.FC<AddEditVendorDialogProps> = ({
           </div>
 
           {/* Additional Notes Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-gray-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Additional Notes
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>

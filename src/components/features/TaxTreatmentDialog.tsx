@@ -98,7 +98,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
             <div className="p-2 bg-lime-100 rounded-lg">
@@ -122,38 +122,16 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
               ? 'Update the tax treatment details below to modify your tax configuration.' 
               : 'Create a new tax treatment for accounting transactions. Fields marked with * are required.'}
           </DialogDescription>
-          {!isEditing && (
-            <div className="mt-4 p-3 bg-lime-50 border border-lime-200 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-lime-900">Progress</span>
-                <span className="text-sm font-medium text-lime-900">{progress}%</span>
-              </div>
-              <div className="w-full bg-lime-200 rounded-full h-2">
-                <div 
-                  className="bg-lime-600 h-2 rounded-full transition-all duration-300" 
-                  style={{width: `${progress}%`}}
-                />
-              </div>
-              <div className="text-xs text-lime-700 mt-1">
-                {completedFields.length} of {requiredFields.length} required fields completed
-              </div>
-            </div>
-          )}
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-8">
+        <form onSubmit={onSubmit} className="space-y-4">
           {/* Section 1: Basic Information */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-blue-600">1</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Basic Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Code */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="code" className="text-sm font-medium flex items-center space-x-1">
                   <Tag className="h-4 w-4 text-blue-600" />
                   <span>Tax Code</span>
@@ -183,7 +161,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
               </div>
 
               {/* Rate */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="rate" className="text-sm font-medium flex items-center space-x-1">
                   <Calculator className="h-4 w-4 text-blue-600" />
                   <span>Tax Rate (%)</span>
@@ -210,13 +188,6 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
                     {getFieldError('rate')}
                   </div>
                 )}
-                {formData.rate && (
-                  <div className="bg-blue-50 p-2 rounded-md">
-                    <p className="text-xs text-blue-700">
-                      💰 Rate Preview: {formData.rate}% tax will be applied
-                    </p>
-                  </div>
-                )}
                 <p className="text-xs text-gray-500">
                   Tax percentage (0-100)
                 </p>
@@ -225,17 +196,12 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
           </Card>
 
           {/* Section 2: Details */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-green-600">2</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Treatment Details</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Treatment Details</h3>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Name */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="name" className="text-sm font-medium flex items-center space-x-1">
                   <FileText className="h-4 w-4 text-green-600" />
                   <span>Display Name</span>
@@ -265,7 +231,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
               </div>
 
               {/* Description */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="description" className="text-sm font-medium flex items-center space-x-1">
                   <Info className="h-4 w-4 text-green-600" />
                   <span>Description</span>
@@ -279,7 +245,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
                   value={formData.description || ''}
                   onChange={(e) => onFormDataChange('description', e.target.value)}
                   placeholder="Describe when and how this tax treatment should be applied..."
-                  rows={4}
+                  rows={3}
                   className={cn("bg-lime-50 border-lime-200 focus:bg-white", hasFieldError('description') && "border-red-500")}
                   disabled={isSubmitting}
                   maxLength={500}
@@ -299,17 +265,12 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
           </Card>
 
           {/* Section 3: Classification */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-purple-600">3</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Tax Classification</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Tax Classification</h3>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Category */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-sm font-medium flex items-center space-x-1">
                   <Tag className="h-4 w-4 text-purple-600" />
                   <span>Tax Category</span>
@@ -323,7 +284,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
                   onValueChange={(value) => onFormDataChange('category', value)}
                   disabled={isSubmitting}
                 >
-                  <SelectTrigger className={cn("h-12 bg-lime-50 border-lime-200 focus:bg-white", hasFieldError('category') && "border-red-500")}>
+                  <SelectTrigger className={cn("bg-lime-50 border-lime-200 focus:bg-white", hasFieldError('category') && "border-red-500")}>
                     <SelectValue placeholder="Choose the tax category type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,31 +306,15 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
                     {getFieldError('category')}
                   </div>
                 )}
-                {formData.category && (
-                  <div className="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                    <Info className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-purple-900 mb-1">
-                        {formData.category.charAt(0).toUpperCase() + formData.category.slice(1)} Tax Category
-                      </p>
-                      <p className="text-xs text-purple-700">
-                        {formatCategoryDescription(formData.category)}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </Card>
 
           {/* Section 4: Applicability */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-orange-600">4</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Where to Apply</h3>
-              <Badge variant="secondary" className="ml-auto bg-lime-100 text-lime-800">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-gray-900">Where to Apply</h3>
+              <Badge variant="secondary" className="bg-lime-100 text-lime-800 text-xs">
                 {formData.applicability?.length || 0} selected
               </Badge>
             </div>
@@ -381,7 +326,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
               </div>
             )}
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center space-x-2 mb-4">
                 <Target className="h-4 w-4 text-orange-600" />
                 <p className="text-sm text-gray-700">
@@ -389,34 +334,48 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {TAX_APPLICABILITIES.map((applicability) => (
-                  <div key={applicability} className="flex items-start space-x-3 p-4 border border-lime-200 rounded-lg hover:bg-lime-50 transition-colors">
-                    <Checkbox
-                      id={`applicability-${applicability}`}
-                      checked={formData.applicability?.includes(applicability) || false}
-                      onCheckedChange={(checked) => 
-                        handleApplicabilityChange(applicability, checked as boolean)
-                      }
-                      disabled={isSubmitting}
-                      className="mt-1"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <Label 
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {TAX_APPLICABILITIES.map((applicability) => {
+                  const isChecked = formData.applicability?.includes(applicability) || false;
+                  
+                  return (
+                    <div 
+                      key={applicability} 
+                      className={cn(
+                        "relative flex items-start space-x-3 p-3 border rounded-lg transition-all duration-200",
+                        isChecked 
+                          ? "border-lime-500 bg-lime-50 shadow-sm" 
+                          : "border-lime-200 hover:border-lime-300 hover:bg-lime-50"
+                      )}
+                    >
+                      <label 
                         htmlFor={`applicability-${applicability}`}
-                        className="text-sm font-medium capitalize cursor-pointer flex items-center space-x-2"
+                        className="flex items-start space-x-3 cursor-pointer w-full"
                       >
-                        <span>{applicability}</span>
-                        {formData.applicability?.includes(applicability) && (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        )}
-                      </Label>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {formatApplicabilityDescription(applicability)}
-                      </p>
+                        <Checkbox
+                          id={`applicability-${applicability}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => 
+                            handleApplicabilityChange(applicability, checked as boolean)
+                          }
+                          disabled={isSubmitting}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium capitalize flex items-center space-x-2">
+                            <span>{applicability}</span>
+                            {isChecked && (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {formatApplicabilityDescription(applicability)}
+                          </p>
+                        </div>
+                      </label>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {formData.applicability && formData.applicability.length > 0 && (
@@ -430,46 +389,86 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
           </Card>
 
           {/* Section 5: Settings */}
-          <Card className="p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-600">5</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
-            </div>
+          <Card className="p-4">
+            <h3 className="text-base font-semibold text-gray-900 mb-3">Settings</h3>
             
-            <div className="flex items-center justify-between p-4 border border-lime-200 rounded-lg bg-lime-50">
+            <div className={cn(
+              "flex items-center justify-between p-4 border rounded-lg transition-colors",
+              formData.isActive ?? true 
+                ? "border-green-200 bg-green-50" 
+                : "border-red-200 bg-red-50"
+            )}>
               <div className="flex items-center space-x-3">
-                <Settings className="h-5 w-5 text-gray-600" />
+                <Settings className={cn(
+                  "h-5 w-5",
+                  formData.isActive ?? true ? "text-green-600" : "text-red-600"
+                )} />
                 <div className="flex-1">
-                  <Label htmlFor="isActive" className="text-sm font-medium text-gray-900">
+                  <Label htmlFor="isActive" className="text-sm font-medium text-gray-900 flex items-center gap-2">
                     Active Status
+                    <span className={cn(
+                      "px-2 py-1 text-xs font-medium rounded-full",
+                      formData.isActive ?? true 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-red-100 text-red-800"
+                    )}>
+                      {formData.isActive ?? true ? "Active" : "Inactive"}
+                    </span>
                   </Label>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Only active tax treatments can be used in transactions
+                  <p className={cn(
+                    "text-xs mt-1",
+                    formData.isActive ?? true ? "text-green-700" : "text-red-700"
+                  )}>
+                    {formData.isActive ?? true 
+                      ? "This tax treatment can be used in transactions"
+                      : "This tax treatment cannot be used in transactions"
+                    }
                   </p>
                 </div>
               </div>
-              <Switch
-                id="isActive"
-                checked={formData.isActive ?? true}
-                onCheckedChange={(checked) => onFormDataChange('isActive', checked)}
-                disabled={isSubmitting || treatment?.isDefault}
-              />
+              <div className="flex items-center gap-3">
+                <span className={cn(
+                  "text-sm font-medium",
+                  formData.isActive ?? true ? "text-green-700" : "text-red-700"
+                )}>
+                  {formData.isActive ?? true ? "ON" : "OFF"}
+                </span>
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive ?? true}
+                  onCheckedChange={(checked) => onFormDataChange('isActive', checked)}
+                  disabled={isSubmitting || treatment?.isDefault}
+                />
+              </div>
             </div>
           </Card>
 
           {/* Summary Section */}
-          <Card className="p-6 bg-gray-50 border-dashed">
-            <div className="flex items-center space-x-2 mb-3">
-              <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-white" />
+          <Card className="p-3 bg-gray-50 border-dashed">
+            <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+            
+            {/* Progress Card */}
+            {!isEditing && (
+              <div className="mb-4 p-3 bg-lime-50 border border-lime-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-lime-900">Progress</span>
+                  <span className="text-sm font-medium text-lime-900">{progress}%</span>
+                </div>
+                <div className="w-full bg-lime-200 rounded-full h-2">
+                  <div 
+                    className="bg-lime-600 h-2 rounded-full transition-all duration-300" 
+                    style={{width: `${progress}%`}}
+                  />
+                </div>
+                <div className="text-xs text-lime-700 mt-1">
+                  {completedFields.length} of {requiredFields.length} required fields completed
+                </div>
               </div>
-              <h4 className="font-semibold text-gray-900">Summary</h4>
-            </div>
+            )}
+            
             {progress < 100 ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-600 mb-2">Complete all required fields to proceed</p>
+              <div className="text-center py-2">
+                <p className="text-sm text-gray-600 mb-1">Complete all required fields to proceed</p>
                 <p className="text-xs text-gray-500">
                   Missing: {requiredFields.filter(field => {
                     const value = formData[field as keyof TaxTreatmentFormData];

@@ -79,7 +79,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {/* Company Selection Section */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
               <div className="w-1.5 h-4 bg-yellow-500 rounded-full"></div>
               Company Assignment
@@ -97,9 +97,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
           </div>
 
           {/* Basic Information Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Basic Information
             </h3>
             
@@ -111,7 +111,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
                   placeholder="e.g., Web Development Service, iPhone 15 Pro"
                   value={newProduct.name}
                   onChange={(e) => onProductFormChange('name', e.target.value)}
-                  className="mt-1"
+                  className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Enter a clear, descriptive name for your product or service
@@ -123,7 +123,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
           {/* Pricing Information Section */}
           <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Pricing Information
             </h3>
             
@@ -139,7 +139,7 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
                     placeholder="0.00"
                     value={newProduct.price}
                     onChange={(e) => onProductFormChange('price', e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -168,9 +168,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
           </div>
 
           {/* Vendor Information Section */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Vendor Information
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>
@@ -211,9 +211,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
           </div>
 
           {/* Cost Information Section */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Cost Information (COGS)
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>
@@ -258,9 +258,9 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
             </div>
           </div>
           {/* Additional Information Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-gray-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Additional Information
               <Badge variant="secondary" className="text-xs">Optional</Badge>
             </h3>

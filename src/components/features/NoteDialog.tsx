@@ -63,10 +63,10 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
 
       <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6">
         {/* Company Selection Section */}
-        <div className="bg-purple-50 rounded-lg p-4 space-y-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Company Association
             </h3>
             <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full font-medium">
@@ -123,9 +123,9 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
         </div>
 
         {/* Basic Information Section */}
-        <div className="bg-green-50 rounded-lg p-4 space-y-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+            <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
             Basic Information
           </h3>
           <div className="space-y-4">
@@ -141,7 +141,7 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
                 onChange={handleInputChange}
                 placeholder="Enter a clear and descriptive title for your note"
                 required
-                className="mt-1"
+                className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
               />
               <p className="text-xs text-gray-500 mt-1">Choose a title that summarizes the main purpose of this note</p>
             </div>
@@ -159,7 +159,7 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
                 placeholder="Write detailed note content here. Include all relevant information, ideas, or observations..."
                 rows={4}
                 required
-                className="mt-1 resize-none"
+                className="mt-1 resize-none bg-lime-50 border-lime-200 focus:bg-white"
               />
               <p className="text-xs text-gray-500 mt-1">Add comprehensive details to make this note useful for future reference</p>
             </div>
@@ -167,9 +167,9 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
         </div>
 
         {/* Configuration Section */}
-        <div className="bg-blue-50 rounded-lg p-4 space-y-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+            <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
             Note Configuration
           </h3>
           <div className="space-y-4">
@@ -254,10 +254,10 @@ export const NoteDialog: React.FC<NoteDialogProps> = ({
         </div>
 
         {/* Event & Tagging Section */}
-        <div className="bg-orange-50 rounded-lg p-4 space-y-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Event & Tagging
             </h3>
             <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full font-medium">

@@ -163,7 +163,7 @@ export default function CategoriesClient() {
           <div className="flex flex-wrap gap-3">
             <Link 
               href="/accounting/bookkeeping/categories/tax-treatments" 
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-purple-600 rounded-md hover:bg-purple-700 hover:border-purple-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-lime-200 border border-lime-200 rounded-md hover:bg-lime-300 hover:border-lime-300 transition-colors"
             >
               <Calculator className="h-4 w-4 mr-2" />
               Manage Tax Treatments

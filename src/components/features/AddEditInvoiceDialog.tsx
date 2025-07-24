@@ -106,9 +106,9 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {/* Client & Basic Info Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Client & Invoice Details
             </h3>
             
@@ -128,7 +128,7 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
                     }
                   }}
                 >
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,7 +174,7 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
               <div>
                 <Label className="text-sm font-medium">Issue Date *</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   type="date"
                   value={invoiceForm.issueDate}
                   onChange={(e) => onFormChange('issueDate', e.target.value)}
@@ -185,7 +185,7 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
               <div>
                 <Label className="text-sm font-medium">Due Date *</Label>
                 <Input 
-                  className="mt-1"
+                  className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   type="date"
                   value={invoiceForm.dueDate}
                   onChange={(e) => onFormChange('dueDate', e.target.value)}
@@ -198,7 +198,7 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Products/Services *
               </h3>
               <Button
@@ -275,7 +275,7 @@ export const AddEditInvoiceDialog: React.FC<AddEditInvoiceDialogProps> = ({
           {/* Payment Methods */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Payment Methods *
             </h3>
             <div className="space-y-2">

@@ -102,7 +102,7 @@ export default function TaxTreatmentsClient() {
               <Button
                 onClick={taxManagement.handleCreate}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="!bg-lime-400 hover:!bg-lime-500 text-gray-900"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Treatment

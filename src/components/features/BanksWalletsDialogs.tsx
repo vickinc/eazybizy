@@ -77,7 +77,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
     <div>
       <Label>Company * {companyOptions.length === 0 && <span className="text-red-500">(No companies found)</span>}</Label>
       <Select value={value ? value.toString() : ''} onValueChange={onValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className="bg-lime-50 border-lime-200 hover:bg-lime-100">
           <SelectValue placeholder={companyOptions.length === 0 ? "No companies available" : "Select company"} />
         </SelectTrigger>
         <SelectContent>
@@ -116,9 +116,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
           
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
             {/* Basic Information Section */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Basic Information
               </h3>
               
@@ -130,7 +130,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     placeholder="e.g., Chase Bank, Wells Fargo"
                     value={newBankAccount.bankName}
                     onChange={(e) => updateNewBankAccount('bankName', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 
@@ -141,7 +141,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     placeholder="Enter the account holder's full name"
                     value={newBankAccount.accountName}
                     onChange={(e) => updateNewBankAccount('accountName', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
 
@@ -168,7 +168,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
             {/* Account Details Section */}
             <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Account Details
               </h3>
               
@@ -218,7 +218,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     placeholder="e.g., CHASUS33"
                     value={newBankAccount.swiftCode}
                     onChange={(e) => updateNewBankAccount('swiftCode', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     8 or 11 character code for bank identification
@@ -228,9 +228,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
             </div>
 
             {/* Additional Information Section */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Additional Information
                 <Badge variant="secondary" className="text-xs">Optional</Badge>
               </h3>
@@ -301,9 +301,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
           
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
             {/* Basic Information Section */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Basic Information
               </h3>
               
@@ -315,7 +315,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     updateNewDigitalWallet('currency', value === 'crypto' ? 'USDT' : 'USD');
                     updateNewDigitalWallet('currencies', []);
                   }}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
                       <SelectValue placeholder="Select wallet type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -342,7 +342,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     placeholder="e.g., My PayPal Business Account"
                     value={newDigitalWallet.walletName}
                     onChange={(e) => updateNewDigitalWallet('walletName', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                 </div>
                 
@@ -359,7 +359,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     }
                     value={newDigitalWallet.walletAddress}
                     onChange={(e) => updateNewDigitalWallet('walletAddress', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {newDigitalWallet.walletType === 'crypto' 
@@ -374,7 +374,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
             {/* Currency & Network Section */}
             <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 {newDigitalWallet.walletType === 'crypto' ? 'Currency & Network Details' : 'Currency Settings'}
               </h3>
               
@@ -387,7 +387,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       placeholder="e.g., Ethereum, Bitcoin, Polygon, BSC"
                       value={newDigitalWallet.blockchain}
                       onChange={(e) => updateNewDigitalWallet('blockchain', e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       The blockchain network this wallet operates on
@@ -397,7 +397,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                   <div>
                     <Label htmlFor="wallet-currencies" className="text-sm font-medium">Supported Cryptocurrencies *</Label>
                     <div className="space-y-2 mt-1">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border rounded-md p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
                         {BanksWalletsBusinessService.CRYPTO_CURRENCIES.map(currency => (
                           <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
                             <input
@@ -462,9 +462,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
             </div>
 
             {/* Additional Information Section */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Additional Information
                 <Badge variant="secondary" className="text-xs">Optional</Badge>
               </h3>
@@ -537,7 +537,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               {/* Company Selection Section */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-yellow-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Company Assignment
                 </h3>
                 
@@ -551,9 +551,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               </div>
 
               {/* Basic Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Basic Information
                 </h3>
                 
@@ -565,7 +565,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       placeholder="e.g., Chase Bank, Wells Fargo"
                       value={editingBank.bankName}
                       onChange={(e) => setEditingBank({ ...editingBank, bankName: e.target.value })}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                   </div>
                   
@@ -576,7 +576,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       placeholder="Enter the account holder's full name"
                       value={editingBank.accountName}
                       onChange={(e) => setEditingBank({ ...editingBank, accountName: e.target.value })}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                   </div>
 
@@ -603,7 +603,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               {/* Account Details Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Account Details
                 </h3>
                 
@@ -653,7 +653,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       placeholder="e.g., CHASUS33"
                       value={editingBank.swiftCode}
                       onChange={(e) => setEditingBank({ ...editingBank, swiftCode: e.target.value })}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       8 or 11 character code for bank identification
@@ -663,9 +663,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               </div>
 
               {/* Additional Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Additional Information
                   <Badge variant="secondary" className="text-xs">Optional</Badge>
                 </h3>
@@ -742,7 +742,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               {/* Company Selection Section */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-yellow-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Company Assignment
                 </h3>
                 
@@ -756,9 +756,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               </div>
 
               {/* Basic Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Basic Information
                 </h3>
                 
@@ -771,7 +771,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       currency: value === 'crypto' ? 'USDT' : 'USD',
                       currencies: value === 'crypto' ? (editingWallet.currencies || '') : ''
                     })}>
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
                         <SelectValue placeholder="Select wallet type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -798,7 +798,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       placeholder="e.g., My PayPal Business Account"
                       value={editingWallet.walletName}
                       onChange={(e) => setEditingWallet({ ...editingWallet, walletName: e.target.value })}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                   </div>
                   
@@ -815,7 +815,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       }
                       value={editingWallet.walletAddress}
                       onChange={(e) => setEditingWallet({ ...editingWallet, walletAddress: e.target.value })}
-                      className="mt-1"
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {editingWallet.walletType === 'crypto' 
@@ -830,7 +830,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               {/* Currency & Network Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   {editingWallet.walletType === 'crypto' ? 'Currency & Network Details' : 'Currency Settings'}
                 </h3>
                 
@@ -843,7 +843,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                         placeholder="e.g., Ethereum, Bitcoin, Polygon, BSC"
                         value={editingWallet.blockchain || ''}
                         onChange={(e) => setEditingWallet({ ...editingWallet, blockchain: e.target.value })}
-                        className="mt-1"
+                        className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         The blockchain network this wallet operates on
@@ -853,7 +853,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     <div>
                       <Label htmlFor="edit-wallet-currencies" className="text-sm font-medium">Supported Cryptocurrencies *</Label>
                       <div className="space-y-2 mt-1">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border rounded-md p-3 bg-gray-50">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
                           {BanksWalletsBusinessService.CRYPTO_CURRENCIES.map(currency => (
                             <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
                               <input
@@ -928,9 +928,9 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
               </div>
 
               {/* Additional Information Section */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+                  <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                   Additional Information
                   <Badge variant="secondary" className="text-xs">Optional</Badge>
                 </h3>

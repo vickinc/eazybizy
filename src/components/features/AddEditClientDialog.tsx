@@ -69,9 +69,9 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
 
         <div className="px-6 pb-6 space-y-6">
           {/* Client Type Section */}
-          <div className="bg-blue-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Client Type
             </h3>
             <div>
@@ -83,7 +83,7 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
                 value={clientForm.clientType} 
                 onValueChange={(value: 'INDIVIDUAL' | 'LEGAL_ENTITY') => onClientFormChange('clientType', value)}
               >
-                <SelectTrigger id="client-type" className="mt-1">
+                <SelectTrigger id="client-type" className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
                   <SelectValue placeholder="Select client type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,9 +105,9 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
           </div>
 
           {/* Basic Information Section */}
-          <div className="bg-green-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-green-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Basic Information
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -118,7 +118,7 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
                 </Label>
                 <Input 
                   id="client-name" 
-                  className="mt-1"
+                  className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   placeholder={clientForm.clientType === 'LEGAL_ENTITY' ? 'Enter legal company name' : 'Enter full client name'}
                   value={clientForm.name}
                   onChange={(e) => onClientFormChange('name', e.target.value)}
@@ -134,29 +134,35 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
                 {clientForm.clientType === 'LEGAL_ENTITY' ? (
                   <Input 
                     id="client-registration" 
-                    className="mt-1"
+                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                     placeholder="Enter company registration number"
                     value={clientForm.registrationNumber}
                     onChange={(e) => onClientFormChange('registrationNumber', e.target.value)}
                   />
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div className="space-y-3">
                     <Input 
                       id="client-passport" 
-                      placeholder="Passport number"
+                      placeholder="e.g., A12345678"
                       value={clientForm.passportNumber}
                       onChange={(e) => onClientFormChange('passportNumber', e.target.value)}
+                      className="font-mono"
                     />
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                      <Input 
-                        id="client-dob" 
-                        type="date"
-                        className="pl-10"
-                        placeholder="Date of birth"
-                        value={clientForm.dateOfBirth}
-                        onChange={(e) => onClientFormChange('dateOfBirth', e.target.value)}
-                      />
+                    
+                    <div className="space-y-2 pt-2">
+                      <Label htmlFor="client-dob" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <Calendar className="h-4 w-4" />
+                        Date of Birth
+                      </Label>
+                      <div className="max-w-xs">
+                        <Input 
+                          id="client-dob" 
+                          type="date"
+                          value={clientForm.dateOfBirth}
+                          onChange={(e) => onClientFormChange('dateOfBirth', e.target.value)}
+                          max={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -182,9 +188,9 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
           </div>
 
           {/* Contact Information Section */}
-          <div className="bg-purple-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+              <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
               Contact Information
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -228,7 +234,7 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
                 <Input 
                   id="client-email" 
                   type="email"
-                  className="mt-1"
+                  className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                   placeholder="Enter email address"
                   value={clientForm.email}
                   onChange={(e) => onClientFormChange('email', e.target.value)}
@@ -271,10 +277,10 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
           </div>
 
           {/* Business Details Section */}
-          <div className="bg-orange-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Business Details
               </h3>
               <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full font-medium">
@@ -325,10 +331,10 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
           </div>
 
           {/* Address Information Section */}
-          <div className="bg-teal-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-teal-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Address Information
               </h3>
               <span className="text-xs text-teal-600 bg-teal-100 px-2 py-1 rounded-full font-medium">
@@ -396,10 +402,10 @@ export const AddEditClientDialog: React.FC<AddEditClientDialogProps> = ({
           </div>
 
           {/* Additional Notes Section */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <div className="w-1.5 h-4 bg-gray-500 rounded-full"></div>
+                <div className="w-1.5 h-4 bg-lime-300 rounded-full"></div>
                 Additional Notes
               </h3>
               <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full font-medium">

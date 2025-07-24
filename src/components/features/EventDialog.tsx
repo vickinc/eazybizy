@@ -203,7 +203,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
               value={formData.title}
               onChange={(e) => updateFormField('title', e.target.value)}
               placeholder="Enter event title"
-              className="w-full px-3 py-2 text-base"
+              className="w-full px-3 py-2 text-base bg-lime-50 border-lime-200 focus:bg-white"
               required
             />
           </div>
@@ -221,7 +221,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
             />
           </div>
           
-          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+          <div className="space-y-4 bg-white border border-gray-200 rounded-lg p-4">
             <Label className="text-sm font-semibold text-gray-700">Date & Time</Label>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -258,7 +258,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
             </div>
           </div>
           
-          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+          <div className="space-y-4 bg-white border border-gray-200 rounded-lg p-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type" className="text-xs text-gray-600">Event Type</Label>
