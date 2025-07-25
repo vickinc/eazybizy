@@ -44,6 +44,8 @@ interface InvoiceListProps {
   onSort: (field: string) => void;
   onSortFieldChange: (field: string) => void;
   onSortDirectionChange: (direction: 'asc' | 'desc') => void;
+  markingSentInvoiceId?: string;
+  markingPaidInvoiceId?: string;
 }
 
 export const InvoiceList: React.FC<InvoiceListProps> = ({
@@ -78,6 +80,8 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({
   onSort,
   onSortFieldChange,
   onSortDirectionChange,
+  markingSentInvoiceId,
+  markingPaidInvoiceId,
 }) => {
   return (
     <>
@@ -227,6 +231,8 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({
                     onArchive={onArchiveInvoice}
                     onRestore={onRestoreInvoice}
                     onDelete={onDeleteInvoice}
+                    isMarkingAsSent={markingSentInvoiceId === invoice.id}
+                    isMarkingAsPaid={markingPaidInvoiceId === invoice.id}
                   />
                 );
               })

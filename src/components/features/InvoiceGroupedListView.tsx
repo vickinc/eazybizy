@@ -41,6 +41,8 @@ interface InvoiceGroupedListViewProps {
   onSortFieldChange: (field: string) => void;
   onSortDirectionChange: (direction: 'asc' | 'desc') => void;
   toggleGroupExpansion: (groupKey: string) => void;
+  markingSentInvoiceId?: string;
+  markingPaidInvoiceId?: string;
 }
 
 export const InvoiceGroupedListView: React.FC<InvoiceGroupedListViewProps> = ({
@@ -76,7 +78,9 @@ export const InvoiceGroupedListView: React.FC<InvoiceGroupedListViewProps> = ({
   onSort,
   onSortFieldChange,
   onSortDirectionChange,
-  toggleGroupExpansion
+  toggleGroupExpansion,
+  markingSentInvoiceId,
+  markingPaidInvoiceId
 }) => {
   if (groupedInvoices.length === 0) {
     return (
@@ -141,6 +145,8 @@ export const InvoiceGroupedListView: React.FC<InvoiceGroupedListViewProps> = ({
                       onArchive={onArchiveInvoice}
                       onRestore={onRestoreInvoice}
                       onDelete={onDeleteInvoice}
+                      isMarkingAsSent={markingSentInvoiceId === invoice.id}
+                      isMarkingAsPaid={markingPaidInvoiceId === invoice.id}
                     />
                   ))}
                 </div>

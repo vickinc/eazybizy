@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import FileText from "lucide-react/dist/esm/icons/file-text";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Banknote from "lucide-react/dist/esm/icons/banknote";
@@ -10,10 +10,14 @@ import { Button } from "@/components/ui/button";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useInvoicesManagementDB as useInvoicesManagement } from "@/hooks/useInvoicesManagementDB";
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
+import { AccountSelectionDialog } from "@/components/features/AccountSelectionDialog";
 import InvoicesLoading from "./loading";
 import dynamic from 'next/dynamic';
 import { Suspense, useCallback } from 'react';
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { BankAccount, DigitalWallet } from '@/types/banksWallets.types';
 
 // Lazy load heavy components to improve initial bundle size
 const InvoiceStats = dynamic(
@@ -116,6 +120,18 @@ const AddEditInvoiceDialog = dynamic(
 export default function InvoicesClient() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  
+  // Account selection dialog state
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [pendingInvoiceId, setPendingInvoiceId] = useState<string | null>(null);
+  const [pendingBulkInvoices, setPendingBulkInvoices] = useState<string[]>([]);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [isBulkOperation, setIsBulkOperation] = useState(false);
+  
+  // Status change loading states
+  const [markingSentInvoiceId, setMarkingSentInvoiceId] = useState<string | null>(null);
+  const [markingPaidInvoiceId, setMarkingPaidInvoiceId] = useState<string | null>(null);
   
   const {
     // Data
@@ -234,6 +250,45 @@ export default function InvoicesClient() {
     downloadInvoicePDF
   } = useInvoicesManagement(globalSelectedCompany, companies);
 
+  // Wrapper functions with loading state management
+  const handleMarkAsSentWithLoading = useCallback(async (invoiceId: string) => {
+    setMarkingSentInvoiceId(invoiceId);
+    try {
+      await handleMarkAsSent(invoiceId);
+    } finally {
+      setMarkingSentInvoiceId(null);
+    }
+  }, [handleMarkAsSent]);
+
+  // Fetch bank accounts for account selection
+  const { data: bankAccountsData } = useQuery({
+    queryKey: ['bank-accounts', globalSelectedCompany],
+    queryFn: async () => {
+      if (globalSelectedCompany === 'all') return { data: [] };
+      const response = await fetch(`/api/bank-accounts?companyId=${globalSelectedCompany}`);
+      if (!response.ok) throw new Error('Failed to fetch bank accounts');
+      return response.json();
+    },
+    enabled: globalSelectedCompany !== 'all' && globalSelectedCompany !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch digital wallets for account selection
+  const { data: digitalWalletsData } = useQuery({
+    queryKey: ['digital-wallets', globalSelectedCompany],
+    queryFn: async () => {
+      if (globalSelectedCompany === 'all') return { data: [] };
+      const response = await fetch(`/api/digital-wallets?companyId=${globalSelectedCompany}`);
+      if (!response.ok) throw new Error('Failed to fetch digital wallets');
+      return response.json();
+    },
+    enabled: globalSelectedCompany !== 'all' && globalSelectedCompany !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const bankAccounts = bankAccountsData?.data || [];
+  const digitalWallets = digitalWalletsData?.data || [];
+
   // Check if no real payment methods are available
   const hasNoPaymentMethods = formPaymentMethods.length === 0 || 
     (formPaymentMethods.length === 1 && formPaymentMethods[0].type === 'placeholder');
@@ -255,6 +310,152 @@ export default function InvoicesClient() {
   const handleNavigateToProducts = () => {
     router.push('/sales/products');
   };
+
+  // Custom mark as paid handler that opens account selection dialog
+  const handleMarkAsPaidWithAccountSelection = useCallback((invoiceId: string) => {
+    // Check if invoice is already paid
+    const invoice = filteredInvoices.find(inv => inv.id === invoiceId);
+    if (invoice?.status === 'PAID') {
+      toast.info('Invoice is already marked as paid');
+      return;
+    }
+
+    setPendingInvoiceId(invoiceId);
+    setShowAccountDialog(true);
+  }, [filteredInvoices]);
+
+  // Handle account selection and mark invoice as paid
+  const handleAccountSelected = useCallback(async (accountId: string, accountType: 'bank' | 'wallet') => {
+    if (isBulkOperation && pendingBulkInvoices.length > 0) {
+      // Handle bulk operation
+      setIsMarkingPaid(true);
+      try {
+        // Filter out already paid invoices
+        const invoicesToProcess = filteredInvoices.filter(inv => 
+          pendingBulkInvoices.includes(inv.id) && inv.status !== 'PAID'
+        );
+
+        if (invoicesToProcess.length === 0) {
+          toast.info('No invoices to process (all selected invoices are already paid)');
+          return;
+        }
+
+        // Process each invoice
+        const results = await Promise.all(invoicesToProcess.map(async (invoice) => {
+          try {
+            const response = await fetch(`/api/invoices/${invoice.id}/mark-paid`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                paidDate: new Date().toISOString(),
+                accountId,
+                accountType
+              })
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to mark invoice as paid');
+            }
+
+            return await response.json();
+          } catch (error) {
+            console.error(`Failed to mark invoice ${invoice.invoiceNumber} as paid:`, error);
+            throw error;
+          }
+        }));
+
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        await queryClient.invalidateQueries({ queryKey: ['invoices-statistics'] });
+        
+        toast.success(`${invoicesToProcess.length} invoice(s) marked as paid successfully`);
+      } catch (error) {
+        toast.error(`Failed to mark invoices as paid: ${error.message}`);
+      } finally {
+        setIsMarkingPaid(false);
+        setShowAccountDialog(false);
+        setPendingBulkInvoices([]);
+        setIsBulkOperation(false);
+      }
+    } else if (pendingInvoiceId) {
+      // Handle individual operation
+      setIsMarkingPaid(true);
+      setMarkingPaidInvoiceId(pendingInvoiceId);
+      try {
+        const response = await fetch(`/api/invoices/${pendingInvoiceId}/mark-paid`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paidDate: new Date().toISOString(),
+            accountId,
+            accountType
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to mark invoice as paid');
+        }
+
+        const result = await response.json();
+        
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        await queryClient.invalidateQueries({ queryKey: ['invoices-statistics'] });
+        
+        // Show success message
+        if (result.bookkeepingEntry) {
+          toast.success('Invoice marked as paid and revenue entry created');
+        } else {
+          toast.success('Invoice marked as paid');
+        }
+      } catch (error) {
+        toast.error(`Failed to mark invoice as paid: ${error.message}`);
+      } finally {
+        setIsMarkingPaid(false);
+        setMarkingPaidInvoiceId(null);
+        setShowAccountDialog(false);
+        setPendingInvoiceId(null);
+      }
+    }
+  }, [pendingInvoiceId, pendingBulkInvoices, isBulkOperation, filteredInvoices, queryClient]);
+
+  // Handle bulk mark as paid with account selection
+  const handleBulkMarkPaidWithAccountSelection = useCallback(() => {
+    const selectedIds = Array.from(selectedInvoices);
+    if (selectedIds.length === 0) {
+      toast.error('No invoices selected');
+      return;
+    }
+
+    // Check if any invoices need to be processed
+    const invoicesToProcess = filteredInvoices.filter(inv => 
+      selectedIds.includes(inv.id) && inv.status !== 'PAID'
+    );
+
+    if (invoicesToProcess.length === 0) {
+      toast.info('All selected invoices are already marked as paid');
+      return;
+    }
+
+    // Set up bulk operation state
+    setPendingBulkInvoices(selectedIds);
+    setIsBulkOperation(true);
+    setShowAccountDialog(true);
+  }, [selectedInvoices, filteredInvoices]);
+
+  // Handle dialog close
+  const handleAccountDialogClose = useCallback(() => {
+    setShowAccountDialog(false);
+    setPendingInvoiceId(null);
+    setPendingBulkInvoices([]);
+    setIsBulkOperation(false);
+  }, []);
 
   // Memoized retry handler to prevent unnecessary re-renders
   const handleRetry = useCallback(() => {
@@ -478,19 +679,21 @@ export default function InvoicesClient() {
                   onEditInvoice={setEditingInvoice}
                   onDownloadPDF={downloadInvoicePDF}
                   onDuplicateInvoice={handleDuplicateInvoice}
-                  onMarkAsSent={handleMarkAsSent}
-                  onMarkAsPaid={handleMarkAsPaid}
+                  onMarkAsSent={handleMarkAsSentWithLoading}
+                  onMarkAsPaid={handleMarkAsPaidWithAccountSelection}
                   onArchiveInvoice={handleArchiveInvoice}
                   onRestoreInvoice={handleRestoreInvoice}
                   onDeleteInvoice={handleDeleteInvoice}
                   onBulkMarkSent={handleBulkMarkSent}
-                  onBulkMarkPaid={handleBulkMarkPaid}
+                  onBulkMarkPaid={handleBulkMarkPaidWithAccountSelection}
                   onBulkArchive={handleBulkArchive}
                   onBulkDelete={handleBulkDelete}
                   onSort={handleSort}
                   onSortFieldChange={handleSortFieldChange}
                   onSortDirectionChange={handleSortDirectionChange}
                   toggleGroupExpansion={toggleGroupExpansion}
+                  markingSentInvoiceId={markingSentInvoiceId}
+                  markingPaidInvoiceId={markingPaidInvoiceId}
                 />
               </Suspense>
             ) : (
@@ -530,18 +733,20 @@ export default function InvoicesClient() {
                   onEditInvoice={setEditingInvoice}
                   onDownloadPDF={downloadInvoicePDF}
                   onDuplicateInvoice={handleDuplicateInvoice}
-                  onMarkAsSent={handleMarkAsSent}
-                  onMarkAsPaid={handleMarkAsPaid}
+                  onMarkAsSent={handleMarkAsSentWithLoading}
+                  onMarkAsPaid={handleMarkAsPaidWithAccountSelection}
                   onArchiveInvoice={handleArchiveInvoice}
                   onRestoreInvoice={handleRestoreInvoice}
                   onDeleteInvoice={handleDeleteInvoice}
                   onBulkMarkSent={handleBulkMarkSent}
-                  onBulkMarkPaid={handleBulkMarkPaid}
+                  onBulkMarkPaid={handleBulkMarkPaidWithAccountSelection}
                   onBulkArchive={handleBulkArchive}
                   onBulkDelete={handleBulkDelete}
                   onSort={handleSort}
                   onSortFieldChange={handleSortFieldChange}
                   onSortDirectionChange={handleSortDirectionChange}
+                  markingSentInvoiceId={markingSentInvoiceId}
+                  markingPaidInvoiceId={markingPaidInvoiceId}
                 />
               </Suspense>
             )}
@@ -573,6 +778,21 @@ export default function InvoicesClient() {
               onCreateInvoice={handleCreateInvoice}
               onUpdateInvoice={handleUpdateInvoice}
               onResetForm={resetForm}
+            />
+
+            {/* Account Selection Dialog */}
+            <AccountSelectionDialog
+              isOpen={showAccountDialog}
+              onClose={handleAccountDialogClose}
+              onSelectAccount={handleAccountSelected}
+              bankAccounts={bankAccounts}
+              digitalWallets={digitalWallets}
+              title={isBulkOperation ? "Select Payment Account for Bulk Operation" : "Select Payment Account"}
+              description={isBulkOperation 
+                ? `Choose which account received payments for ${pendingBulkInvoices.length} invoice(s)`
+                : "Choose which account received this invoice payment"
+              }
+              isLoading={isMarkingPaid}
             />
           </div>
         </div>

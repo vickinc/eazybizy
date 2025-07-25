@@ -77,6 +77,8 @@ interface InvoiceListItemProps {
   onArchive: (id: string) => void;
   onRestore: (id: string) => void;
   onDelete: (id: string) => void;
+  isMarkingAsSent?: boolean;
+  isMarkingAsPaid?: boolean;
 }
 
 export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
@@ -95,6 +97,8 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
   onArchive,
   onRestore,
   onDelete,
+  isMarkingAsSent = false,
+  isMarkingAsPaid = false,
 }) => {
 
   return (
@@ -170,6 +174,66 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
               </Badge>
             )}
             
+            {/* Status Action Buttons */}
+            {viewMode === 'active' && invoice.status !== 'ARCHIVED' && (
+              <>
+                {invoice.status === 'DRAFT' && (
+                  <Button 
+                    size="sm" 
+                    onClick={(e) => { e.stopPropagation(); onMarkAsSent(invoice.id); }}
+                    disabled={isMarkingAsSent}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isMarkingAsSent ? (
+                      <div className="flex items-center space-x-1">
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Sending...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        <Send className="h-3 w-3" />
+                        <span>Mark as Sent</span>
+                      </div>
+                    )}
+                  </Button>
+                )}
+                
+                {(invoice.status === 'SENT' || invoice.status === 'OVERDUE') && (
+                  <div
+                    onClick={(e) => { e.stopPropagation(); onMarkAsPaid(invoice.id); }}
+                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all cursor-pointer border border-lime-200 text-gray-800 ${
+                      isMarkingAsPaid ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-sm'
+                    }`}
+                    style={{ 
+                      backgroundColor: '#ecfccb'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isMarkingAsPaid) {
+                        e.currentTarget.style.backgroundColor = '#d9f99d';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isMarkingAsPaid) {
+                        e.currentTarget.style.backgroundColor = '#ecfccb';
+                      }
+                    }}
+                  >
+                    {isMarkingAsPaid ? (
+                      <div className="flex items-center space-x-1">
+                        <div className="w-3 h-3 border-2 border-gray-800 border-t-transparent rounded-full animate-spin" />
+                        <span>Processing...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1">
+                        <CheckCircle className="h-3 w-3" />
+                        <span>Mark as Paid</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
             {/* Action buttons */}
             <div className="flex space-x-1">
               <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onPreview(invoice); }} className="h-8 px-2">
@@ -186,7 +250,7 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {viewMode === 'active' && invoice.status !== 'archived' && (
+                  {viewMode === 'active' && invoice.status !== 'ARCHIVED' && (
                     <>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(invoice); }}>
                         <Edit className="h-4 w-4 mr-2" />
@@ -196,13 +260,13 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
-                      {invoice.status === 'draft' && (
+                      {invoice.status === 'DRAFT' && (
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMarkAsSent(invoice.id); }}>
                           <Send className="h-4 w-4 mr-2" />
                           Mark as Sent
                         </DropdownMenuItem>
                       )}
-                      {(invoice.status === 'sent' || invoice.status === 'overdue') && (
+                      {(invoice.status === 'SENT' || invoice.status === 'OVERDUE') && (
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMarkAsPaid(invoice.id); }}>
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Mark as Paid
