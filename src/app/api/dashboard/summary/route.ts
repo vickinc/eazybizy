@@ -49,7 +49,6 @@ interface DashboardSummary {
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
-  console.log('🔥 DASHBOARD API CALLED - Starting fresh data fetch')
 
   try {
     // Authenticate the user to filter deleted events properly

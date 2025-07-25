@@ -152,7 +152,7 @@ export async function PUT(
     if (customEntityType !== undefined) updateData.customEntityType = entityType === 'Other' ? customEntityType : null
     if (fiscalYearEnd !== undefined) updateData.fiscalYearEnd = fiscalYearEnd || null
     
-    // Handle company update with sequential operations (SQLite-compatible)
+    // Handle company update with sequential operations
     try {
       // Update the company first
       const updatedCompany = await prisma.company.update({

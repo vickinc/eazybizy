@@ -28,6 +28,7 @@ export function useEntriesManagement({
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
+
   // State management
   const [filters, setFilters] = useState<EntryFilters>({
     companyId,
@@ -35,6 +36,11 @@ export function useEntriesManagement({
   });
 
   const [pagination, setPagination] = useState<EntryPaginationOptions>(initialPagination);
+
+  // Sync companyId prop changes with filters
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, companyId }));
+  }, [companyId]);
 
   // Form state for create/edit dialogs
   const [showEntryDialog, setShowEntryDialog] = useState(false);
@@ -68,7 +74,6 @@ export function useEntriesManagement({
   const queryKeys = {
     list: ['entries', 'list', filters, pagination] as const,
     detail: (id: string) => ['entries', 'detail', id] as const,
-    stats: ['entries', 'stats', filters] as const,
   };
 
   // Fetch entries
@@ -80,18 +85,16 @@ export function useEntriesManagement({
     refetch,
   } = useQuery({
     queryKey: queryKeys.list,
-    queryFn: () => EntryApiService.getEntries(filters, pagination),
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: () => {
+      return EntryApiService.getEntries(filters, pagination);
+    },
+    staleTime: 0, // No caching
+    gcTime: 0, // No caching
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch statistics
-  const { data: statsData } = useQuery({
-    queryKey: queryKeys.stats,
-    queryFn: () => EntryApiService.getEntryStatistics(filters),
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
+  // Note: Statistics are included in the entries response, no separate query needed
 
   // Create entry mutation
   const createEntryMutation = useMutation({
@@ -246,16 +249,23 @@ export function useEntriesManagement({
   const { pagination: paginationData, stats } = entriesData || {};
   
   const financialSummary = useMemo(() => {
-    if (!stats) return null;
+    if (!stats) {
+      return null;
+    }
     
-    return {
-      revenue: stats.income.total,
-      expenses: stats.expense.total,
-      netProfit: stats.netProfit,
-      accountsPayable: stats.expense.total - stats.expense.totalCogsPaid,
-      totalCogs: stats.expense.totalCogs,
+    const totalCogs = stats.expense.totalCogs || 0;
+    const totalCogsPaid = stats.expense.totalCogsPaid || 0;
+    
+    const summary = {
+      revenue: stats.income.total || 0,
+      expenses: stats.expense.total || 0,
+      netProfit: stats.netProfit || 0,
+      accountsPayable: totalCogs - totalCogsPaid,
+      totalCogs: totalCogs,
     };
-  }, [stats]);
+    
+    return summary;
+  }, [stats, filters]);
 
   // Group entries by category
   const groupedEntries = useMemo(() => {
@@ -263,14 +273,24 @@ export function useEntriesManagement({
       const key = `${entry.type}_${entry.category}`;
       if (!acc[key]) {
         acc[key] = {
+          key,
+          name: entry.category,
           type: entry.type,
           category: entry.category,
           entries: [],
-          total: 0,
+          totalIncome: 0,
+          totalExpenses: 0,
         };
       }
       acc[key].entries.push(entry);
-      acc[key].total += entry.amount;
+      
+      // Add to appropriate total based on entry type
+      if (entry.type === 'revenue') {
+        acc[key].totalIncome += entry.amount;
+      } else if (entry.type === 'expense') {
+        acc[key].totalExpenses += entry.amount;
+      }
+      
       return acc;
     }, {} as Record<string, any>);
     

@@ -214,16 +214,26 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
                   <p className="text-sm text-gray-600">
                     {formData.phone}
                   </p>
-                  {/* Messenger Icons */}
+                </div>
+              </div>
+            )}
+            
+            {/* Messenger Icons - Show separately if available */}
+            {(formData.whatsappNumber || formData.telegramNumber) && (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    Messengers:
+                  </span>
                   {formData.whatsappNumber && (
-                    <span className="ml-2 text-green-600" title={`WhatsApp: https://wa.me/${formData.whatsappNumber}`}>
+                    <span className="text-green-600" title={`WhatsApp: https://wa.me/${formData.whatsappNumber}`}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.982-3.589c-.597-1.047-.9-2.215-.899-3.411.002-3.813 3.103-6.912 6.914-6.912 1.849.001 3.584.721 4.887 2.025 1.304 1.305 2.023 3.04 2.022 4.889-.002 3.814-3.103 6.878-6.911 6.878z"/>
                       </svg>
                     </span>
                   )}
                   {formData.telegramNumber && (
-                    <span className="ml-1 text-blue-500">
+                    <span className="text-blue-500" title={`Telegram: https://t.me/${formData.telegramNumber}`}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0c-6.626 0-12 5.373-12 12s5.374 12 12 12 12-5.373 12-12-5.374-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
                       </svg>

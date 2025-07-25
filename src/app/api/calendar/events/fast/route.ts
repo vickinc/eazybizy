@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CacheService, CacheKeys, CacheTTL } from '@/lib/redis'
 import { ResponseCompression, generateETag, checkETag } from '@/lib/compression'
+import { AnniversaryEventService } from '@/services/business/anniversaryEventService'
 
 interface CalendarFilters {
   page?: number
@@ -40,6 +41,12 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
   try {
+    // Trigger anniversary rollover check (non-blocking, runs in background)
+    // This ensures that new anniversary events are generated when old ones pass
+    AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
+      console.warn('Anniversary rollover check failed during fast calendar fetch:', error);
+    });
+
     const searchParams = request.nextUrl.searchParams
     
     // Parse parameters

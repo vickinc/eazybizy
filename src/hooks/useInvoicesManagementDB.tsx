@@ -841,18 +841,38 @@ export function useInvoicesManagementDB(
         return;
       }
       
-      // Use the PUT endpoint instead of mark-paid endpoint to avoid database issues
-      await updateInvoiceMutation.mutateAsync({
-        id,
-        data: { 
-          status: 'PAID',
+      // Use the dedicated mark-paid endpoint which also creates revenue entry
+      const response = await fetch(`/api/invoices/${id}/mark-paid`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           paidDate: new Date().toISOString()
-        }
+        })
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to mark invoice as paid');
+      }
+
+      const result = await response.json();
+      
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      await queryClient.invalidateQueries({ queryKey: ['invoices-statistics'] });
+      
+      // Show success message
+      if (result.bookkeepingEntry) {
+        toast.success('Invoice marked as paid and revenue entry created');
+      } else {
+        toast.success('Invoice marked as paid');
+      }
     } catch (error: unknown) {
       toast.error(`Failed to mark invoice as paid: ${error.message}`);
     }
-  }, [updateInvoiceMutation, filteredInvoices]);
+  }, [filteredInvoices, queryClient]);
 
   const handleMarkAsSent = useCallback(async (id: string) => {
     await updateInvoiceMutation.mutateAsync({
@@ -919,17 +939,35 @@ export function useInvoicesManagementDB(
         toast.info(`${alreadyPaidInvoices.length} invoice(s) are already marked as paid`);
       }
       
-      // Mark all non-paid invoices as paid using PUT endpoint
+      // Mark all non-paid invoices as paid using the dedicated endpoint
       if (invoicesToMarkPaid.length > 0) {
-        await Promise.all(invoicesToMarkPaid.map(inv => 
-          updateInvoiceMutation.mutateAsync({
-            id: inv.id,
-            data: { 
-              status: 'PAID',
-              paidDate: new Date().toISOString()
+        const results = await Promise.all(invoicesToMarkPaid.map(async (inv) => {
+          try {
+            const response = await fetch(`/api/invoices/${inv.id}/mark-paid`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                paidDate: new Date().toISOString()
+              })
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to mark invoice as paid');
             }
-          })
-        ));
+
+            return await response.json();
+          } catch (error) {
+            console.error(`Failed to mark invoice ${inv.invoiceNumber} as paid:`, error);
+            throw error;
+          }
+        }));
+        
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        await queryClient.invalidateQueries({ queryKey: ['invoices-statistics'] });
         
         toast.success(`${invoicesToMarkPaid.length} invoice(s) marked as paid successfully`);
       }
@@ -939,7 +977,7 @@ export function useInvoicesManagementDB(
     } catch (error: unknown) {
       toast.error(`Failed to mark invoices as paid: ${error.message}`);
     }
-  }, [selectedInvoices, filteredInvoices, updateInvoiceMutation]);
+  }, [selectedInvoices, filteredInvoices, queryClient]);
 
   const handleBulkMarkSent = useCallback(async () => {
     const ids = Array.from(selectedInvoices);

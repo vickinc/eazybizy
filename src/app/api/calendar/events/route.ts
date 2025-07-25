@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService';
 import { authenticateRequest } from '@/lib/api-auth';
+import { AnniversaryEventService } from '@/services/business/anniversaryEventService';
 
 // GET /api/calendar/events - Get all calendar events with basic pagination
 export async function GET(request: NextRequest) {
   try {
+    // Trigger anniversary rollover check (non-blocking, runs in background)
+    // This ensures that new anniversary events are generated when old ones pass
+    AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
+      console.warn('Anniversary rollover check failed during calendar fetch:', error);
+    });
+
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -448,7 +448,7 @@ model DigitalWallet {
   updatedAt     DateTime      @updatedAt
   notes         String?
   company       Company       @relation(fields: [companyId], references: [id])
-  transactions  Transaction[] @relation("BankAccountTransactions")
+  transactions  Transaction[] @relation("DigitalWalletTransactions")
 
   @@index([companyId, createdAt])
   @@index([isActive, createdAt])
@@ -523,7 +523,7 @@ model CompanyAccount {
   updatedAt       DateTime           @updatedAt
   entries         BookkeepingEntry[]
   company         Company            @relation(fields: [companyId], references: [id])
-  transactions    Transaction[]      @relation("BankAccountTransactions")
+  transactions    Transaction[]      @relation("CompanyAccountTransactions")
 
   @@unique([companyId, type, name])
   @@map("company_accounts")
@@ -575,9 +575,9 @@ model Transaction {
   parentTransaction    Transaction?            @relation("TransactionHierarchy", fields: [parentTransactionId], references: [id])
   childTransactions    Transaction[]           @relation("TransactionHierarchy")
   linkedEntry          BookkeepingEntry?       @relation(fields: [linkedEntryId], references: [id])
-  digitalWallet        DigitalWallet?          @relation("BankAccountTransactions", fields: [accountId], references: [id])
-  bankAccount          BankAccount?            @relation("BankAccountTransactions", fields: [accountId], references: [id])
-  companyAccount       CompanyAccount?         @relation("BankAccountTransactions", fields: [accountId], references: [id])
+  digitalWallet        DigitalWallet?          @relation("DigitalWalletTransactions", fields: [accountId], references: [id], map: "transaction_digital_wallet_fkey")
+  bankAccount          BankAccount?            @relation("BankAccountTransactions", fields: [accountId], references: [id], map: "transaction_bank_account_fkey")
+  companyAccount       CompanyAccount?         @relation("CompanyAccountTransactions", fields: [accountId], references: [id], map: "transaction_company_account_fkey")
   company              Company                 @relation(fields: [companyId], references: [id])
 
   @@index([companyId, date])

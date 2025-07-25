@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
               legalName: true,
               tradingName: true,
               baseCurrency: true,
+              logo: true,
             }
           },
           account: {
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
     ]);
     
     // Calculate income/expense breakdown
-    const [incomeStats, expenseStats] = await Promise.all([
+    const [incomeStats, expenseStats, linkedExpenseStats] = await Promise.all([
       prisma.bookkeepingEntry.aggregate({
         where: { ...where, type: 'revenue' },
         _sum: { amount: true },
@@ -158,6 +159,15 @@ export async function GET(request: NextRequest) {
         where: { ...where, type: 'expense' },
         _sum: { amount: true, cogs: true, cogsPaid: true },
         _count: { _all: true }
+      }),
+      // Calculate COGS paid as sum of expense amounts that are linked to revenue
+      prisma.bookkeepingEntry.aggregate({
+        where: { 
+          ...where, 
+          type: 'expense',
+          linkedIncomeId: { not: null }
+        },
+        _sum: { amount: true }
       })
     ]);
     
@@ -172,7 +182,7 @@ export async function GET(request: NextRequest) {
       stats: {
         totalAmount: stats._sum.amount || 0,
         totalCogs: stats._sum.cogs || 0,
-        totalCogsPaid: stats._sum.cogsPaid || 0,
+        totalCogsPaid: linkedExpenseStats._sum.amount || 0,
         averageAmount: stats._avg.amount || 0,
         count: stats._count._all,
         income: {
@@ -181,8 +191,8 @@ export async function GET(request: NextRequest) {
         },
         expense: {
           total: expenseStats._sum.amount || 0,
-          totalCogs: expenseStats._sum.cogs || 0,
-          totalCogsPaid: expenseStats._sum.cogsPaid || 0,
+          totalCogs: stats._sum.cogs || 0,
+          totalCogsPaid: linkedExpenseStats._sum.amount || 0,
           count: expenseStats._count._all,
         },
         netProfit: (incomeStats._sum.amount || 0) - (expenseStats._sum.amount || 0),
@@ -267,6 +277,7 @@ export async function POST(request: NextRequest) {
             legalName: true,
             tradingName: true,
             baseCurrency: true,
+            logo: true,
           }
         },
         account: true,

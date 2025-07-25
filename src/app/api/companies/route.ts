@@ -8,6 +8,12 @@ import { AnniversaryEventService } from '@/services/business/anniversaryEventSer
 
 export async function GET(request: NextRequest) {
   try {
+    // Trigger anniversary rollover check (non-blocking, runs in background)
+    // This ensures that new anniversary events are generated when old ones pass
+    AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
+      console.warn('Anniversary rollover check failed during company fetch:', error);
+    });
+
     const { searchParams } = new URL(request.url)
     
     // Pagination parameters
@@ -29,7 +35,7 @@ export async function GET(request: NextRequest) {
     
     // Search filter
     if (searchTerm) {
-      // SQLite doesn't support mode 'insensitive' - using contains only
+      // Case-insensitive search using contains
       where.OR = [
         { legalName: { contains: searchTerm } },
         { tradingName: { contains: searchTerm } },
@@ -242,7 +248,7 @@ export async function POST(request: NextRequest) {
     try {
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setFullYear(endDate.getFullYear() + 2); // Generate events for next 2 years
+      endDate.setFullYear(endDate.getFullYear() + 1); // Generate events for next 1 year
       
       await AnniversaryEventService.generateAndStoreAnniversaryEvents(
         company.id,

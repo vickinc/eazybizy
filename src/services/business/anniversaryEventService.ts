@@ -9,6 +9,7 @@ import {
   formatAnniversaryEventTitle, 
   formatAnniversaryEventDescription 
 } from '@/utils/companyUtils';
+import { AnniversarySmartRollover } from './anniversarySmartRollover';
 
 export interface AnniversaryEventData {
   id: string;
@@ -397,6 +398,100 @@ export class AnniversaryEventService {
   }
 
   /**
+   * Check and generate next anniversary events for passed anniversaries (smart rollover)
+   */
+  static async checkAndGenerateNextAnniversaries(
+    companyId?: number,
+    userId?: string
+  ): Promise<{ success: boolean; message: string; stats: { processed: number; created: number; skipped: number; errors: number } }> {
+    try {
+      console.log(`Starting smart anniversary rollover check${companyId ? ` for company ${companyId}` : ' for all companies'}`);
+      
+      const result = await AnniversarySmartRollover.checkAndGenerateNextAnniversaries(companyId, userId);
+      
+      const stats = {
+        processed: result.processed,
+        created: result.created,
+        skipped: result.skipped,
+        errors: result.errors.length
+      };
+
+      if (result.errors.length > 0) {
+        console.warn('Anniversary rollover completed with errors:', result.errors);
+        return {
+          success: false,
+          message: `Rollover completed with ${result.errors.length} errors`,
+          stats
+        };
+      }
+
+      const message = result.created > 0 
+        ? `Successfully generated ${result.created} new anniversary events from ${result.processed} companies`
+        : 'No new anniversary events needed';
+
+      return {
+        success: true,
+        message,
+        stats
+      };
+    } catch (error) {
+      console.error('Anniversary rollover failed:', error);
+      return {
+        success: false,
+        message: `Rollover failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        stats: { processed: 0, created: 0, skipped: 0, errors: 1 }
+      };
+    }
+  }
+
+  /**
+   * Force anniversary rollover check (bypass cache)
+   */
+  static async forceAnniversaryRollover(
+    companyId?: number,
+    userId?: string
+  ): Promise<{ success: boolean; message: string; stats: { processed: number; created: number; skipped: number; errors: number } }> {
+    try {
+      console.log(`Forcing anniversary rollover check${companyId ? ` for company ${companyId}` : ' for all companies'}`);
+      
+      const result = await AnniversarySmartRollover.forceRolloverCheck(companyId, userId);
+      
+      const stats = {
+        processed: result.processed,
+        created: result.created,
+        skipped: result.skipped,
+        errors: result.errors.length
+      };
+
+      if (result.errors.length > 0) {
+        console.warn('Forced anniversary rollover completed with errors:', result.errors);
+        return {
+          success: false,
+          message: `Forced rollover completed with ${result.errors.length} errors`,
+          stats
+        };
+      }
+
+      const message = result.created > 0 
+        ? `Force rollover: Generated ${result.created} new anniversary events from ${result.processed} companies`
+        : 'Force rollover: No new anniversary events needed';
+
+      return {
+        success: true,
+        message,
+        stats
+      };
+    } catch (error) {
+      console.error('Forced anniversary rollover failed:', error);
+      return {
+        success: false,
+        message: `Forced rollover failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        stats: { processed: 0, created: 0, skipped: 0, errors: 1 }
+      };
+    }
+  }
+
+  /**
    * Sync anniversary events for a specific time period (used by scheduled jobs)
    */
   static async syncAnniversaryEventsForPeriod(
@@ -406,6 +501,9 @@ export class AnniversaryEventService {
   ): Promise<{ success: boolean; message: string; stats: { created: number; skipped: number; errors: number } }> {
     try {
       console.log(`Starting anniversary event sync for period ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      
+      // First, check for rollover opportunities
+      await this.checkAndGenerateNextAnniversaries(undefined, userId);
       
       const result = await this.generateAndStoreAllAnniversaryEvents(startDate, endDate, userId);
       

@@ -106,12 +106,18 @@ export class EntryApiService {
     const queryString = this.buildQueryString(filters, options);
     const url = `${this.baseUrl}${queryString ? `?${queryString}` : ''}`;
 
+    console.log('🔍 [EntryApiService] Fetching entries with:', { filters, options });
+    console.log('🔍 [EntryApiService] Final URL:', url);
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch entries: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('🔍 [EntryApiService] Response data:', data);
+
+    return data;
   }
 
   // Get single entry by ID

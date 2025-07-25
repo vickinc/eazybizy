@@ -109,10 +109,18 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
     return (
       <div className="space-y-2">
         {processedGroupedEntries.map((group) => (
-          <div key={group.key} className="border rounded-lg">
+          <div key={group.key} className={`border rounded-lg ${
+            group.type === 'revenue' 
+              ? 'border-l-4 border-l-green-500 bg-green-50/50' 
+              : 'border-l-4 border-l-red-500 bg-red-50/50'
+          }`}>
             {/* Group Header */}
             <div 
-              className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`p-4 cursor-pointer transition-colors ${
+                group.type === 'revenue'
+                  ? 'bg-green-50 hover:bg-green-100'
+                  : 'bg-red-50 hover:bg-red-100'
+              }`}
               onClick={() => toggleGroupExpansion(group.key)}
             >
               <div className="flex items-center justify-between">
@@ -123,25 +131,51 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
                     className="p-1 h-6 w-6 pointer-events-none"
                   >
                     {expandedGroups.has(group.key) ? 
-                      <FolderOpen className="h-4 w-4" /> : 
-                      <Folder className="h-4 w-4" />
+                      <FolderOpen className={`h-4 w-4 ${
+                        group.type === 'revenue' ? 'text-green-600' : 'text-red-600'
+                      }`} /> : 
+                      <Folder className={`h-4 w-4 ${
+                        group.type === 'revenue' ? 'text-green-600' : 'text-red-600'
+                      }`} />
                     }
                   </Button>
-                  <h3 className="font-semibold text-lg">{group.name}</h3>
-                  <Badge variant="outline" className="text-xs">
+                  <h3 className={`font-semibold text-lg ${
+                    group.type === 'revenue' ? 'text-green-800' : 'text-red-800'
+                  }`}>{group.name}</h3>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${
+                      group.type === 'revenue' 
+                        ? 'bg-green-100 text-green-700 border-green-200' 
+                        : 'bg-red-100 text-red-700 border-red-200'
+                    }`}
+                  >
                     {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs font-medium ${
+                      group.type === 'revenue' 
+                        ? 'bg-green-200 text-green-800 border-green-300' 
+                        : 'bg-red-200 text-red-800 border-red-300'
+                    }`}
+                  >
+                    {group.type === 'revenue' ? '📈 Revenue' : '📉 Expense'}
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className="text-sm text-gray-600">
-                    Revenue: {formatLargeCurrency(group.totalIncome)}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Expenses: {formatLargeCurrency(group.totalExpenses)}
-                  </div>
+                  {group.type === 'revenue' ? (
+                    <div className="text-sm font-medium text-green-700">
+                      Revenue: {formatLargeCurrency(group.totalIncome)}
+                    </div>
+                  ) : (
+                    <div className="text-sm font-medium text-red-700">
+                      Expenses: {formatLargeCurrency(group.totalExpenses)}
+                    </div>
+                  )}
                   <ChevronDown className={`h-4 w-4 transition-transform ${
                     expandedGroups.has(group.key) ? 'rotate-180' : ''
-                  }`} />
+                  } ${group.type === 'revenue' ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
               </div>
             </div>
@@ -149,7 +183,7 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
             {/* Group Content */}
             {expandedGroups.has(group.key) && (
               <div className="border-t space-y-2 p-2">
-                {group.entries.map((entry) => {
+                {group.entries.filter(entry => entry && entry.id).map((entry) => {
                   const isExpanded = expandedEntries.has(entry.id);
                   
                   // Use pre-calculated values from enhanced entry
@@ -211,7 +245,7 @@ export const EntriesListView: React.FC<EntriesListViewProps> = ({
   // Regular List View
   return (
     <div className="space-y-2">
-      {filteredEntries.map((entry) => {
+      {filteredEntries.filter(entry => entry && entry.id).map((entry) => {
         const isExpanded = expandedEntries.has(entry.id);
         
         // Use pre-calculated values from enhanced entry

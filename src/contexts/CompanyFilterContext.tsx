@@ -42,13 +42,20 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
 
   const [selectedCompany, setSelectedCompanyState] = useState<number | 'all'>(getInitialCompanyId);
 
-  // Sync with URL search params when they change (only if URL has the parameter)
+  // Sync with URL search params when they change
   useEffect(() => {
     const urlCompanyId = searchParams.get('companyId');
+    
+    // If URL has companyId parameter, use it
     if (urlCompanyId !== null) {
       const parsedCompanyId = urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
       if (parsedCompanyId !== selectedCompany) {
         setSelectedCompanyState(parsedCompanyId);
+      }
+    } else {
+      // If URL doesn't have companyId parameter, it means "All Companies"
+      if (selectedCompany !== 'all') {
+        setSelectedCompanyState('all');
       }
     }
   }, [searchParams, selectedCompany]);

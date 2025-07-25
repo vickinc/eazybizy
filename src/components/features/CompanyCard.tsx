@@ -516,15 +516,25 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                   >
                     {copiedFields[`${company.id}-Phone`] ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-400" />}
                   </Button>
-                  {/* Messenger Icons */}
+                </div>
+              </div>
+            )}
+            
+            {/* Messenger Icons - Show separately if available */}
+            {(company.whatsappNumber || company.telegramNumber) && (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
+                  <span className={`text-sm ${isPassive ? 'text-gray-500' : 'text-gray-600'}`}>
+                    Messengers:
+                  </span>
                   {company.whatsappNumber && (
                     <a
                       href={`https://wa.me/${company.whatsappNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="ml-2 text-green-600 hover:text-green-800 transition-colors"
-                      title="WhatsApp"
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                      title={`WhatsApp: ${company.whatsappNumber}`}
                       aria-label={`Contact via WhatsApp: ${company.whatsappNumber}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -538,8 +548,8 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="ml-1 text-blue-500 hover:text-blue-700 transition-colors"
-                      title="Telegram"
+                      className="text-blue-500 hover:text-blue-700 transition-colors"
+                      title={`Telegram: ${company.telegramNumber}`}
                       aria-label={`Contact via Telegram: ${company.telegramNumber}`}
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

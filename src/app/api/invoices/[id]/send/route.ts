@@ -14,7 +14,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get the invoice to validate current status
     const invoice = await prisma.invoice.findUnique({
       where: { id },
-      select: { id: true, status: true, invoiceNumber: true, dueDate: true }
+      select: { id: true, status: true, invoiceNumber: true, dueDate: true, notes: true }
     })
 
     if (!invoice) {
@@ -89,7 +89,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     console.error('Error sending invoice:', error)
     return NextResponse.json(
-      { error: 'Failed to send invoice' },
+      { 
+        error: 'Failed to send invoice',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }

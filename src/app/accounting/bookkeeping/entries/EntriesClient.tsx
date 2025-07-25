@@ -73,10 +73,18 @@ export default function EntriesClient({
 }: EntriesClientProps) {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
   
+  console.log('🔍 [EntriesClient] globalSelectedCompany:', globalSelectedCompany, typeof globalSelectedCompany);
+  console.log('🔍 [EntriesClient] companies:', companies?.map(c => ({ id: c.id, name: c.tradingName })));
+  
   // Get selected company name for display
   const selectedCompanyName = companies?.find(c => c.id === parseInt(globalSelectedCompany || '0'))?.tradingName;
   
+  console.log('🔍 [EntriesClient] selectedCompanyName:', selectedCompanyName);
+  
   // Use the entries management hook
+  const finalCompanyId = initialFilters?.companyId || (globalSelectedCompany === 'all' ? 'all' : String(globalSelectedCompany || 'all'));
+  console.log('🔍 [EntriesClient] finalCompanyId being passed to hook:', finalCompanyId, typeof finalCompanyId);
+
   const {
     entries,
     groupedEntries,
@@ -119,7 +127,7 @@ export default function EntriesClient({
     // Mutations
     bulkCreateMutation,
   } = useEntriesManagement({
-    companyId: initialFilters?.companyId || globalSelectedCompany || 'all',
+    companyId: finalCompanyId,
     initialFilters,
     initialPagination,
   });
@@ -345,7 +353,7 @@ export default function EntriesClient({
       setExpandedGroups(new Set());
     } else {
       setExpandedEntries(new Set(entries.map(e => e.id)));
-      setExpandedGroups(new Set(groupedEntries.map(g => `${g.type}_${g.category}`)));
+      setExpandedGroups(new Set(groupedEntries.map(g => g.key)));
     }
     setIsAllExpanded(!isAllExpanded);
   }, [isAllExpanded, entries, groupedEntries]);
@@ -480,31 +488,31 @@ export default function EntriesClient({
 
         {/* Action Buttons */}
         <div className="mb-6">
-          {canAddEntry ? (
-            <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
-              <Button 
-                onClick={handleCreateEntry}
-                className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                disabled={isFetching}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Entry
-              </Button>
-              <Button 
-                onClick={() => {
-                  setBulkAddType('expense');
-                  setShowBulkAddDialog(true);
-                }}
-                variant="outline"
-                className="w-full sm:w-auto"
-                disabled={isFetching}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Bulk Add
-              </Button>
-            </div>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className={canAddEntry ? "flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0" : "bg-amber-50 border border-amber-200 rounded-lg p-4"}>
+            {canAddEntry ? (
+              <>
+                <Button 
+                  onClick={handleCreateEntry}
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                  disabled={isFetching}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Entry
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setBulkAddType('expense');
+                    setShowBulkAddDialog(true);
+                  }}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  disabled={isFetching}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Add
+                </Button>
+              </>
+            ) : (
               <div className="flex items-center gap-3">
                 <div className="bg-amber-100 p-2 rounded-full">
                   <Receipt className="h-5 w-5 text-amber-600" />
@@ -514,8 +522,8 @@ export default function EntriesClient({
                   <p className="text-amber-700 text-sm">Please select a specific company from the filter to add entries.</p>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Financial Summary */}

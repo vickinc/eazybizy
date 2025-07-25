@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const where: Prisma.CompanyWhereInput = {}
     
     if (filters.search) {
-      // SQLite doesn't support mode 'insensitive' - using contains only
+      // Case-insensitive search using contains
       where.OR = [
         { legalName: { contains: filters.search } },
         { tradingName: { contains: filters.search } },

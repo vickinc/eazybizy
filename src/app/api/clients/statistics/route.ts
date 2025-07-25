@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Execute basic statistics queries that work with SQLite
+    // Execute basic statistics queries
     const [
       overallStats,
       statusBreakdown,
