@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, Suspense, lazy } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { EntriesLoading } from './loading';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import { useCompanyFilter } from '@/contexts/CompanyFilterContext';
+import { useCategoryMode } from '@/contexts/CategoryModeContext';
 import { useEntriesManagement } from '@/hooks/useEntriesManagement';
+import { useChartOfAccountsManagement } from '@/hooks/useChartOfAccountsManagement';
 import { EntryFilters, EntryPaginationOptions } from '@/services/api/entryApiService';
 import { formatDateForDisplay } from '@/utils';
+import { EntriesExportService } from '@/services/business/entriesExportService';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Upload from 'lucide-react/dist/esm/icons/upload';
 import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2';
@@ -21,6 +26,9 @@ import ToggleRight from 'lucide-react/dist/esm/icons/toggle-right';
 import CheckSquare from 'lucide-react/dist/esm/icons/check-square';
 import Square from 'lucide-react/dist/esm/icons/square';
 import Receipt from 'lucide-react/dist/esm/icons/receipt';
+import Download from 'lucide-react/dist/esm/icons/download';
+import FileText from 'lucide-react/dist/esm/icons/file-text';
+import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet';
 
 // Types for bulk add functionality
 interface BulkEntryFormData {
@@ -38,26 +46,139 @@ interface BulkEntryFormData {
 // Lazy load heavy components
 const EntriesFilterBar = dynamic(
   () => import('@/components/features/EntriesFilterBar').then(mod => ({ default: mod.EntriesFilterBar })),
-  { ssr: false }
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="h-10 w-48 bg-gray-200 rounded animate-pulse" />
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
+          <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
+          <div className="h-10 w-36 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="flex gap-4">
+          <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
+          <div className="h-10 w-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </div>
+    ),
+    ssr: true
+  }
 );
 
 const EntriesListView = dynamic(
   () => import('@/components/features/EntriesListView').then(mod => ({ default: mod.EntriesListView })),
-  { ssr: false }
+  {
+    loading: () => (
+      <div className="bg-white rounded-lg shadow border">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+        <div className="divide-y divide-gray-200">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="p-4 sm:p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mb-1" />
+                      <div className="h-3 w-32 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3 w-2/3 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    ssr: true
+  }
 );
 
 const AddEditEntryDialog = dynamic(
   () => import('@/components/features/AddEditEntryDialog').then(mod => ({ default: mod.AddEditEntryDialog })),
-  { ssr: false }
+  {
+    loading: () => null,
+    ssr: false
+  }
 );
 
 const BulkAddDialog = dynamic(
   () => import('@/components/features/BulkAddDialog').then(mod => ({ default: mod.BulkAddDialog })),
-  { ssr: false }
+  {
+    loading: () => null,
+    ssr: false
+  }
 );
 
 const ConfirmationDialog = lazy(() => 
   import('@/components/ui/ConfirmationDialog').then(mod => ({ default: mod.ConfirmationDialog }))
+);
+
+// Financial Summary Component
+const FinancialSummary = ({ financialSummary, formatCurrency }: { financialSummary: any, formatCurrency: (value: number) => string }) => (
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-sm font-medium text-gray-600">Total Revenue</div>
+        <div className="text-2xl font-bold text-green-600">
+          {formatCurrency(financialSummary.revenue)}
+        </div>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-sm font-medium text-gray-600">Total Expenses</div>
+        <div className="text-2xl font-bold text-red-600">
+          {formatCurrency(financialSummary.expenses)}
+        </div>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-sm font-medium text-gray-600">Net Profit</div>
+        <div className={`text-2xl font-bold ${financialSummary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {formatCurrency(financialSummary.netProfit)}
+        </div>
+      </CardContent>
+    </Card>
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-sm font-medium text-gray-600">Accounts Payable</div>
+        <div className="text-2xl font-bold text-blue-600">
+          {formatCurrency(financialSummary.accountsPayable)}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// Skeleton for Financial Summary
+const FinancialSummarySkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {[...Array(4)].map((_, index) => (
+      <Card key={index}>
+        <CardContent className="p-4">
+          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+          <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
 );
 
 interface EntriesClientProps {
@@ -72,18 +193,18 @@ export default function EntriesClient({
   highlightId,
 }: EntriesClientProps) {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
+  const { mode: categoryMode, isLoading: categoryModeLoading } = useCategoryMode();
   
-  console.log('🔍 [EntriesClient] globalSelectedCompany:', globalSelectedCompany, typeof globalSelectedCompany);
-  console.log('🔍 [EntriesClient] companies:', companies?.map(c => ({ id: c.id, name: c.tradingName })));
+  // Conditionally fetch Chart of Accounts data if in advanced mode
+  const chartOfAccounts = useChartOfAccountsManagement();
+  const shouldFetchChartOfAccounts = categoryMode === 'advanced' && !categoryModeLoading;
+  
   
   // Get selected company name for display
   const selectedCompanyName = companies?.find(c => c.id === parseInt(globalSelectedCompany || '0'))?.tradingName;
   
-  console.log('🔍 [EntriesClient] selectedCompanyName:', selectedCompanyName);
-  
   // Use the entries management hook
   const finalCompanyId = initialFilters?.companyId || (globalSelectedCompany === 'all' ? 'all' : String(globalSelectedCompany || 'all'));
-  console.log('🔍 [EntriesClient] finalCompanyId being passed to hook:', finalCompanyId, typeof finalCompanyId);
 
   const {
     entries,
@@ -265,8 +386,15 @@ export default function EntriesClient({
   // Use highlighted ID from props or hook
   const highlightedEntryId = highlightId || hookHighlightedId;
 
+  // State to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Check if we can add entries (company must be selected)
-  const canAddEntry = globalSelectedCompany !== 'all' && globalSelectedCompany !== null;
+  const canAddEntry = isMounted && globalSelectedCompany !== 'all' && globalSelectedCompany !== null;
 
   // Helper function to determine current selected period based on date filters
   const getDetectedPeriod = useCallback(() => {
@@ -464,8 +592,32 @@ export default function EntriesClient({
     }).filter(Boolean);
   }, [selectedEntries, entries, formatDateForDisplay, formatCurrency]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  // Export handlers
+  const handleExportCSV = useCallback(() => {
+    const companyName = selectedCompanyName || 'All Companies';
+    EntriesExportService.exportToCSV(entries, `entries-${companyName.toLowerCase().replace(/\s+/g, '-')}`);
+  }, [entries, selectedCompanyName]);
+
+  const handleExportPDF = useCallback(() => {
+    const companyName = selectedCompanyName || 'All Companies';
+    EntriesExportService.exportToPDF(
+      entries, 
+      companyName,
+      {
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        type: filters.type
+      },
+      `entries-${companyName.toLowerCase().replace(/\s+/g, '-')}`
+    );
+  }, [entries, selectedCompanyName, filters]);
+
+  // Use delayed loading to prevent flash for cached data, but not during SSR
+  const showLoader = useDelayedLoading(isLoading && typeof window !== 'undefined');
+
+  // Handle loading state with skeleton UI (only on client-side)
+  if (showLoader && typeof window !== 'undefined') {
+    return <EntriesLoading />;
   }
 
   return (
@@ -488,80 +640,121 @@ export default function EntriesClient({
 
         {/* Action Buttons */}
         <div className="mb-6">
-          <div className={canAddEntry ? "flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0" : "bg-amber-50 border border-amber-200 rounded-lg p-4"}>
+          <div className={canAddEntry ? "flex flex-col space-y-2 sm:flex-row sm:justify-between sm:space-y-0" : "bg-amber-50 border border-amber-200 rounded-lg p-4"}>
             {canAddEntry ? (
               <>
-                <Button 
-                  onClick={handleCreateEntry}
-                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                  disabled={isFetching}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Entry
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setBulkAddType('expense');
-                    setShowBulkAddDialog(true);
-                  }}
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  disabled={isFetching}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Add
-                </Button>
+                <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
+                  <Button 
+                    onClick={handleCreateEntry}
+                    className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Entry
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setBulkAddType('expense');
+                      setShowBulkAddDialog(true);
+                    }}
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Bulk Add
+                  </Button>
+                </div>
+                
+                {/* Export Dropdown - aligned right */}
+                {entries.length > 0 && (
+                  <div className="relative group">
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                    <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                      <button
+                        onClick={handleExportCSV}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                        style={{ backgroundColor: 'white' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                      >
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Export as CSV
+                      </button>
+                      <button
+                        onClick={handleExportPDF}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                        style={{ backgroundColor: 'white' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Export as PDF
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
-              <div className="flex items-center gap-3">
-                <div className="bg-amber-100 p-2 rounded-full">
-                  <Receipt className="h-5 w-5 text-amber-600" />
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-100 p-2 rounded-full">
+                    <Receipt className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-amber-800 font-semibold">Select a Company</h3>
+                    <p className="text-amber-700 text-sm">Please select a specific company from the filter to add entries.</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-amber-800 font-semibold">Select a Company</h3>
-                  <p className="text-amber-700 text-sm">Please select a specific company from the filter to add entries.</p>
-                </div>
+                
+                {/* Export buttons even when no company selected */}
+                {entries.length > 0 && (
+                  <div className="relative group">
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                    <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                      <button
+                        onClick={handleExportCSV}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                        style={{ backgroundColor: 'white' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                      >
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Export as CSV
+                      </button>
+                      <button
+                        onClick={handleExportPDF}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                        style={{ backgroundColor: 'white' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Export as PDF
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
 
         {/* Financial Summary */}
-        {financialSummary && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-sm font-medium text-gray-600">Total Revenue</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(financialSummary.revenue)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-sm font-medium text-gray-600">Total Expenses</div>
-                <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(financialSummary.expenses)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-sm font-medium text-gray-600">Net Profit</div>
-                <div className={`text-2xl font-bold ${financialSummary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(financialSummary.netProfit)}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-sm font-medium text-gray-600">Accounts Payable</div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(financialSummary.accountsPayable)}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {financialSummary ? (
+          <FinancialSummary financialSummary={financialSummary} formatCurrency={formatCurrency} />
+        ) : (
+          <FinancialSummarySkeleton />
         )}
 
         {/* Filters */}
@@ -753,6 +946,10 @@ export default function EntriesClient({
                 formSelectedLinkedIncome: null,
                 formCogsSummary: null,
               }}
+              categoryProps={{
+                categoryMode,
+                chartOfAccounts: shouldFetchChartOfAccounts ? chartOfAccounts.accounts : [],
+              }}
               invoiceSearchProps={{
                 invoiceSearchTerm: '',
                 handleInvoiceSearchChange: () => {},
@@ -928,6 +1125,7 @@ export default function EntriesClient({
               </DialogContent>
             </Dialog>
           )}
+
         </Suspense>
       </div>
     </div>

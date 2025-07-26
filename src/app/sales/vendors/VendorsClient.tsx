@@ -6,6 +6,9 @@ import Truck from "lucide-react/dist/esm/icons/truck";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
+import Download from "lucide-react/dist/esm/icons/download";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import FileSpreadsheet from "lucide-react/dist/esm/icons/file-spreadsheet";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useVendorsManagementDB } from "@/hooks/useVendorsManagementDB";
 import { productApiService } from "@/services/api/productApiService";
@@ -15,6 +18,7 @@ import VendorsLoading from "./loading";
 import dynamic from 'next/dynamic';
 import { Suspense, useCallback, useState } from 'react';
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import { VendorsExportService } from "@/services/business/vendorsExportService";
 
 // Lazy load heavy components to improve initial bundle size
 const VendorStats = dynamic(
@@ -177,6 +181,39 @@ export default function VendorsClient() {
     window.location.reload();
   }, []);
 
+  // Export handlers
+  const handleExportCSV = useCallback(() => {
+    const exportData = filteredVendors.map(vendor => {
+      const relatedCompany = companies.find(c => c.id === vendor.companyId);
+      return {
+        ...vendor,
+        relatedCompanyName: relatedCompany?.tradingName || ''
+      };
+    });
+    const companyName = selectedCompanyName || 'All Companies';
+    VendorsExportService.exportToCSV(exportData, `vendors-${companyName.toLowerCase().replace(/\s+/g, '-')}`);
+  }, [filteredVendors, selectedCompanyName, companies]);
+
+  const handleExportPDF = useCallback(() => {
+    const exportData = filteredVendors.map(vendor => {
+      const relatedCompany = companies.find(c => c.id === vendor.companyId);
+      return {
+        ...vendor,
+        relatedCompanyName: relatedCompany?.tradingName || ''
+      };
+    });
+    const companyName = selectedCompanyName || 'All Companies';
+    VendorsExportService.exportToPDF(
+      exportData, 
+      companyName,
+      {
+        searchTerm,
+        statusFilter
+      },
+      `vendors-${companyName.toLowerCase().replace(/\s+/g, '-')}`
+    );
+  }, [filteredVendors, selectedCompanyName, searchTerm, statusFilter, companies]);
+
   // Product dialog state management
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -322,24 +359,98 @@ export default function VendorsClient() {
             {/* Add Vendor Section */}
             <div className="mb-8">
               {canAddVendor ? (
-                <Button 
-                  className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white" 
-                  onClick={() => setShowAddForm(true)}
-                >
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
-                  Add Vendor
-                </Button>
-              ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <Truck className="h-5 w-5 text-amber-600" />
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <Button 
+                    className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white" 
+                    onClick={() => setShowAddForm(true)}
+                  >
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
+                    Add Vendor
+                  </Button>
+                  
+                  {/* Export Dropdown - aligned right */}
+                  {filteredVendors.length > 0 && (
+                    <div className="relative group">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-amber-800 font-semibold">Select a Company</h3>
-                      <p className="text-amber-700 text-sm">Please select a specific company from the filter to add vendors.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-100 p-2 rounded-full">
+                        <Truck className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-amber-800 font-semibold">Select a Company</h3>
+                        <p className="text-amber-700 text-sm">Please select a specific company from the filter to add vendors.</p>
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Export buttons even when no company selected */}
+                  {filteredVendors.length > 0 && (
+                    <div className="relative group ml-4">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -4,6 +4,9 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import UserCheck from "lucide-react/dist/esm/icons/user-check";
 import Plus from "lucide-react/dist/esm/icons/plus";
+import Download from "lucide-react/dist/esm/icons/download";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import FileSpreadsheet from "lucide-react/dist/esm/icons/file-spreadsheet";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useClientsManagementDB } from "@/hooks/useClientsManagementDB";
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
@@ -11,6 +14,8 @@ import ClientsLoading from "./loading";
 import dynamic from 'next/dynamic';
 import { Suspense, useCallback } from 'react';
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import { ClientsExportService } from "@/services/business/clientsExportService";
+import { InvoiceApiService } from "@/services/api/invoiceApiService";
 
 // Lazy load heavy components to improve initial bundle size
 const ClientStats = dynamic(
@@ -147,6 +152,119 @@ export default function ClientsClient() {
     window.location.reload();
   }, []);
 
+  // Helper function to calculate real financial data from invoices
+  const calculateClientFinancials = useCallback(async (clientId: string) => {
+    try {
+      const invoiceService = new InvoiceApiService();
+      const invoicesResponse = await invoiceService.getInvoices({
+        clientFilter: clientId,
+        companyFilter: globalSelectedCompany !== 'all' ? globalSelectedCompany : 'all'
+      });
+      
+      const invoices = invoicesResponse.data;
+      const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+      const totalPaid = invoices
+        .filter(invoice => invoice.status.toLowerCase() === 'paid')
+        .reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+      
+      return {
+        calculatedTotalInvoiced: totalInvoiced,
+        calculatedTotalPaid: totalPaid,
+        invoiceCount: invoices.length
+      };
+    } catch (error) {
+      console.warn('Failed to calculate financials for client:', clientId, error);
+      return {
+        calculatedTotalInvoiced: 0,
+        calculatedTotalPaid: 0,
+        invoiceCount: 0
+      };
+    }
+  }, [globalSelectedCompany]);
+
+  // Export handlers with real financial calculation
+  const handleExportCSV = useCallback(async () => {
+    try {
+      // Calculate real financial data for each client
+      const exportDataPromises = filteredClients.map(async (client) => {
+        const relatedCompany = companies.find(c => c.id === client.companyId);
+        const financials = await calculateClientFinancials(client.id);
+        
+        return {
+          ...client,
+          companyName: relatedCompany?.tradingName || '',
+          ...financials
+        };
+      });
+      
+      const exportData = await Promise.all(exportDataPromises);
+      const companyName = selectedCompanyName || 'All Companies';
+      ClientsExportService.exportToCSV(exportData, `clients-${companyName.toLowerCase().replace(/\s+/g, '-')}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Fallback to stored values if calculation fails
+      const exportData = filteredClients.map(client => {
+        const relatedCompany = companies.find(c => c.id === client.companyId);
+        return {
+          ...client,
+          companyName: relatedCompany?.tradingName || ''
+        };
+      });
+      const companyName = selectedCompanyName || 'All Companies';
+      ClientsExportService.exportToCSV(exportData, `clients-${companyName.toLowerCase().replace(/\s+/g, '-')}`);
+    }
+  }, [filteredClients, selectedCompanyName, companies, calculateClientFinancials]);
+
+  const handleExportPDF = useCallback(async () => {
+    try {
+      // Calculate real financial data for each client
+      const exportDataPromises = filteredClients.map(async (client) => {
+        const relatedCompany = companies.find(c => c.id === client.companyId);
+        const financials = await calculateClientFinancials(client.id);
+        
+        return {
+          ...client,
+          companyName: relatedCompany?.tradingName || '',
+          ...financials
+        };
+      });
+      
+      const exportData = await Promise.all(exportDataPromises);
+      const companyName = selectedCompanyName || 'All Companies';
+      ClientsExportService.exportToPDF(
+        exportData, 
+        companyName,
+        {
+          searchTerm,
+          statusFilter: filterStatus,
+          industryFilter: filterIndustry
+        },
+        `clients-${companyName.toLowerCase().replace(/\s+/g, '-')}`
+      );
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Fallback to stored values if calculation fails
+      const exportData = filteredClients.map(client => {
+        const relatedCompany = companies.find(c => c.id === client.companyId);
+        return {
+          ...client,
+          companyName: relatedCompany?.tradingName || ''
+        };
+      });
+      const companyName = selectedCompanyName || 'All Companies';
+      ClientsExportService.exportToPDF(
+        exportData, 
+        companyName,
+        {
+          searchTerm,
+          statusFilter: filterStatus,
+          industryFilter: filterIndustry
+        },
+        `clients-${companyName.toLowerCase().replace(/\s+/g, '-')}`
+      );
+    }
+  }, [filteredClients, selectedCompanyName, searchTerm, filterStatus, filterIndustry, companies, calculateClientFinancials]);
+
   // Handle loading state with skeleton UI
   if (showLoader) {
     return <ClientsLoading />;
@@ -177,24 +295,98 @@ export default function ClientsClient() {
             {/* Add Client Section */}
             <div className="mb-8">
               {canAddClient ? (
-                <Button 
-                  className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white" 
-                  onClick={() => setShowAddForm(true)}
-                >
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
-                  Add Client
-                </Button>
-              ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <UserCheck className="h-5 w-5 text-amber-600" />
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <Button 
+                    className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-base sm:text-lg font-bold text-white" 
+                    onClick={() => setShowAddForm(true)}
+                  >
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
+                    Add Client
+                  </Button>
+                  
+                  {/* Export Dropdown - aligned right */}
+                  {filteredClients.length > 0 && (
+                    <div className="relative group">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-amber-800 font-semibold">Select a Company</h3>
-                      <p className="text-amber-700 text-sm">Please select a specific company from the filter to add clients.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-100 p-2 rounded-full">
+                        <UserCheck className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-amber-800 font-semibold">Select a Company</h3>
+                        <p className="text-amber-700 text-sm">Please select a specific company from the filter to add clients.</p>
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Export buttons even when no company selected */}
+                  {filteredClients.length > 0 && (
+                    <div className="relative group ml-4">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -6,6 +6,8 @@ import Plus from "lucide-react/dist/esm/icons/plus";
 import Banknote from "lucide-react/dist/esm/icons/banknote";
 import Users from "lucide-react/dist/esm/icons/users";
 import Package from "lucide-react/dist/esm/icons/package";
+import Download from "lucide-react/dist/esm/icons/download";
+import FileSpreadsheet from "lucide-react/dist/esm/icons/file-spreadsheet";
 import { Button } from "@/components/ui/button";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useInvoicesManagementDB as useInvoicesManagement } from "@/hooks/useInvoicesManagementDB";
@@ -18,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { BankAccount, DigitalWallet } from '@/types/banksWallets.types';
+import { InvoicesExportService } from "@/services/business/invoicesExportService";
 
 // Lazy load heavy components to improve initial bundle size
 const InvoiceStats = dynamic(
@@ -457,6 +460,55 @@ export default function InvoicesClient() {
     setIsBulkOperation(false);
   }, []);
 
+  // Export handlers
+  const handleExportCSV = useCallback(() => {
+    const exportData = filteredInvoices.map(invoice => {
+      const relatedCompany = companies.find(c => c.id === invoice.fromCompanyId);
+      // Extract payment method IDs from the invoice structure
+      const paymentMethodIds = invoice.paymentMethodInvoices?.map(pm => pm.paymentMethodId) || [];
+      const paymentMethodNames = invoice.paymentMethodInvoices?.map(pm => pm.paymentMethod?.name || 'Unknown') || [];
+      
+      return {
+        ...invoice,
+        paymentMethodIds,
+        companyName: relatedCompany?.tradingName || '',
+        paymentMethodNames
+      };
+    });
+    const companyName = globalSelectedCompany === 'all' ? 'All Companies' : 
+      companies.find(c => c.id === globalSelectedCompany)?.tradingName || 'Unknown Company';
+    InvoicesExportService.exportToCSV(exportData, `invoices-${companyName.toLowerCase().replace(/\s+/g, '-')}`);
+  }, [filteredInvoices, companies, globalSelectedCompany]);
+
+  const handleExportPDF = useCallback(() => {
+    const exportData = filteredInvoices.map(invoice => {
+      const relatedCompany = companies.find(c => c.id === invoice.fromCompanyId);
+      // Extract payment method IDs from the invoice structure
+      const paymentMethodIds = invoice.paymentMethodInvoices?.map(pm => pm.paymentMethodId) || [];
+      const paymentMethodNames = invoice.paymentMethodInvoices?.map(pm => pm.paymentMethod?.name || 'Unknown') || [];
+      
+      return {
+        ...invoice,
+        paymentMethodIds,
+        companyName: relatedCompany?.tradingName || '',
+        paymentMethodNames
+      };
+    });
+    const companyName = globalSelectedCompany === 'all' ? 'All Companies' : 
+      companies.find(c => c.id === globalSelectedCompany)?.tradingName || 'Unknown Company';
+    InvoicesExportService.exportToPDF(
+      exportData, 
+      companyName,
+      {
+        searchTerm,
+        statusFilter: filterStatus,
+        clientFilter: filterClient,
+        currencyFilter: filterCurrency
+      },
+      `invoices-${companyName.toLowerCase().replace(/\s+/g, '-')}`
+    );
+  }, [filteredInvoices, companies, globalSelectedCompany, searchTerm, filterStatus, filterClient, filterCurrency]);
+
   // Memoized retry handler to prevent unnecessary re-renders
   const handleRetry = useCallback(() => {
     window.location.reload();
@@ -570,24 +622,98 @@ export default function InvoicesClient() {
             {/* Company Selection Section */}
             <div className="mb-8">
               {canAddInvoice ? (
-                <Button
-                  className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-lg font-bold text-white"
-                  onClick={handleCreateInvoiceClick}
-                >
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
-                  Create Invoice
-                </Button>
-              ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FileText className="h-5 w-5 text-amber-600" />
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <Button
+                    className="bg-black hover:bg-gray-800 py-3 px-4 sm:py-4 sm:px-8 text-lg font-bold text-white"
+                    onClick={handleCreateInvoiceClick}
+                  >
+                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 font-bold" />
+                    Create Invoice
+                  </Button>
+                  
+                  {/* Export Dropdown - aligned right */}
+                  {filteredInvoices.length > 0 && (
+                    <div className="relative group">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-amber-800 font-semibold">Select a Company</h3>
-                      <p className="text-amber-700 text-sm">Please select a specific company from the filter to create invoices.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-100 p-2 rounded-full">
+                        <FileText className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-amber-800 font-semibold">Select a Company</h3>
+                        <p className="text-amber-700 text-sm">Please select a specific company from the filter to create invoices.</p>
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Export buttons even when no company selected */}
+                  {filteredInvoices.length > 0 && (
+                    <div className="relative group ml-4">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-200 overflow-hidden" style={{ backgroundColor: 'white' }}>
+                        <button
+                          onClick={handleExportCSV}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-t-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={handleExportPDF}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 rounded-b-md transition-colors"
+                          style={{ backgroundColor: 'white' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(236, 253, 245)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export as PDF
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

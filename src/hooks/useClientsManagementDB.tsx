@@ -247,8 +247,13 @@ export function useClientsManagementDB(
   const availableIndustries = useMemo(() => INDUSTRIES, []);
   const availableStatuses = useMemo(() => CLIENT_STATUSES, []);
 
-  // Page Header Data
+  // Page Header Data - Fixed for hydration
   const pageTitle = useMemo(() => {
+    // During SSR/hydration, default to simple title to avoid mismatches
+    if (typeof window === 'undefined' || !companies || companies.length === 0) {
+      return 'Clients';
+    }
+    
     if (globalSelectedCompany === 'all') {
       return 'All Clients';
     }
@@ -257,6 +262,11 @@ export function useClientsManagementDB(
   }, [globalSelectedCompany, companies]);
 
   const pageDescription = useMemo(() => {
+    // During SSR/hydration, use simple description
+    if (typeof window === 'undefined') {
+      return 'Manage client relationships';
+    }
+    
     return globalSelectedCompany === 'all' 
       ? 'Manage client relationships across all companies'
       : 'Manage client relationships for the selected company';
