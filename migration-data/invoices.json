@@ -1,0 +1,24 @@
+[
+  {
+    "id": "cmdhlaz0f000d9k86hz9agmky",
+    "invoiceNumber": "INV-2025-077973",
+    "clientName": "Helsinki Vesi",
+    "clientEmail": "fedor@helsinkingvesi.fi",
+    "clientAddress": null,
+    "subtotal": 10,
+    "currency": "USD",
+    "status": "DRAFT",
+    "dueDate": 1755907200000,
+    "issueDate": 1753315200000,
+    "paidDate": null,
+    "createdAt": 1753373489344,
+    "updatedAt": 1753373489344,
+    "template": "professional",
+    "taxRate": 2,
+    "taxAmount": 0.2,
+    "totalAmount": 10.2,
+    "fromCompanyId": 15,
+    "notes": null,
+    "clientId": "cmdhl7zf600079k86ufx2uab4"
+  }
+]

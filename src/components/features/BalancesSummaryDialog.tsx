@@ -39,13 +39,11 @@ export const BalancesSummaryDialog: React.FC<BalancesSummaryDialogProps> = ({
 
   const getAccountDisplayName = (balance: AccountBalance) => {
     const isBank = BalanceBusinessService.isAccountBank(balance.account);
-    if (isBank && 'bankName' in balance.account) {
-      return balance.account.bankName;
+    if (isBank) {
+      return balance.account.accountName || balance.account.bankName || 'Unknown Bank Account';
+    } else {
+      return balance.account.walletName || 'Unknown Wallet';
     }
-    if (!isBank && 'walletName' in balance.account) {
-      return balance.account.walletName;
-    }
-    return balance.account.name || 'Unknown Account';
   };
 
   // Group balances by currency for total calculation

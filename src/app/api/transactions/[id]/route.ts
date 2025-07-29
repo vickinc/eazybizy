@@ -1,38 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateApiRequest } from '@/lib/api-auth';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 interface RouteParams {
   params: { id: string }
 }
 
+// GET /api/transactions/[id] - Fetch a single transaction by ID
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
 
     const transaction = await prisma.transaction.findUnique({
-      where: { id },
+      where: { 
+        id,
+        isDeleted: false // Only fetch non-deleted transactions
+      },
       include: {
         company: {
           select: { id: true, tradingName: true, legalName: true }
         },
-        companyAccount: {
-          select: { id: true, name: true, type: true, currency: true }
-        },
-        bankAccount: {
-          select: { id: true, accountName: true, bankName: true, currency: true, iban: true }
-        },
-        digitalWallet: {
-          select: { id: true, walletName: true, walletType: true, currency: true, walletAddress: true }
-        },
         linkedEntry: {
-          select: { id: true, type: true, category: true, description: true, amount: true }
-        },
-        parentTransaction: {
-          select: { id: true, reference: true, description: true, netAmount: true, date: true }
-        },
-        childTransactions: {
-          select: { id: true, reference: true, description: true, netAmount: true, date: true },
-          where: { isDeleted: false }
+          select: { 
+            id: true, 
+            type: true, 
+            category: true, 
+            description: true, 
+            amount: true,
+            currency: true
+          }
         },
         attachments: {
           select: {
@@ -41,80 +44,111 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             filePath: true,
             fileSize: true,
             mimeType: true,
-            uploadedBy: true,
-            createdAt: true
+            createdAt: true,
           }
         }
       }
-    })
+    });
 
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
-      )
+      );
     }
 
-    return NextResponse.json(transaction)
+    return NextResponse.json(transaction);
 
   } catch (error) {
-    console.error('Error fetching transaction:', error)
+    console.error('GET /api/transactions/[id] error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transaction' },
       { status: 500 }
-    )
+    );
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+// PATCH /api/transactions/[id] - Update an existing transaction
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
-    const data = await request.json()
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Check if transaction exists
+    const { id } = params;
+    const body = await request.json();
+
+    // Check if transaction exists and is not deleted
     const existingTransaction = await prisma.transaction.findUnique({
-      where: { id }
-    })
+      where: { 
+        id,
+        isDeleted: false
+      }
+    });
 
     if (!existingTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
-      )
+      );
+    }
+
+    // Validate enum values if provided
+    if (body.accountType && !['bank', 'wallet'].includes(body.accountType)) {
+      return NextResponse.json(
+        { error: 'Invalid accountType. Must be "bank" or "wallet"' },
+        { status: 400 }
+      );
+    }
+
+    if (body.status && !['PENDING', 'CLEARED', 'CANCELLED'].includes(body.status)) {
+      return NextResponse.json(
+        { error: 'Invalid status. Must be PENDING, CLEARED, or CANCELLED' },
+        { status: 400 }
+      );
     }
 
     // Prepare update data
-    const updateData: unknown = {
-      ...data,
-      updatedBy: data.updatedBy,
-    }
+    const updateData: any = {};
+
+    // Handle string fields
+    if (body.paidBy !== undefined) updateData.paidBy = body.paidBy;
+    if (body.paidTo !== undefined) updateData.paidTo = body.paidTo;
+    if (body.currency !== undefined) updateData.currency = body.currency;
+    if (body.baseCurrency !== undefined) updateData.baseCurrency = body.baseCurrency;
+    if (body.accountId !== undefined) updateData.accountId = body.accountId;
+    if (body.accountType !== undefined) updateData.accountType = body.accountType;
+    if (body.reference !== undefined) updateData.reference = body.reference;
+    if (body.category !== undefined) updateData.category = body.category;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.linkedEntryId !== undefined) updateData.linkedEntryId = body.linkedEntryId;
+    if (body.linkedEntryType !== undefined) updateData.linkedEntryType = body.linkedEntryType;
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.reconciliationStatus !== undefined) updateData.reconciliationStatus = body.reconciliationStatus;
+    if (body.approvalStatus !== undefined) updateData.approvalStatus = body.approvalStatus;
 
     // Handle date conversion if provided
-    if (data.date) {
-      updateData.date = new Date(data.date)
+    if (body.date !== undefined) {
+      updateData.date = new Date(body.date);
     }
 
     // Handle numeric conversions
-    if (data.netAmount !== undefined) {
-      updateData.netAmount = parseFloat(data.netAmount)
+    if (body.netAmount !== undefined) {
+      updateData.netAmount = body.netAmount;
     }
-    if (data.incomingAmount !== undefined) {
-      updateData.incomingAmount = data.incomingAmount ? parseFloat(data.incomingAmount) : null
+    if (body.incomingAmount !== undefined) {
+      updateData.incomingAmount = body.incomingAmount;
     }
-    if (data.outgoingAmount !== undefined) {
-      updateData.outgoingAmount = data.outgoingAmount ? parseFloat(data.outgoingAmount) : null
+    if (body.outgoingAmount !== undefined) {
+      updateData.outgoingAmount = body.outgoingAmount;
     }
-    if (data.baseCurrencyAmount !== undefined) {
-      updateData.baseCurrencyAmount = parseFloat(data.baseCurrencyAmount)
+    if (body.baseCurrencyAmount !== undefined) {
+      updateData.baseCurrencyAmount = body.baseCurrencyAmount;
     }
-    if (data.exchangeRate !== undefined) {
-      updateData.exchangeRate = data.exchangeRate ? parseFloat(data.exchangeRate) : null
-    }
-
-    // Handle approval workflow
-    if (data.approvalStatus === 'APPROVED' && !existingTransaction.approvedAt) {
-      updateData.approvedAt = new Date()
-      updateData.approvedBy = data.updatedBy || data.approvedBy
+    if (body.exchangeRate !== undefined) {
+      updateData.exchangeRate = body.exchangeRate;
     }
 
     // Update transaction
@@ -123,85 +157,109 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: updateData,
       include: {
         company: {
-          select: { id: true, tradingName: true, legalName: true }
+          select: {
+            id: true,
+            tradingName: true,
+            legalName: true,
+          }
         },
-        companyAccount: {
-          select: { id: true, name: true, type: true, currency: true }
+        bankAccount: {
+          select: {
+            id: true,
+            bankName: true,
+            accountName: true,
+            currency: true,
+          }
+        },
+        digitalWallet: {
+          select: {
+            id: true,
+            walletName: true,
+            walletType: true,
+            currency: true,
+          }
         },
         linkedEntry: {
-          select: { id: true, type: true, category: true, description: true }
-        },
-        attachments: {
-          select: { id: true, fileName: true, fileSize: true, mimeType: true }
+          select: {
+            id: true,
+            type: true,
+            category: true,
+            amount: true,
+            currency: true,
+            description: true,
+          }
         }
       }
-    })
+    });
 
-    return NextResponse.json(transaction)
+    return NextResponse.json(transaction);
 
   } catch (error) {
-    console.error('Error updating transaction:', error)
+    console.error('PATCH /api/transactions/[id] error:', error);
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'A transaction with this data already exists' },
+          { status: 409 }
+        );
+      }
+      if (error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'Referenced company, account, or entry does not exist' },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to update transaction' },
       { status: 500 }
-    )
+    );
   }
 }
 
+// DELETE /api/transactions/[id] - Delete a transaction (soft delete)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
-    const { searchParams } = new URL(request.url)
-    const hardDelete = searchParams.get('hard') === 'true'
-    const deletedBy = searchParams.get('deletedBy')
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Check if transaction exists
+    const { id } = params;
+
+    // Check if transaction exists and is not already deleted
     const existingTransaction = await prisma.transaction.findUnique({
-      where: { id },
-      include: {
-        childTransactions: { where: { isDeleted: false } }
+      where: { 
+        id,
+        isDeleted: false
       }
-    })
+    });
 
     if (!existingTransaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
         { status: 404 }
-      )
+      );
     }
 
-    // Check if transaction has child transactions
-    if (existingTransaction.childTransactions.length > 0 && !hardDelete) {
-      return NextResponse.json(
-        { error: 'Cannot delete transaction with child transactions. Use hard delete or delete children first.' },
-        { status: 400 }
-      )
-    }
+    // Perform soft delete
+    await prisma.transaction.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+      }
+    });
 
-    if (hardDelete) {
-      // Hard delete - remove from database completely
-      await prisma.transaction.delete({
-        where: { id }
-      })
-    } else {
-      // Soft delete - mark as deleted
-      await prisma.transaction.update({
-        where: { id },
-        data: {
-          isDeleted: true,
-          deletedAt: new Date(),
-          deletedBy: deletedBy || 'unknown'
-        }
-      })
-    }
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('Error deleting transaction:', error)
+    console.error('DELETE /api/transactions/[id] error:', error);
     return NextResponse.json(
       { error: 'Failed to delete transaction' },
       { status: 500 }
-    )
+    );
   }
 }

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "cmdhl7zf600079k86ufx2uab4",
+    "companyId": 15,
+    "clientType": "LEGAL_ENTITY",
+    "name": "Helsinki Vesi",
+    "contactPersonName": "Fedor Levin",
+    "contactPersonPosition": "AM",
+    "email": "fedor@helsinkingvesi.fi",
+    "phone": null,
+    "website": null,
+    "address": null,
+    "city": "Helsinki",
+    "zipCode": null,
+    "country": "Finland",
+    "industry": "Construction",
+    "status": "ACTIVE",
+    "notes": null,
+    "createdAt": 1753373349906,
+    "updatedAt": 1753373349906,
+    "lastInvoiceDate": null,
+    "totalInvoiced": 0,
+    "totalPaid": 0,
+    "registrationNumber": "1234567",
+    "vatNumber": "FI13456788",
+    "passportNumber": null,
+    "dateOfBirth": null
+  }
+]

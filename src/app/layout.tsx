@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { CompanyFilterProvider } from "@/contexts/CompanyFilterContext";
+import { CategoryModeProvider } from "@/contexts/CategoryModeContext";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -30,10 +31,12 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <CompanyFilterProvider>
-              <ConditionalLayout>
-                {children}
-              </ConditionalLayout>
-              <Toaster position="top-center" richColors />
+              <CategoryModeProvider>
+                <ConditionalLayout>
+                  {children}
+                </ConditionalLayout>
+                <Toaster position="top-center" richColors />
+              </CategoryModeProvider>
             </CompanyFilterProvider>
           </AuthProvider>
         </QueryProvider>

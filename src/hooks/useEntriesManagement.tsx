@@ -169,6 +169,7 @@ export function useEntriesManagement({
     },
   });
 
+
   // Filter handlers
   const handleFilterChange = useCallback((newFilters: Partial<EntryFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -365,6 +366,7 @@ export function useEntriesManagement({
     }, 100);
   }, [router, searchParams]);
 
+
   // Format currency helper
   const formatCurrency = useCallback((amount: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
@@ -435,6 +437,7 @@ export function useEntriesManagement({
     expenseToLink,
     selectedIncomeForLink,
     setSelectedIncomeForLink,
+
 
     // Mutations
     createEntryMutation,

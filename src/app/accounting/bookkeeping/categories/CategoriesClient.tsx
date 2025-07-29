@@ -11,6 +11,8 @@ import { CategoryFilterBar } from '@/components/features/CategoryFilterBar';
 import { ProfessionalAccountTable } from '@/components/features/ProfessionalAccountTable';
 import { CategoryDialog } from '@/components/features/CategoryDialog';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { useCategoryMode } from '@/contexts/CategoryModeContext';
+import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
 
 export default function CategoriesClient() {
@@ -19,6 +21,7 @@ export default function CategoriesClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const chartOfAccounts = useChartOfAccountsManagement();
+  const { mode, setMode, isLoading: categoryModeLoading } = useCategoryMode();
 
   useEffect(() => {
     // Simulate initial load time for chart of accounts
@@ -155,6 +158,61 @@ export default function CategoriesClient() {
               <Plus className="h-4 w-4 mr-2" />
               Add Account
             </Button>
+          </div>
+        </div>
+
+        {/* Category Mode Settings */}
+        <div className="mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Category Mode</h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  Choose how you want to categorize your bookkeeping entries
+                </p>
+                <div className="text-xs text-gray-500">
+                  <span className="font-medium">Simplified:</span> Use basic income and expense categories for quick entry
+                  <br />
+                  <span className="font-medium">Advanced:</span> Use professional Chart of Accounts (IFRS compliant)
+                </div>
+              </div>
+              <div className="flex items-center space-x-4 bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <span className={`text-sm font-medium transition-colors ${
+                    mode === 'simplified' ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    Simplified
+                  </span>
+                  <Switch
+                    checked={mode === 'advanced'}
+                    onCheckedChange={(checked) => setMode(checked ? 'advanced' : 'simplified')}
+                    disabled={categoryModeLoading}
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                  <span className={`text-sm font-medium transition-colors ${
+                    mode === 'advanced' ? 'text-green-600' : 'text-gray-500'
+                  }`}>
+                    Advanced
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {mode === 'advanced' && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  <span className="font-medium">Advanced mode is active.</span> Your bookkeeping entries will use categories from the Chart of Accounts below.
+                </p>
+              </div>
+            )}
+            
+            {mode === 'simplified' && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Simplified mode is active.</span> Your bookkeeping entries will use basic income and expense categories.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

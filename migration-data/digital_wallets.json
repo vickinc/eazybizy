@@ -1,0 +1,17 @@
+[
+  {
+    "id": "cmdhl642q00059k864fan4qno",
+    "companyId": 15,
+    "walletType": "CRYPTO",
+    "walletName": "ERC-20",
+    "walletAddress": "0xETHcfdfdgferFDGbhdWallet1",
+    "currency": "USDC",
+    "currencies": "USDC, USDT",
+    "description": null,
+    "blockchain": "Ethereum",
+    "isActive": true,
+    "createdAt": 1753373262626,
+    "updatedAt": 1753373262626,
+    "notes": null
+  }
+]

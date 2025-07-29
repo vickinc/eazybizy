@@ -1,0 +1,332 @@
+{
+  "importDate": "2025-07-24T18:48:52.041Z",
+  "totalImported": 239,
+  "tableStats": {
+    "users": {
+      "imported": 1,
+      "skipped": 0,
+      "total": 1
+    },
+    "companies": {
+      "imported": 15,
+      "skipped": 0,
+      "total": 15
+    },
+    "clients": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 1
+    },
+    "vendors": {
+      "imported": 1,
+      "skipped": 0,
+      "total": 1
+    },
+    "products": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 1
+    },
+    "bank_accounts": {
+      "imported": 1,
+      "skipped": 0,
+      "total": 1
+    },
+    "digital_wallets": {
+      "imported": 1,
+      "skipped": 0,
+      "total": 1
+    },
+    "chart_of_accounts": {
+      "imported": 218,
+      "skipped": 0,
+      "total": 218
+    },
+    "tax_treatments": {
+      "imported": 2,
+      "skipped": 0,
+      "total": 2
+    },
+    "invoices": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 1
+    },
+    "invoice_items": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 1
+    },
+    "invoice_payment_sources": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 1
+    },
+    "bookkeeping_entries": {
+      "imported": 0,
+      "skipped": 0,
+      "total": 3
+    }
+  },
+  "companyIdMap": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5,
+    "6": 6,
+    "7": 7,
+    "8": 8,
+    "9": 9,
+    "10": 10,
+    "11": 11,
+    "12": 12,
+    "13": 13,
+    "14": 14,
+    "15": 15
+  },
+  "errors": [
+    {
+      "table": "clients",
+      "record": {
+        "id": "cmdhl7zf600079k86ufx2uab4",
+        "clientType": "LEGAL_ENTITY",
+        "name": "Helsinki Vesi",
+        "contactPersonName": "Fedor Levin",
+        "contactPersonPosition": "AM",
+        "email": "fedor@helsinkingvesi.fi",
+        "phone": "",
+        "website": null,
+        "address": null,
+        "city": "Helsinki",
+        "zipCode": null,
+        "country": "Finland",
+        "industry": "Construction",
+        "status": "ACTIVE",
+        "notes": null,
+        "createdAt": "2025-07-24T16:09:09.906Z",
+        "updatedAt": "2025-07-24T16:09:09.906Z",
+        "lastInvoiceDate": null,
+        "totalInvoiced": 0,
+        "totalPaid": 0,
+        "registrationNumber": "1234567",
+        "vatNumber": "FI13456788",
+        "passportNumber": null,
+        "dateOfBirth": null,
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhl7zf600079k86ufx2uab4\",\n              clientType: \"LEGAL_ENTITY\",\n              name: \"Helsinki Vesi\",\n              contactPersonName: \"Fedor Levin\",\n              contactPersonPosition: \"AM\",\n              email: \"fedor@helsinkingvesi.fi\",\n              phone: \"\",\n              address: null,\n              city: \"Helsinki\",\n              zipCode: null,\n              country: \"Finland\",\n              industry: \"Construction\",\n              status: \"ACTIVE\",\n              notes: null,\n              createdAt: new Date(\"2025-07-24T16:09:09.906Z\"),\n              updatedAt: new Date(\"2025-07-24T16:09:09.906Z\"),\n              lastInvoiceDate: null,\n              totalInvoiced: 0,\n              totalPaid: 0,\n              registrationNumber: \"1234567\",\n              vatNumber: \"FI13456788\",\n              passportNumber: null,\n              dateOfBirth: null,\n              company: {\n                connect: {\n                  id: 15\n                }\n              },\n          +   website: String\n            }\n          })\n\nArgument `website` must not be null."
+    },
+    {
+      "table": "products",
+      "record": {
+        "id": "cmdhl9tuv00099k86wsy7pe3f",
+        "name": "Unlimited Internet",
+        "description": "",
+        "price": 10,
+        "currency": "USD",
+        "cost": 5,
+        "costCurrency": "USD",
+        "isActive": true,
+        "vendorId": null,
+        "createdAt": "2025-07-24T16:10:36.006Z",
+        "updatedAt": "2025-07-24T16:10:36.006Z",
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhl9tuv00099k86wsy7pe3f\",\n              name: \"Unlimited Internet\",\n              description: \"\",\n              price: 10,\n              currency: \"USD\",\n              cost: 5,\n              costCurrency: \"USD\",\n              isActive: true,\n              vendorId: null,\n              ~~~~~~~~\n              createdAt: new Date(\"2025-07-24T16:10:36.006Z\"),\n              updatedAt: new Date(\"2025-07-24T16:10:36.006Z\"),\n              company: {\n                connect: {\n                  id: 15\n                }\n              },\n          ?   invoiceItems?: InvoiceItemCreateNestedManyWithoutProductInput,\n          ?   vendor?: VendorCreateNestedOneWithoutProductsInput\n            }\n          })\n\nUnknown argument `vendorId`. Did you mean `vendor`? Available options are marked with ?."
+    },
+    {
+      "table": "invoices",
+      "record": {
+        "id": "cmdhlaz0f000d9k86hz9agmky",
+        "invoiceNumber": "INV-2025-077973",
+        "clientName": "Helsinki Vesi",
+        "clientEmail": "fedor@helsinkingvesi.fi",
+        "clientAddress": null,
+        "subtotal": 10,
+        "currency": "USD",
+        "status": "DRAFT",
+        "dueDate": "2025-08-23T00:00:00.000Z",
+        "issueDate": "2025-07-24T00:00:00.000Z",
+        "paidDate": null,
+        "createdAt": "2025-07-24T16:11:29.344Z",
+        "updatedAt": "2025-07-24T16:11:29.344Z",
+        "template": "professional",
+        "taxRate": 2,
+        "taxAmount": 0.2,
+        "totalAmount": 10.2,
+        "notes": null,
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        },
+        "client": {
+          "connect": {
+            "id": "cmdhl7zf600079k86ufx2uab4"
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create(\nAn operation failed because it depends on one or more records that were required but not found. No 'Client' record (needed to inline the relation on 'Invoice' record(s)) was found for a nested connect on one-to-many relation 'ClientToInvoice'."
+    },
+    {
+      "table": "invoice_items",
+      "record": {
+        "id": "cmdhlaz0i000e9k862qyoxm0k",
+        "productName": "Unlimited Internet",
+        "description": null,
+        "quantity": 1,
+        "unitPrice": 10,
+        "currency": "USD",
+        "total": 10,
+        "createdAt": "2025-07-24T16:11:29.346Z",
+        "updatedAt": "2025-07-24T16:11:29.346Z",
+        "invoice": {
+          "connect": {
+            "id": "cmdhlaz0f000d9k86hz9agmky"
+          }
+        },
+        "product": {
+          "connect": {
+            "id": "cmdhl9tuv00099k86wsy7pe3f"
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhlaz0i000e9k862qyoxm0k\",\n              productName: \"Unlimited Internet\",\n              quantity: 1,\n              unitPrice: 10,\n              currency: \"USD\",\n              total: 10,\n              createdAt: new Date(\"2025-07-24T16:11:29.346Z\"),\n              updatedAt: new Date(\"2025-07-24T16:11:29.346Z\"),\n              invoice: {\n                connect: {\n                  id: \"cmdhlaz0f000d9k86hz9agmky\"\n                }\n              },\n              product: {\n                connect: {\n                  id: \"cmdhl9tuv00099k86wsy7pe3f\"\n                }\n              },\n          +   description: String\n            }\n          })\n\nArgument `description` must not be null."
+    },
+    {
+      "table": "invoice_payment_sources",
+      "record": {
+        "id": "cmdhlaz0m000f9k86ektnauvy",
+        "sourceType": "BANK_ACCOUNT",
+        "sourceId": "cmdhl5eay00039k869n2a3ylr",
+        "createdAt": "2025-07-24T16:11:29.350Z",
+        "invoice": {
+          "connect": {
+            "id": "cmdhlaz0f000d9k86hz9agmky"
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create(\nAn operation failed because it depends on one or more records that were required but not found. No 'Invoice' record (needed to inline the relation on 'InvoicePaymentSource' record(s)) was found for a nested connect on one-to-many relation 'InvoiceToInvoicePaymentSource'."
+    },
+    {
+      "table": "bookkeeping_entries",
+      "record": {
+        "id": "cmdhc7z2y00019kc7v31f78ix",
+        "type": "revenue",
+        "category": "Sales Revenue",
+        "subcategory": null,
+        "description": null,
+        "amount": 1,
+        "currency": "USD",
+        "date": "2025-07-24T00:00:00.000Z",
+        "reference": null,
+        "notes": null,
+        "accountId": null,
+        "accountType": "bank",
+        "cogs": 0,
+        "cogsPaid": 0,
+        "vendorInvoice": null,
+        "isFromInvoice": false,
+        "invoiceId": null,
+        "chartOfAccountsId": null,
+        "linkedIncomeId": null,
+        "createdAt": "2025-07-24T11:57:12.921Z",
+        "updatedAt": "2025-07-24T14:05:04.035Z",
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhc7z2y00019kc7v31f78ix\",\n              type: \"revenue\",\n              category: \"Sales Revenue\",\n              subcategory: null,\n              description: null,\n              amount: 1,\n              currency: \"USD\",\n              date: new Date(\"2025-07-24T00:00:00.000Z\"),\n              reference: null,\n              notes: null,\n              accountId: null,\n              ~~~~~~~~~\n              accountType: \"bank\",\n              cogs: 0,\n              cogsPaid: 0,\n              vendorInvoice: null,\n              isFromInvoice: false,\n              invoiceId: null,\n              chartOfAccountsId: null,\n              linkedIncomeId: null,\n              createdAt: new Date(\"2025-07-24T11:57:12.921Z\"),\n              updatedAt: new Date(\"2025-07-24T14:05:04.035Z\"),\n              company: {\n                connect: {\n                  id: 15\n                }\n              },\n          ?   account?: CompanyAccountCreateNestedOneWithoutEntriesInput,\n          ?   invoice?: InvoiceCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   chartOfAccount?: ChartOfAccountCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   linkedIncome?: BookkeepingEntryCreateNestedOneWithoutLinkedExpensesInput,\n          ?   linkedExpenses?: BookkeepingEntryCreateNestedManyWithoutLinkedIncomeInput,\n          ?   transaction?: TransactionCreateNestedOneWithoutLinkedEntryInput\n            }\n          })\n\nUnknown argument `accountId`. Did you mean `account`? Available options are marked with ?."
+    },
+    {
+      "table": "bookkeeping_entries",
+      "record": {
+        "id": "cmdhcbuh400039kc73ly993li",
+        "type": "expense",
+        "category": "Cost of Service",
+        "subcategory": null,
+        "description": null,
+        "amount": 0.01,
+        "currency": "USD",
+        "date": "2025-07-24T00:00:00.000Z",
+        "reference": null,
+        "notes": null,
+        "accountId": null,
+        "accountType": "bank",
+        "cogs": 0,
+        "cogsPaid": 0,
+        "vendorInvoice": "123ssd",
+        "isFromInvoice": false,
+        "invoiceId": null,
+        "chartOfAccountsId": null,
+        "linkedIncomeId": "cmdhc7z2y00019kc7v31f78ix",
+        "createdAt": "2025-07-24T12:00:13.576Z",
+        "updatedAt": "2025-07-24T14:16:42.165Z",
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhcbuh400039kc73ly993li\",\n              type: \"expense\",\n              category: \"Cost of Service\",\n              subcategory: null,\n              description: null,\n              amount: 0.01,\n              currency: \"USD\",\n              date: new Date(\"2025-07-24T00:00:00.000Z\"),\n              reference: null,\n              notes: null,\n              accountId: null,\n              ~~~~~~~~~\n              accountType: \"bank\",\n              cogs: 0,\n              cogsPaid: 0,\n              vendorInvoice: \"123ssd\",\n              isFromInvoice: false,\n              invoiceId: null,\n              chartOfAccountsId: null,\n              linkedIncomeId: \"cmdhc7z2y00019kc7v31f78ix\",\n              createdAt: new Date(\"2025-07-24T12:00:13.576Z\"),\n              updatedAt: new Date(\"2025-07-24T14:16:42.165Z\"),\n              company: {\n                connect: {\n                  id: 15\n                }\n              },\n          ?   account?: CompanyAccountCreateNestedOneWithoutEntriesInput,\n          ?   invoice?: InvoiceCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   chartOfAccount?: ChartOfAccountCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   linkedIncome?: BookkeepingEntryCreateNestedOneWithoutLinkedExpensesInput,\n          ?   linkedExpenses?: BookkeepingEntryCreateNestedManyWithoutLinkedIncomeInput,\n          ?   transaction?: TransactionCreateNestedOneWithoutLinkedEntryInput\n            }\n          })\n\nUnknown argument `accountId`. Did you mean `account`? Available options are marked with ?."
+    },
+    {
+      "table": "bookkeeping_entries",
+      "record": {
+        "id": "cmdhkzlm100019k86hmjltk0m",
+        "type": "revenue",
+        "category": "Sales Revenue",
+        "subcategory": null,
+        "description": null,
+        "amount": 1000000,
+        "currency": "USD",
+        "date": "2024-12-30T00:00:00.000Z",
+        "reference": null,
+        "notes": null,
+        "accountId": null,
+        "accountType": "bank",
+        "cogs": 0,
+        "cogsPaid": 0,
+        "vendorInvoice": null,
+        "isFromInvoice": false,
+        "invoiceId": null,
+        "chartOfAccountsId": null,
+        "linkedIncomeId": null,
+        "createdAt": "2025-07-24T16:02:38.760Z",
+        "updatedAt": "2025-07-24T16:02:38.760Z",
+        "company": {
+          "connect": {
+            "id": 15
+          }
+        }
+      },
+      "error": "\nInvalid `this.prisma[modelName].create()` invocation in\n/Users/viktorj/Desktop/ClaudeCode/eazybizy/scripts/postgresql-data-import-fixed.js:297:55\n\n  294 \n  295 for (const record of transformedData) {\n  296   try {\n→ 297     const result = await this.prisma[modelName].create({\n            data: {\n              id: \"cmdhkzlm100019k86hmjltk0m\",\n              type: \"revenue\",\n              category: \"Sales Revenue\",\n              subcategory: null,\n              description: null,\n              amount: 1000000,\n              currency: \"USD\",\n              date: new Date(\"2024-12-30T00:00:00.000Z\"),\n              reference: null,\n              notes: null,\n              accountId: null,\n              ~~~~~~~~~\n              accountType: \"bank\",\n              cogs: 0,\n              cogsPaid: 0,\n              vendorInvoice: null,\n              isFromInvoice: false,\n              invoiceId: null,\n              chartOfAccountsId: null,\n              linkedIncomeId: null,\n              createdAt: new Date(\"2025-07-24T16:02:38.760Z\"),\n              updatedAt: new Date(\"2025-07-24T16:02:38.760Z\"),\n              company: {\n                connect: {\n                  id: 15\n                }\n              },\n          ?   account?: CompanyAccountCreateNestedOneWithoutEntriesInput,\n          ?   invoice?: InvoiceCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   chartOfAccount?: ChartOfAccountCreateNestedOneWithoutBookkeepingEntriesInput,\n          ?   linkedIncome?: BookkeepingEntryCreateNestedOneWithoutLinkedExpensesInput,\n          ?   linkedExpenses?: BookkeepingEntryCreateNestedManyWithoutLinkedIncomeInput,\n          ?   transaction?: TransactionCreateNestedOneWithoutLinkedEntryInput\n            }\n          })\n\nUnknown argument `accountId`. Did you mean `account`? Available options are marked with ?."
+    }
+  ],
+  "importOrder": [
+    "users",
+    "companies",
+    "clients",
+    "vendors",
+    "products",
+    "bank_accounts",
+    "digital_wallets",
+    "chart_of_accounts",
+    "tax_treatments",
+    "invoices",
+    "invoice_items",
+    "invoice_payment_sources",
+    "bookkeeping_entries"
+  ]
+}

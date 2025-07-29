@@ -4,7 +4,6 @@
 // For specific domains, use focused imports:
 // - Accounting: import from '@/types/accounting'
 // - Chart of Accounts: import from '@/types/chartOfAccounts.types'
-// - Fixed Assets: import from '@/types/fixedAssets.types'
 // - Heavy financial types: import directly (consolidation, comparativeReporting, etc.)
 
 // Core types (lightweight, frequently used)

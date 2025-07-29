@@ -89,7 +89,6 @@ export type AuditAction =
   // Financial operations
   | 'transaction-post'
   | 'transaction-reverse'
-  | 'journal-entry'
   | 'adjustment-entry'
   | 'accrual-entry'
   | 'closing-entry'
@@ -393,7 +392,6 @@ export type BusinessProcess =
   | 'procurement'
   | 'payroll'
   | 'inventory'
-  | 'fixed-assets'
   | 'cash-treasury'
   | 'financial-reporting'
   | 'tax'

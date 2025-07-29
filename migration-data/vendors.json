@@ -1,0 +1,23 @@
+[
+  {
+    "id": "cmdhl9yuj000b9k86x3r6pvxr",
+    "companyId": 15,
+    "companyName": "Nicole",
+    "contactPerson": "Amerling Nika",
+    "contactEmail": "niko@amerlika.com",
+    "phone": null,
+    "website": null,
+    "paymentTerms": "15",
+    "currency": "USD",
+    "paymentMethod": "Crypto",
+    "billingAddress": "Costa rica",
+    "itemsServicesSold": null,
+    "notes": null,
+    "companyRegistrationNr": "43434345335",
+    "vatNr": "IE34678821",
+    "vendorCountry": "Andorra",
+    "isActive": true,
+    "createdAt": 1753373442475,
+    "updatedAt": 1753373442475
+  }
+]

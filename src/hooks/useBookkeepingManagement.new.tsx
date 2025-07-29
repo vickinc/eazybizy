@@ -324,10 +324,10 @@ export function useBookkeepingManagement(
   const enrichedEntries: EnrichedBookkeepingEntry[] = useMemo(() => 
     entries.map(entry => ({
       ...entry,
-      // Map API type to expected component type
-      type: entry.type === 'INCOME' ? 'revenue' : 'expense',
+      // API already uses 'revenue' and 'expense' types correctly
+      type: entry.type, // Keep the type as-is from API
       company: undefined, // TODO: Add company lookup if needed
-      accountsPayable: entry.type === 'INCOME' && entry.cogs 
+      accountsPayable: entry.type === 'revenue' && entry.cogs 
         ? (entry.cogs || 0) - (entry.cogsPaid || 0)
         : 0
     }))

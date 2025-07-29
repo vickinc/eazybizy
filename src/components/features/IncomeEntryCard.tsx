@@ -344,7 +344,11 @@ export const IncomeEntryCard: React.FC<IncomeEntryCardProps> = ({
           <div>
             <label className="text-sm font-medium text-gray-700">Source</label>
             <p className="text-sm mt-1">
-              {entry.isFromInvoice ? (
+              {entry.isFromInvoice && entry.invoice ? (
+                <Badge className="bg-blue-100 text-blue-800">
+                  📄 From Invoice {entry.invoice.invoiceNumber}
+                </Badge>
+              ) : entry.isFromInvoice ? (
                 <Badge className="bg-blue-100 text-blue-800">
                   📄 From Invoice {entry.invoiceId ? `(${entry.invoiceId})` : ''}
                 </Badge>

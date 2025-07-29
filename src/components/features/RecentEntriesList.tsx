@@ -11,7 +11,7 @@ import { RecentEntriesListItem } from "./RecentEntriesListItem";
 
 interface EnrichedEntry {
   id: string;
-  type: 'income' | 'expense';
+  type: 'revenue' | 'expense';
   description: string;
   category: string;
   date: string;

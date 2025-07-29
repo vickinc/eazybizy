@@ -21,20 +21,32 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
-  // Initialize from localStorage first, then URL params if present
+  // Initialize from localStorage first, then URL params if explicitly set
   const getInitialCompanyId = (): number | 'all' => {
-    // Check URL first
-    const urlCompanyId = searchParams.get('companyId');
-    if (urlCompanyId) {
-      return urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
-    }
-    
-    // Fallback to localStorage
+    // First check localStorage for persisted value
     if (typeof window !== 'undefined') {
       const savedCompanyId = localStorage.getItem('selectedCompanyId');
       if (savedCompanyId && savedCompanyId !== 'null') {
-        return savedCompanyId === 'all' ? 'all' : parseInt(savedCompanyId);
+        const savedValue = savedCompanyId === 'all' ? 'all' : parseInt(savedCompanyId);
+        
+        // Check if URL has a different value that should override
+        const urlCompanyId = searchParams.get('companyId');
+        if (urlCompanyId) {
+          const urlValue = urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
+          // Only use URL value if it's different from saved value
+          if (urlValue !== savedValue) {
+            return urlValue;
+          }
+        }
+        
+        return savedValue;
       }
+    }
+    
+    // No saved value, check URL
+    const urlCompanyId = searchParams.get('companyId');
+    if (urlCompanyId) {
+      return urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
     }
     
     return 'all';
@@ -46,19 +58,15 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
   useEffect(() => {
     const urlCompanyId = searchParams.get('companyId');
     
-    // If URL has companyId parameter, use it
+    // Only update if URL explicitly has a companyId parameter
     if (urlCompanyId !== null) {
       const parsedCompanyId = urlCompanyId === 'all' ? 'all' : parseInt(urlCompanyId);
       if (parsedCompanyId !== selectedCompany) {
         setSelectedCompanyState(parsedCompanyId);
       }
-    } else {
-      // If URL doesn't have companyId parameter, it means "All Companies"
-      if (selectedCompany !== 'all') {
-        setSelectedCompanyState('all');
-      }
     }
-  }, [searchParams, selectedCompany]);
+    // Don't reset to 'all' when URL doesn't have companyId - maintain current selection
+  }, [searchParams]);
 
   // Enhanced setSelectedCompany that updates URL and localStorage
   const setSelectedCompany = (companyId: number | 'all') => {

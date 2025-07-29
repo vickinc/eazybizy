@@ -6,16 +6,11 @@ import {
   PeriodFilter,
   BookkeepingFormData,
   AccountFormData,
-  JournalEntry,
-  JournalEntryLine,
-  JournalEntryFormData,
-  JournalEntryLineFormData,
   TrialBalance,
   TrialBalanceAccount,
   AccountBalance
 } from '@/types';
 import { Invoice, Product, ChartOfAccount } from '@/types';
-import { JournalEntryStorageService } from '@/services/storage';
 import { UserManagementService } from './userManagementService';
 
 interface Vendor {
@@ -46,31 +41,6 @@ export interface COGSCalculation {
 }
 
 export class BookkeepingBusinessService {
-  // Journal entry counter for generating entry numbers
-  private static journalEntryCounter: number = 1;
-
-  /**
-   * Get the next journal entry number
-   */
-  private static getNextEntryNumber(): string {
-    // Get existing entries to determine the next number
-    const existingEntries = JournalEntryStorageService.getJournalEntries();
-    
-    if (existingEntries.length === 0) {
-      this.journalEntryCounter = 1;
-    } else {
-      // Find the highest entry number
-      const entryNumbers = existingEntries
-        .map(entry => entry.entryNumber)
-        .filter(num => num.startsWith('JE-'))
-        .map(num => parseInt(num.replace('JE-', '')))
-        .filter(num => !isNaN(num));
-      
-      this.journalEntryCounter = entryNumbers.length > 0 ? Math.max(...entryNumbers) + 1 : 1;
-    }
-    
-    return `JE-${this.journalEntryCounter.toString().padStart(3, '0')}`;
-  }
   static roundToTwoDecimals(num: number): number {
     return Math.round((num + Number.EPSILON) * 100) / 100;
   }
@@ -79,17 +49,6 @@ export class BookkeepingBusinessService {
     return `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  static generateJournalEntryId(): string {
-    return `je_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  static generateJournalEntryNumber(): string {
-    return this.getNextEntryNumber();
-  }
-
-  static generateJournalEntryLineId(): string {
-    return `jel_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
 
   static generateAccountId(): string {
     return `account_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -382,29 +341,6 @@ export class BookkeepingBusinessService {
     return cogs - totalExpenses;
   }
 
-  // COGS calculation function
-  static calculateInvoiceCOGS(invoice: unknown, products: Product[]): { amount: number; currency: string } {
-    const invoiceProducts = products.filter(p => 
-      invoice.items.some((item: unknown) => item.productId === p.id)
-    );
-    let totalCOGS = 0;
-    let cogsCurrency = 'USD';
-    
-    invoice.items.forEach((item: unknown) => {
-      const product = invoiceProducts.find(p => p.id === item.productId);
-      if (product) {
-        totalCOGS += product.cost * item.quantity;
-        if (cogsCurrency === 'USD' && product.costCurrency) {
-          cogsCurrency = product.costCurrency;
-        }
-      }
-    });
-    
-    return {
-      amount: Math.round((totalCOGS + Number.EPSILON) * 100) / 100,
-      currency: cogsCurrency
-    };
-  }
 
   static getCOGSCurrency(entry: BookkeepingEntry, invoices: Invoice[], products: Product[]): string {
     if (entry.reference) {

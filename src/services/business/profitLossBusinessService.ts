@@ -9,13 +9,10 @@ import {
   StatementValidationResult,
   StatementCalculationResult
 } from '@/types/financialStatements.types';
-import { FixedAsset } from '@/types/fixedAssets.types';
 import { IFRSSettings, CompanySettings } from '@/types/settings.types';
 import { ChartOfAccountsBusinessService } from './chartOfAccountsBusinessService';
 import { BookkeepingBusinessService } from './bookkeepingBusinessService';
 import { CurrencyService } from './currencyService';
-import { FixedAssetsBusinessService } from './fixedAssetsBusinessService';
-import { FixedAssetsDepreciationService } from './fixedAssetsDepreciationService';
 
 export interface PLSection {
   name: string;
@@ -539,8 +536,9 @@ export class ProfitLossBusinessService {
     variancePercent?: number;
     formattedVariance?: string;
   } {
-    const fixedAssets = FixedAssetsBusinessService.getAllAssets();
-    const activeAssets = fixedAssets.filter(asset => asset.status === 'active');
+    // const fixedAssets = FixedAssetsBusinessService.getAllAssets();
+    // const activeAssets = fixedAssets.filter(asset => asset.status === 'active');
+    const activeAssets = [];
     
     // Calculate current period depreciation
     const currentDepreciation = 0;
@@ -553,7 +551,7 @@ export class ProfitLossBusinessService {
     );
     
     activeAssets.forEach(asset => {
-      const monthlyDepreciation = FixedAssetsDepreciationService.calculateMonthlyDepreciation(asset);
+      // const monthlyDepreciation = FixedAssetsDepreciationService.calculateMonthlyDepreciation(asset);
       
       // Only include assets that started depreciating before or during this period
       const depreciationStartDate = new Date(asset.depreciationStartDate);
@@ -582,7 +580,7 @@ export class ProfitLossBusinessService {
       );
       
       activeAssets.forEach(asset => {
-        const monthlyDepreciation = FixedAssetsDepreciationService.calculateMonthlyDepreciation(asset);
+        // const monthlyDepreciation = FixedAssetsDepreciationService.calculateMonthlyDepreciation(asset);
         const depreciationStartDate = new Date(asset.depreciationStartDate);
         
         if (depreciationStartDate <= priorEndDate) {
@@ -622,23 +620,24 @@ export class ProfitLossBusinessService {
     variancePercent?: number;
     formattedVariance?: string;
   } {
-    const fixedAssets = FixedAssetsBusinessService.getAllAssets();
+    // const fixedAssets = FixedAssetsBusinessService.getAllAssets();
     
     // Filter assets disposed in current period with gains
     const currentPeriodStart = new Date(context.currentPeriod.startDate);
     const currentPeriodEnd = new Date(context.currentPeriod.endDate);
     
-    const currentDisposalGains = fixedAssets.filter(asset => 
-      asset.status === 'disposed' && 
-      asset.disposalDate &&
-      new Date(asset.disposalDate) >= currentPeriodStart &&
-      new Date(asset.disposalDate) <= currentPeriodEnd &&
-      asset.disposalPrice &&
-      asset.disposalPrice > asset.currentBookValue
-    ).reduce((sum, asset) => {
-      const gain = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice!);
-      return sum + Math.max(0, gain); // Only gains
-    }, 0);
+    // const currentDisposalGains = fixedAssets.filter(asset => 
+    //   asset.status === 'disposed' && 
+    //   asset.disposalDate &&
+    //   new Date(asset.disposalDate) >= currentPeriodStart &&
+    //   new Date(asset.disposalDate) <= currentPeriodEnd &&
+    //   asset.disposalPrice &&
+    //   asset.disposalPrice > asset.currentBookValue
+    // ).reduce((sum, asset) => {
+    //   const gain = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice!);
+    //   return sum + Math.max(0, gain); // Only gains
+    // }, 0);
+    const currentDisposalGains = 0;
 
     // Calculate prior period gains if available
     let priorDisposalGains: number | undefined;
@@ -646,17 +645,18 @@ export class ProfitLossBusinessService {
       const priorPeriodStart = new Date(context.priorPeriod.startDate);
       const priorPeriodEnd = new Date(context.priorPeriod.endDate);
       
-      priorDisposalGains = fixedAssets.filter(asset => 
-        asset.status === 'disposed' && 
-        asset.disposalDate &&
-        new Date(asset.disposalDate) >= priorPeriodStart &&
-        new Date(asset.disposalDate) <= priorPeriodEnd &&
-        asset.disposalPrice &&
-        asset.disposalPrice > asset.currentBookValue
-      ).reduce((sum, asset) => {
-        const gain = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice!);
-        return sum + Math.max(0, gain); // Only gains
-      }, 0);
+      // priorDisposalGains = fixedAssets.filter(asset => 
+      //   asset.status === 'disposed' && 
+      //   asset.disposalDate &&
+      //   new Date(asset.disposalDate) >= priorPeriodStart &&
+      //   new Date(asset.disposalDate) <= priorPeriodEnd &&
+      //   asset.disposalPrice &&
+      //   asset.disposalPrice > asset.currentBookValue
+      // ).reduce((sum, asset) => {
+      //   const gain = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice!);
+      //   return sum + Math.max(0, gain); // Only gains
+      // }, 0);
+      priorDisposalGains = 0;
     }
 
     // Calculate variance
@@ -683,22 +683,23 @@ export class ProfitLossBusinessService {
     variancePercent?: number;
     formattedVariance?: string;
   } {
-    const fixedAssets = FixedAssetsBusinessService.getAllAssets();
+    // const fixedAssets = FixedAssetsBusinessService.getAllAssets();
     
     // Filter assets disposed in current period with losses
     const currentPeriodStart = new Date(context.currentPeriod.startDate);
     const currentPeriodEnd = new Date(context.currentPeriod.endDate);
     
-    const currentDisposalLosses = fixedAssets.filter(asset => 
-      asset.status === 'disposed' && 
-      asset.disposalDate &&
-      new Date(asset.disposalDate) >= currentPeriodStart &&
-      new Date(asset.disposalDate) <= currentPeriodEnd &&
-      (asset.disposalPrice || 0) < asset.currentBookValue
-    ).reduce((sum, asset) => {
-      const gainLoss = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice || 0);
-      return sum + Math.max(0, -gainLoss); // Only losses (convert to positive)
-    }, 0);
+    // const currentDisposalLosses = fixedAssets.filter(asset => 
+    //   asset.status === 'disposed' && 
+    //   asset.disposalDate &&
+    //   new Date(asset.disposalDate) >= currentPeriodStart &&
+    //   new Date(asset.disposalDate) <= currentPeriodEnd &&
+    //   (asset.disposalPrice || 0) < asset.currentBookValue
+    // ).reduce((sum, asset) => {
+    //   const gainLoss = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice || 0);
+    //   return sum + Math.max(0, -gainLoss); // Only losses (convert to positive)
+    // }, 0);
+    const currentDisposalLosses = 0;
 
     // Calculate prior period losses if available
     let priorDisposalLosses: number | undefined;
@@ -706,16 +707,17 @@ export class ProfitLossBusinessService {
       const priorPeriodStart = new Date(context.priorPeriod.startDate);
       const priorPeriodEnd = new Date(context.priorPeriod.endDate);
       
-      priorDisposalLosses = fixedAssets.filter(asset => 
-        asset.status === 'disposed' && 
-        asset.disposalDate &&
-        new Date(asset.disposalDate) >= priorPeriodStart &&
-        new Date(asset.disposalDate) <= priorPeriodEnd &&
-        (asset.disposalPrice || 0) < asset.currentBookValue
-      ).reduce((sum, asset) => {
-        const gainLoss = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice || 0);
-        return sum + Math.max(0, -gainLoss); // Only losses (convert to positive)
-      }, 0);
+      // priorDisposalLosses = fixedAssets.filter(asset => 
+      //   asset.status === 'disposed' && 
+      //   asset.disposalDate &&
+      //   new Date(asset.disposalDate) >= priorPeriodStart &&
+      //   new Date(asset.disposalDate) <= priorPeriodEnd &&
+      //   (asset.disposalPrice || 0) < asset.currentBookValue
+      // ).reduce((sum, asset) => {
+      //   const gainLoss = FixedAssetsDepreciationService.calculateDisposalGainLoss(asset, asset.disposalPrice || 0);
+      //   return sum + Math.max(0, -gainLoss); // Only losses (convert to positive)
+      // }, 0);
+      priorDisposalLosses = 0;
     }
 
     // Calculate variance

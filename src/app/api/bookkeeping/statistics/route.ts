@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const incomeStats = await prisma.bookkeepingEntry.aggregate({
       where: {
         ...whereClause,
-        type: 'INCOME',
+        type: 'revenue',
       },
       _sum: {
         amount: true,
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const expenseStats = await prisma.bookkeepingEntry.aggregate({
       where: {
         ...whereClause,
-        type: 'EXPENSE',
+        type: 'expense',
       },
       _sum: {
         amount: true,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       by: ['category'],
       where: {
         ...whereClause,
-        type: 'INCOME',
+        type: 'revenue',
       },
       _sum: {
         amount: true,
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       by: ['category'],
       where: {
         ...whereClause,
-        type: 'EXPENSE',
+        type: 'expense',
       },
       _sum: {
         amount: true,
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
         monthlyTrends[monthKey] = { income: 0, expenses: 0 }
       }
       
-      if (entry.type === 'INCOME') {
+      if (entry.type === 'revenue') {
         monthlyTrends[monthKey].income += entry.amount
       } else {
         monthlyTrends[monthKey].expenses += entry.amount

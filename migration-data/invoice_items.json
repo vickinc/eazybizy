@@ -1,0 +1,15 @@
+[
+  {
+    "id": "cmdhlaz0i000e9k862qyoxm0k",
+    "invoiceId": "cmdhlaz0f000d9k86hz9agmky",
+    "productId": "cmdhl9tuv00099k86wsy7pe3f",
+    "productName": "Unlimited Internet",
+    "description": null,
+    "quantity": 1,
+    "unitPrice": 10,
+    "currency": "USD",
+    "total": 10,
+    "createdAt": 1753373489346,
+    "updatedAt": 1753373489346
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "cmdhl5eay00039k869n2a3ylr",
+    "companyId": 15,
+    "bankName": "LHV Bank",
+    "bankAddress": "Tartu mnt 12-13",
+    "currency": "USD",
+    "iban": "EE243545465767",
+    "swiftCode": "LHVBE223X",
+    "accountNumber": null,
+    "accountName": "Environmental Consulting Group Inc.",
+    "isActive": true,
+    "createdAt": 1753373229226,
+    "updatedAt": 1753373229226,
+    "notes": null
+  }
+]

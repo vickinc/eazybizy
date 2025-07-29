@@ -1,262 +1,207 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateApiRequest } from '@/lib/api-auth';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
+// POST /api/transactions/bulk - Bulk create transactions
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { operation, data } = body
-
-    switch (operation) {
-      case 'create':
-        return await handleBulkCreate(data)
-      case 'update':
-        return await handleBulkUpdate(data)
-      case 'delete':
-        return await handleBulkDelete(data)
-      case 'categorize':
-        return await handleBulkCategorize(data)
-      case 'reconcile':
-        return await handleBulkReconcile(data)
-      case 'approve':
-        return await handleBulkApprove(data)
-      default:
-        return NextResponse.json(
-          { error: 'Invalid bulk operation' },
-          { status: 400 }
-        )
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const body = await request.json();
+    const { transactions } = body;
+
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      return NextResponse.json(
+        { error: 'Invalid transactions data. Expected array of transactions.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate each transaction
+    const requiredFields = [
+      'date', 'paidBy', 'paidTo', 'netAmount', 'incomingAmount', 'outgoingAmount',
+      'currency', 'baseCurrency', 'baseCurrencyAmount', 'exchangeRate',
+      'accountId', 'accountType', 'category', 'companyId'
+    ];
+
+    const errors: Array<{ index: number; error: string }> = [];
+    const validTransactions: any[] = [];
+
+    transactions.forEach((transaction, index) => {
+      // Check required fields
+      for (const field of requiredFields) {
+        if (transaction[field] === undefined || transaction[field] === null) {
+          errors.push({ 
+            index, 
+            error: `Missing required field: ${field}` 
+          });
+          return;
+        }
+      }
+
+      // Validate enum values
+      if (!['bank', 'wallet'].includes(transaction.accountType)) {
+        errors.push({ 
+          index, 
+          error: 'Invalid accountType. Must be "bank" or "wallet"' 
+        });
+        return;
+      }
+
+      if (transaction.status && !['PENDING', 'CLEARED', 'CANCELLED'].includes(transaction.status)) {
+        errors.push({ 
+          index, 
+          error: 'Invalid status. Must be PENDING, CLEARED, or CANCELLED' 
+        });
+        return;
+      }
+
+      // Process valid transaction
+      validTransactions.push({
+        date: new Date(transaction.date),
+        paidBy: transaction.paidBy,
+        paidTo: transaction.paidTo,
+        netAmount: transaction.netAmount,
+        incomingAmount: transaction.incomingAmount,
+        outgoingAmount: transaction.outgoingAmount,
+        currency: transaction.currency,
+        baseCurrency: transaction.baseCurrency,
+        baseCurrencyAmount: transaction.baseCurrencyAmount,
+        exchangeRate: transaction.exchangeRate,
+        accountId: transaction.accountId,
+        accountType: transaction.accountType,
+        reference: transaction.reference || null,
+        category: transaction.category,
+        description: transaction.description || null,
+        linkedEntryId: transaction.linkedEntryId || null,
+        linkedEntryType: transaction.linkedEntryType || null,
+        status: transaction.status || 'PENDING',
+        reconciliationStatus: transaction.reconciliationStatus || 'UNRECONCILED',
+        approvalStatus: transaction.approvalStatus || 'PENDING',
+        companyId: transaction.companyId,
+        isDeleted: false,
+      });
+    });
+
+    // Return validation errors if any
+    if (errors.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Validation failed for some transactions',
+          errors: errors.slice(0, 10), // Limit to first 10 errors
+          totalErrors: errors.length
+        },
+        { status: 400 }
+      );
+    }
+
+    // Create transactions in database
+    const result = await prisma.transaction.createMany({
+      data: validTransactions,
+      skipDuplicates: true
+    });
+
+    // Fetch the created transactions with relations
+    const createdTransactions = await prisma.transaction.findMany({
+      where: {
+        companyId: { in: validTransactions.map(t => t.companyId) },
+        createdAt: { gte: new Date(Date.now() - 5000) } // Last 5 seconds
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            tradingName: true,
+            legalName: true,
+          }
+        },
+        bankAccount: {
+          select: {
+            id: true,
+            bankName: true,
+            accountName: true,
+            currency: true,
+          }
+        },
+        digitalWallet: {
+          select: {
+            id: true,
+            walletName: true,
+            walletType: true,
+            currency: true,
+          }
+        }
+      },
+      take: result.count
+    });
+
+    return NextResponse.json(createdTransactions, { status: 201 });
+
   } catch (error) {
-    console.error('Error in bulk operation:', error)
-    return NextResponse.json(
-      { error: 'Bulk operation failed' },
-      { status: 500 }
-    )
-  }
-}
-
-async function handleBulkCreate(transactions: unknown[]) {
-  if (!Array.isArray(transactions) || transactions.length === 0) {
-    return NextResponse.json(
-      { error: 'Invalid transactions data' },
-      { status: 400 }
-    )
-  }
-
-  // Validate each transaction
-  const requiredFields = ['companyId', 'date', 'paidBy', 'paidTo', 'netAmount', 'currency', 'accountId', 'accountType']
-  for (const transaction of transactions) {
-    for (const field of requiredFields) {
-      if (!transaction[field]) {
+    console.error('POST /api/transactions/bulk error:', error);
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2003') {
         return NextResponse.json(
-          { error: `Missing required field: ${field} in transaction` },
+          { error: 'Referenced company, account, or entry does not exist' },
           { status: 400 }
-        )
+        );
       }
     }
+
+    return NextResponse.json(
+      { error: 'Failed to create transactions in bulk' },
+      { status: 500 }
+    );
   }
-
-  // Process transactions for database
-  const processedTransactions = transactions.map(transaction => ({
-    ...transaction,
-    date: new Date(transaction.date),
-    netAmount: parseFloat(transaction.netAmount),
-    incomingAmount: transaction.incomingAmount ? parseFloat(transaction.incomingAmount) : null,
-    outgoingAmount: transaction.outgoingAmount ? parseFloat(transaction.outgoingAmount) : null,
-    baseCurrencyAmount: parseFloat(transaction.baseCurrencyAmount || transaction.netAmount),
-    exchangeRate: transaction.exchangeRate ? parseFloat(transaction.exchangeRate) : null,
-    tags: transaction.tags || [],
-    status: transaction.status || 'CLEARED',
-    reconciliationStatus: transaction.reconciliationStatus || 'UNRECONCILED',
-    approvalStatus: transaction.approvalStatus || 'APPROVED',
-    isRecurring: transaction.isRecurring || false,
-  }))
-
-  const createdTransactions = await prisma.transaction.createMany({
-    data: processedTransactions,
-    skipDuplicates: true
-  })
-
-  return NextResponse.json({
-    success: true,
-    created: createdTransactions.count,
-    message: `Successfully created ${createdTransactions.count} transactions`
-  })
 }
 
-async function handleBulkUpdate(updateData: { ids: string[], updates: unknown }) {
-  const { ids, updates } = updateData
+// DELETE /api/transactions/bulk - Bulk delete transactions
+export async function DELETE(request: NextRequest) {
+  try {
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json(
-      { error: 'Invalid transaction IDs' },
-      { status: 400 }
-    )
-  }
+    const body = await request.json();
+    const { ids } = body;
 
-  // Prepare update data
-  const processedUpdates: unknown = { ...updates }
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { error: 'Invalid transaction IDs. Expected array of IDs.' },
+        { status: 400 }
+      );
+    }
 
-  if (updates.date) {
-    processedUpdates.date = new Date(updates.date)
-  }
-  if (updates.netAmount !== undefined) {
-    processedUpdates.netAmount = parseFloat(updates.netAmount)
-  }
-  if (updates.incomingAmount !== undefined) {
-    processedUpdates.incomingAmount = updates.incomingAmount ? parseFloat(updates.incomingAmount) : null
-  }
-  if (updates.outgoingAmount !== undefined) {
-    processedUpdates.outgoingAmount = updates.outgoingAmount ? parseFloat(updates.outgoingAmount) : null
-  }
-
-  const result = await prisma.transaction.updateMany({
-    where: {
-      id: { in: ids },
-      isDeleted: false
-    },
-    data: processedUpdates
-  })
-
-  return NextResponse.json({
-    success: true,
-    updated: result.count,
-    message: `Successfully updated ${result.count} transactions`
-  })
-}
-
-async function handleBulkDelete(deleteData: { ids: string[], hardDelete?: boolean, deletedBy?: string }) {
-  const { ids, hardDelete = false, deletedBy } = deleteData
-
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json(
-      { error: 'Invalid transaction IDs' },
-      { status: 400 }
-    )
-  }
-
-  let result
-  if (hardDelete) {
-    result = await prisma.transaction.deleteMany({
-      where: { id: { in: ids } }
-    })
-  } else {
-    result = await prisma.transaction.updateMany({
+    // Perform bulk soft delete
+    const result = await prisma.transaction.updateMany({
       where: {
         id: { in: ids },
         isDeleted: false
       },
       data: {
         isDeleted: true,
-        deletedAt: new Date(),
-        deletedBy: deletedBy || 'bulk-operation'
       }
-    })
-  }
+    });
 
-  return NextResponse.json({
-    success: true,
-    deleted: result.count,
-    message: `Successfully ${hardDelete ? 'deleted' : 'soft deleted'} ${result.count} transactions`
-  })
-}
+    return NextResponse.json({
+      success: true,
+      deleted: result.count,
+      message: `Successfully deleted ${result.count} transactions`
+    });
 
-async function handleBulkCategorize(categorizeData: { ids: string[], category: string, subcategory?: string, updatedBy?: string }) {
-  const { ids, category, subcategory, updatedBy } = categorizeData
-
-  if (!Array.isArray(ids) || ids.length === 0 || !category) {
+  } catch (error) {
+    console.error('DELETE /api/transactions/bulk error:', error);
     return NextResponse.json(
-      { error: 'Invalid data for categorization' },
-      { status: 400 }
-    )
+      { error: 'Failed to delete transactions in bulk' },
+      { status: 500 }
+    );
   }
-
-  const result = await prisma.transaction.updateMany({
-    where: {
-      id: { in: ids },
-      isDeleted: false
-    },
-    data: {
-      category,
-      subcategory: subcategory || null,
-      updatedBy
-    }
-  })
-
-  return NextResponse.json({
-    success: true,
-    updated: result.count,
-    message: `Successfully categorized ${result.count} transactions`
-  })
-}
-
-async function handleBulkReconcile(reconcileData: { ids: string[], reconciliationStatus: string, statementDate?: string, statementReference?: string, updatedBy?: string }) {
-  const { ids, reconciliationStatus, statementDate, statementReference, updatedBy } = reconcileData
-
-  if (!Array.isArray(ids) || ids.length === 0 || !reconciliationStatus) {
-    return NextResponse.json(
-      { error: 'Invalid data for reconciliation' },
-      { status: 400 }
-    )
-  }
-
-  const updateData: unknown = {
-    reconciliationStatus,
-    updatedBy
-  }
-
-  if (statementDate) {
-    updateData.statementDate = new Date(statementDate)
-  }
-  if (statementReference) {
-    updateData.statementReference = statementReference
-  }
-
-  const result = await prisma.transaction.updateMany({
-    where: {
-      id: { in: ids },
-      isDeleted: false
-    },
-    data: updateData
-  })
-
-  return NextResponse.json({
-    success: true,
-    updated: result.count,
-    message: `Successfully updated reconciliation status for ${result.count} transactions`
-  })
-}
-
-async function handleBulkApprove(approveData: { ids: string[], approvalStatus: string, approvedBy?: string }) {
-  const { ids, approvalStatus, approvedBy } = approveData
-
-  if (!Array.isArray(ids) || ids.length === 0 || !approvalStatus) {
-    return NextResponse.json(
-      { error: 'Invalid data for approval' },
-      { status: 400 }
-    )
-  }
-
-  const updateData: unknown = {
-    approvalStatus,
-    updatedBy: approvedBy
-  }
-
-  if (approvalStatus === 'APPROVED') {
-    updateData.approvedBy = approvedBy
-    updateData.approvedAt = new Date()
-  }
-
-  const result = await prisma.transaction.updateMany({
-    where: {
-      id: { in: ids },
-      isDeleted: false
-    },
-    data: updateData
-  })
-
-  return NextResponse.json({
-    success: true,
-    updated: result.count,
-    message: `Successfully updated approval status for ${result.count} transactions`
-  })
 }

@@ -14,9 +14,6 @@ import {
 import { IFRSSettings, CompanySettings } from '@/types/settings.types';
 import { MultiCurrencyFinancialStatement, IFRSDisclosure } from '@/types/multiCurrency.types';
 import { ConsolidatedFinancialStatements } from '@/types/consolidation.types';
-import { FixedAsset, AssetCategory, DepreciationMethod } from '@/types/fixedAssets.types';
-import { FixedAssetsBusinessService } from './fixedAssetsBusinessService';
-import { FixedAssetsDepreciationService } from './fixedAssetsDepreciationService';
 
 /**
  * Financial Statements Notes Service

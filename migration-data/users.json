@@ -1,0 +1,28 @@
+[
+  {
+    "id": "cmdequ76700009k7cd7r5vlcy",
+    "email": "palthavj@gmail.com",
+    "username": "alvw",
+    "fullName": "Albert Albertovich",
+    "role": "VIEWER",
+    "isActive": true,
+    "createdAt": 1753201385934,
+    "updatedAt": 1753201385934,
+    "lastLoginAt": null,
+    "passwordHash": "$2a$10$6X06Kupdb/7meHnwW3VeeeE4s9Nzw1BKUPp1BCIGerRVOrtRqmgyy",
+    "emailVerified": false,
+    "authId": null,
+    "googleId": null,
+    "googleEmail": null,
+    "googleRefreshToken": null,
+    "googleAccessToken": null,
+    "googleTokenExpiry": null,
+    "googleCalendarId": null,
+    "googleSyncEnabled": false,
+    "lastGoogleSync": null,
+    "timezoneId": "UTC",
+    "timezoneMode": null,
+    "googleAutoSyncEnabled": null,
+    "googleDefaultCalendarId": null
+  }
+]

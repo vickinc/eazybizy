@@ -76,7 +76,11 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
             )}
           </div>
           <div>
-            <div className="font-medium">{account.name}</div>
+            <div className="font-medium">
+              {isBank 
+                ? (account.accountName || account.bankName) 
+                : account.walletName}
+            </div>
             <div className="text-sm text-gray-500">{company.tradingName}</div>
           </div>
         </div>
@@ -103,7 +107,11 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
               )}
             </div>
             <div>
-              <h3 className="font-semibold text-lg">{account.name}</h3>
+              <h3 className="font-semibold text-lg">
+                {isBank 
+                  ? (account.accountName || account.bankName) 
+                  : account.walletName}
+              </h3>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <Building className="h-4 w-4" />
                 <span>{company.tradingName}</span>

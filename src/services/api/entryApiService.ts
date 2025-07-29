@@ -106,8 +106,6 @@ export class EntryApiService {
     const queryString = this.buildQueryString(filters, options);
     const url = `${this.baseUrl}${queryString ? `?${queryString}` : ''}`;
 
-    console.log('🔍 [EntryApiService] Fetching entries with:', { filters, options });
-    console.log('🔍 [EntryApiService] Final URL:', url);
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -115,8 +113,8 @@ export class EntryApiService {
     }
 
     const data = await response.json();
-    console.log('🔍 [EntryApiService] Response data:', data);
-
+    
+    // The API already returns the correct structure, no transformation needed
     return data;
   }
 

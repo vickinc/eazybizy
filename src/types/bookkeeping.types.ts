@@ -153,67 +153,6 @@ export const EXPENSE_CATEGORIES = [
 export type IncomeCategory = typeof INCOME_CATEGORIES[number];
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
 
-// General Journal Entry Types - True Double-Entry Bookkeeping
-export interface JournalEntryLine {
-  id: string;
-  accountId: string; // Reference to Chart of Accounts
-  accountCode?: string; // Account code for reference
-  accountName?: string; // Account name for display
-  description?: string; // Line-specific description
-  debit: number;
-  credit: number;
-  reference?: string; // Additional reference for this line
-}
-
-export interface JournalEntry {
-  id: string;
-  entryNumber: string; // Sequential journal entry number (e.g., "JE-001")
-  date: string; // Transaction date
-  description: string; // Main description of the transaction
-  reference?: string; // External reference (invoice number, receipt, etc.)
-  companyId: number;
-  lines: JournalEntryLine[]; // Must have at least 2 lines
-  totalDebits: number; // Sum of all debit amounts
-  totalCredits: number; // Sum of all credit amounts
-  isBalanced: boolean; // True if debits = credits
-  source: 'manual' | 'auto-income' | 'auto-expense' | 'auto-invoice' | 'auto-fixed-asset'; // Source of the entry
-  sourceId?: string; // ID of the source record (original entry ID, invoice ID, etc.)
-  createdBy?: string; // User who created the entry
-  createdByName?: string; // Display name of creator
-  approvedBy?: string; // User who approved the entry (for approval workflow)
-  approvedByName?: string; // Display name of approver
-  approvedAt?: string; // When the entry was approved
-  postedBy?: string; // User who posted the entry
-  postedByName?: string; // Display name of poster
-  postedAt?: string; // When the entry was posted
-  lastModifiedBy?: string; // User who last modified the entry
-  lastModifiedByName?: string; // Display name of last modifier
-  status: 'draft' | 'posted' | 'reversed'; // Entry status
-  reversalEntryId?: string; // If this entry was reversed, reference to the reversal entry
-  reversedBy?: string; // User who reversed the entry
-  reversedByName?: string; // Display name of reverser
-  reversedAt?: string; // When the entry was reversed
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Journal Entry Form Data for creating new entries
-export interface JournalEntryFormData {
-  date: string;
-  description: string;
-  reference?: string;
-  companyId: string;
-  status?: 'draft' | 'posted'; // Only allow draft/posted for form (reversed is system-generated)
-  lines: JournalEntryLineFormData[];
-}
-
-export interface JournalEntryLineFormData {
-  accountId: string;
-  description?: string;
-  debit: string; // String for form input
-  credit: string; // String for form input
-  reference?: string;
-}
 
 // Trial Balance Types
 export interface TrialBalanceAccount {

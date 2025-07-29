@@ -10,11 +10,9 @@ import {
 } from '@/types/financialStatements.types';
 import { ChartOfAccount, AccountType, AccountSubcategory } from '@/types/chartOfAccounts.types';
 import { IFRSSettings, CompanySettings } from '@/types/settings.types';
-import { FixedAsset, AssetCategory } from '@/types/fixedAssets.types';
 import { ChartOfAccountsBusinessService } from './chartOfAccountsBusinessService';
 import { BookkeepingBusinessService } from './bookkeepingBusinessService';
 import { CurrencyService } from './currencyService';
-import { FixedAssetsBusinessService } from './fixedAssetsBusinessService';
 
 export class BalanceSheetBusinessService {
   
@@ -705,7 +703,7 @@ export class BalanceSheetBusinessService {
    * Calculate Property, Plant & Equipment from Fixed Assets module
    */
   private static calculatePropertyPlantEquipment(context: CalculationContext): FinancialStatementSection {
-    const fixedAssets = FixedAssetsBusinessService.getAllAssets();
+    // const fixedAssets = FixedAssetsBusinessService.getAllAssets();
     
     // Filter tangible assets (exclude intangible)
     const tangibleAssets = fixedAssets.filter(asset => 
@@ -793,7 +791,7 @@ export class BalanceSheetBusinessService {
    * Calculate Intangible Assets from Fixed Assets module
    */
   private static calculateIntangibleAssets(context: CalculationContext): FinancialStatementSection {
-    const fixedAssets = FixedAssetsBusinessService.getAllAssets();
+    // const fixedAssets = FixedAssetsBusinessService.getAllAssets();
     
     // Filter intangible assets
     const intangibleAssets = fixedAssets.filter(asset => 

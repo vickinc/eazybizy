@@ -8,9 +8,25 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
-    const { paidDate } = body
+    const { paidDate, accountId, accountType } = body
+
+    // Validate required account information
+    if (!accountId || !accountType) {
+      return NextResponse.json(
+        { error: 'Account ID and account type are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate account type
+    if (!['bank', 'wallet'].includes(accountType)) {
+      return NextResponse.json(
+        { error: 'Account type must be either "bank" or "wallet"' },
+        { status: 400 }
+      )
+    }
 
     // Use the exact same pattern as the working PUT endpoint
     const paymentDate = paidDate ? new Date(paidDate) : new Date()
@@ -56,6 +72,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
+    // Validate that the selected account belongs to the invoice's company
+    let accountExists = false;
+    if (accountType === 'bank') {
+      const bankAccount = await prisma.bankAccount.findFirst({
+        where: {
+          id: accountId,
+          companyId: invoice.fromCompanyId
+        }
+      });
+      accountExists = !!bankAccount;
+    } else if (accountType === 'wallet') {
+      const digitalWallet = await prisma.digitalWallet.findFirst({
+        where: {
+          id: accountId,
+          companyId: invoice.fromCompanyId
+        }
+      });
+      accountExists = !!digitalWallet;
+    }
+
+    if (!accountExists) {
+      return NextResponse.json(
+        { error: 'Selected account does not belong to the invoice company' },
+        { status: 400 }
+      )
+    }
+
     // Fetch products for COGS calculation
     const productIds = invoice.items
       .map(item => item.productId)
@@ -68,10 +111,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }) : []
 
     // Calculate COGS
-    const calculatedCOGS = BookkeepingBusinessService.calculateInvoiceCOGS(invoice as any, products as any);
+    const calculatedCOGS = BookkeepingBusinessService.calculateInvoiceCOGS(invoice, products);
 
     // Update invoice status within a transaction
-    const [updatedInvoice, bookkeepingEntry] = await prisma.$transaction(async (tx) => {
+    const [updatedInvoice, bookkeepingEntry, transactionRecord] = await prisma.$transaction(async (tx) => {
       // Update invoice status
       const updated = await tx.invoice.update({
         where: { id },
@@ -96,18 +139,47 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           invoiceId: invoice.id,
           cogs: calculatedCOGS.amount,
           cogsPaid: 0,
-          accountType: 'bank' // Default to bank, can be enhanced later
+          accountId: accountId,
+          accountType: accountType
         }
       })
 
-      return [updated, entry]
+      // Create corresponding transaction record for balance calculations
+      const transaction = await tx.transaction.create({
+        data: {
+          companyId: invoice.fromCompanyId,
+          date: paymentDate,
+          paidBy: invoice.clientName,
+          paidTo: invoice.company.tradingName,
+          netAmount: invoice.totalAmount,
+          incomingAmount: invoice.totalAmount,
+          outgoingAmount: 0,
+          currency: invoice.currency,
+          baseCurrency: invoice.currency, // Assuming same currency for now
+          baseCurrencyAmount: invoice.totalAmount,
+          exchangeRate: 1.0,
+          accountId: accountId,
+          accountType: accountType,
+          reference: invoice.invoiceNumber,
+          category: 'Sales Revenue',
+          description: `Invoice ${invoice.invoiceNumber} - ${invoice.clientName}`,
+          linkedEntryId: entry.id,
+          linkedEntryType: 'bookkeeping_entry',
+          status: 'CLEARED',
+          reconciliationStatus: 'UNRECONCILED',
+          approvalStatus: 'APPROVED'
+        }
+      })
+
+      return [updated, entry, transaction]
     })
 
     return NextResponse.json({
       success: true,
       invoice: updatedInvoice,
       bookkeepingEntry: bookkeepingEntry,
-      message: `Invoice has been marked as paid and revenue entry created`
+      transaction: transactionRecord,
+      message: `Invoice has been marked as paid, revenue entry and transaction created`
     })
 
   } catch (error) {

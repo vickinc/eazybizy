@@ -75,14 +75,7 @@ export async function GET(request: NextRequest) {
               logo: true,
             }
           },
-          account: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              currency: true,
-            }
-          },
+          // account: removed due to foreign key constraint removal
           invoice: {
             select: {
               id: true,
@@ -280,7 +273,7 @@ export async function POST(request: NextRequest) {
             logo: true,
           }
         },
-        account: true,
+        // account: removed due to foreign key constraint removal
         invoice: true,
         chartOfAccount: true,
       }

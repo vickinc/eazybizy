@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Search from "lucide-react/dist/esm/icons/search";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
@@ -13,6 +15,9 @@ import Building2 from "lucide-react/dist/esm/icons/building-2";
 import FileText from "lucide-react/dist/esm/icons/file-text";
 import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import { BookkeepingEntry, Invoice, Product, Company } from '@/types';
+import { ChartOfAccount } from '@/types/chartOfAccounts.types';
+import { CategoryMode } from '@/contexts/CategoryModeContext';
+import { ChartOfAccountsBusinessService } from '@/services/business/chartOfAccountsBusinessService';
 
 interface Vendor {
   id: string;
@@ -120,6 +125,11 @@ interface ActionProps {
   handleUpdateEntry: () => void;
 }
 
+interface CategoryProps {
+  categoryMode: CategoryMode;
+  chartOfAccounts: ChartOfAccount[];
+}
+
 interface UtilityProps {
   formatLargeCurrency: (amount: number, currency?: string) => string;
   getCOGSCurrency: (entry: BookkeepingEntry) => string;
@@ -129,6 +139,7 @@ interface AddEditEntryDialogProps {
   dialogProps: DialogProps;
   formProps: FormProps;
   dataProps: DataProps;
+  categoryProps: CategoryProps;
   invoiceSearchProps: InvoiceSearchProps;
   actionProps: ActionProps;
   utilityProps: UtilityProps;
@@ -139,6 +150,7 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
   dialogProps,
   formProps,
   dataProps,
+  categoryProps,
   invoiceSearchProps,
   actionProps,
   utilityProps,
@@ -147,6 +159,32 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
   const { open, onOpenChange } = dialogProps;
   const { entryFormData, editingEntry, updateEntryFormData } = formProps;
   const { companies, invoices, filteredInvoicesForDropdown, formSelectedLinkedIncome, formCogsSummary } = dataProps;
+  const { categoryMode: globalCategoryMode, chartOfAccounts } = categoryProps;
+  
+  // Local state for in-dialog mode switching
+  const [localCategoryMode, setLocalCategoryMode] = useState<CategoryMode>(globalCategoryMode);
+  
+  // Use local mode if it exists, otherwise global mode
+  const effectiveCategoryMode = localCategoryMode;
+  
+  // Reset local mode when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setLocalCategoryMode(globalCategoryMode);
+    }
+  }, [open, globalCategoryMode]);
+
+  // Clear category selection when mode changes to avoid invalid selections
+  useEffect(() => {
+    if (entryFormData.category) {
+      const currentCategories = getCategories(entryFormData.type);
+      const isCurrentCategoryValid = currentCategories.some(cat => cat.value === entryFormData.category);
+      if (!isCurrentCategoryValid) {
+        updateEntryFormData('category', '');
+      }
+    }
+  }, [effectiveCategoryMode, entryFormData.type]);
+  
   const { 
     invoiceSearchTerm, 
     handleInvoiceSearchChange, 
@@ -157,6 +195,36 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
   } = invoiceSearchProps;
   const { handleCancelEdit, handleCreateEntry, handleUpdateEntry } = actionProps;
   const { formatLargeCurrency, getCOGSCurrency } = utilityProps;
+
+  // Get categories based on mode
+  const getCategories = (type: 'revenue' | 'expense') => {
+    if (effectiveCategoryMode === 'advanced' && Array.isArray(chartOfAccounts) && chartOfAccounts.length > 0) {
+      // Use the business service to get the correct accounts by type
+      const filteredAccounts = ChartOfAccountsBusinessService.getAccountsForBookkeeping(chartOfAccounts, type);
+
+      // If we have filtered accounts, use them, otherwise fallback to simplified
+      if (filteredAccounts.length > 0) {
+        return filteredAccounts.map(account => {
+          const accountCode = account.code || account.accountCode;
+          const accountName = account.name || account.accountName;
+          return {
+            value: accountName,
+            label: `${accountCode} - ${accountName}`
+          };
+        });
+      }
+    }
+    
+    // Use simplified categories (either in simplified mode or as fallback)
+    const categories = type === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+    return categories.map(category => ({
+      value: category,
+      label: category
+    }));
+  };
+
+  const availableCategories = getCategories(entryFormData.type);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
@@ -244,21 +312,6 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
-                <Select value={entryFormData.category} onValueChange={(value) => updateEntryFormData('category', value)}>
-                  <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(entryFormData.type === 'revenue' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
                 <Label htmlFor="date" className="text-sm font-medium">Date *</Label>
                 <Input
                   id="date"
@@ -267,6 +320,53 @@ export const AddEditEntryDialog: React.FC<AddEditEntryDialogProps> = ({
                   onChange={(e) => updateEntryFormData('date', e.target.value)}
                   className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-xs ${effectiveCategoryMode === 'simplified' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                      Simplified
+                    </span>
+                    <Switch
+                      checked={effectiveCategoryMode === 'advanced'}
+                      onCheckedChange={(checked) => setLocalCategoryMode(checked ? 'advanced' : 'simplified')}
+                      className="data-[state=checked]:bg-green-600"
+                    />
+                    <span className={`text-xs ${effectiveCategoryMode === 'advanced' ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                      Advanced
+                    </span>
+                  </div>
+                </div>
+                <Combobox
+                  options={availableCategories}
+                  value={entryFormData.category}
+                  onValueChange={(value) => updateEntryFormData('category', value)}
+                  placeholder="Select category"
+                  searchPlaceholder="Search categories..."
+                  emptyMessage="No category found."
+                  className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100"
+                />
+                {effectiveCategoryMode === 'simplified' && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Navigate to categories page
+                        window.open('/accounting/bookkeeping/categories', '_blank');
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Switch to advanced categories
+                    </button>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Use professional Chart of Accounts for more detailed categorization
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div>

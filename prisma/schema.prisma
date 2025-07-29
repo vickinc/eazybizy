@@ -46,8 +46,8 @@ model Company {
   companyAccounts       CompanyAccount[]
   companyMemberships    CompanyMembership[]
   digitalWallets        DigitalWallet[]
+  initialBalances       InitialBalance[]
   invoices              Invoice[]
-  journalEntries        JournalEntry[]
   notes                 Note[]
   paymentMethods        PaymentMethod[]
   products              Product[]
@@ -418,7 +418,7 @@ model BankAccount {
   updatedAt     DateTime      @updatedAt
   notes         String?
   company       Company       @relation(fields: [companyId], references: [id])
-  transactions  Transaction[] @relation("BankAccountTransactions")
+  // Removed transactions relation - accountId references are handled at application level
 
   @@index([companyId, createdAt])
   @@index([isActive, createdAt])
@@ -448,7 +448,7 @@ model DigitalWallet {
   updatedAt     DateTime      @updatedAt
   notes         String?
   company       Company       @relation(fields: [companyId], references: [id])
-  transactions  Transaction[] @relation("DigitalWalletTransactions")
+  // Removed transactions relation - accountId references are handled at application level
 
   @@index([companyId, createdAt])
   @@index([isActive, createdAt])
@@ -489,7 +489,7 @@ model BookkeepingEntry {
   updatedAt          DateTime         @updatedAt
   
   // Relations
-  account            CompanyAccount?  @relation(fields: [accountId], references: [id])
+  // account            CompanyAccount?  @relation(fields: [accountId], references: [id]) // Removed: accountId stores bank/wallet IDs
   company            Company          @relation(fields: [companyId], references: [id])
   invoice            Invoice?         @relation(fields: [invoiceId], references: [id])
   chartOfAccount     ChartOfAccount?  @relation(fields: [chartOfAccountsId], references: [id])
@@ -521,9 +521,9 @@ model CompanyAccount {
   isActive        Boolean            @default(true)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
-  entries         BookkeepingEntry[]
+  // entries         BookkeepingEntry[] // Removed: accountId in BookkeepingEntry stores bank/wallet IDs, not CompanyAccount IDs
   company         Company            @relation(fields: [companyId], references: [id])
-  transactions    Transaction[]      @relation("CompanyAccountTransactions")
+  // Removed transactions relation - accountId references are handled at application level
 
   @@unique([companyId, type, name])
   @@map("company_accounts")
@@ -575,10 +575,11 @@ model Transaction {
   parentTransaction    Transaction?            @relation("TransactionHierarchy", fields: [parentTransactionId], references: [id])
   childTransactions    Transaction[]           @relation("TransactionHierarchy")
   linkedEntry          BookkeepingEntry?       @relation(fields: [linkedEntryId], references: [id])
-  digitalWallet        DigitalWallet?          @relation("DigitalWalletTransactions", fields: [accountId], references: [id], map: "transaction_digital_wallet_fkey")
-  bankAccount          BankAccount?            @relation("BankAccountTransactions", fields: [accountId], references: [id], map: "transaction_bank_account_fkey")
-  companyAccount       CompanyAccount?         @relation("CompanyAccountTransactions", fields: [accountId], references: [id], map: "transaction_company_account_fkey")
   company              Company                 @relation(fields: [companyId], references: [id])
+
+  // Note: accountId is kept as a simple string field without foreign key constraints
+  // This allows it to reference different account types (bank, wallet, company) based on accountType
+  // The application logic ensures data integrity instead of database constraints
 
   @@index([companyId, date])
   @@index([companyId, accountId])
@@ -606,42 +607,25 @@ model TransactionAttachment {
   @@map("transaction_attachments")
 }
 
-model JournalEntry {
-  id             String             @id @default(cuid())
-  companyId      Int
-  entryNumber    String
-  date           DateTime
-  description    String
-  reference      String?
-  status         String             @default("POSTED")
-  reversedFromId String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  reversedFrom   JournalEntry?      @relation("ReversalRelation", fields: [reversedFromId], references: [id])
-  reversals      JournalEntry[]     @relation("ReversalRelation")
-  company        Company            @relation(fields: [companyId], references: [id])
-  lines          JournalEntryLine[]
+model InitialBalance {
+  id          String   @id @default(cuid())
+  accountId   String
+  accountType String   // 'bank' | 'wallet'
+  amount      Float
+  currency    String
+  companyId   Int
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id])
 
-  @@unique([companyId, entryNumber])
-  @@index([companyId, date])
-  @@map("journal_entries")
+  @@unique([accountId, accountType])
+  @@index([companyId])
+  @@index([accountType])
+  @@index([currency])
+  @@map("initial_balances")
 }
 
-model JournalEntryLine {
-  id             String       @id @default(cuid())
-  journalEntryId String
-  accountCode    String
-  accountName    String
-  description    String?
-  debit          Float        @default(0)
-  credit         Float        @default(0)
-  reference      String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
-
-  @@map("journal_entry_lines")
-}
 
 model CalendarEvent {
   id               String               @id @default(cuid())
@@ -834,3 +818,4 @@ model TaxTreatment {
   @@index([createdAt, id])
   @@map("tax_treatments")
 }
+

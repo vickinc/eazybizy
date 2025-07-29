@@ -1,218 +1,241 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateApiRequest } from '@/lib/api-auth';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+
+/**
+ * RESTful API endpoint for transactions
+ * Provides comprehensive CRUD operations with filtering, sorting, and pagination
+ */
 
 interface TransactionQueryParams {
-  companyId?: string
   skip?: string
   take?: string
+  searchTerm?: string
+  status?: 'all' | 'pending' | 'cleared' | 'cancelled'
+  reconciliationStatus?: 'all' | 'unreconciled' | 'reconciled' | 'auto_reconciled'
+  approvalStatus?: 'all' | 'pending' | 'approved' | 'rejected'
   accountId?: string
-  accountType?: string
-  search?: string
+  accountType?: 'all' | 'bank' | 'wallet'
+  currency?: string
+  companyId?: string
+  dateRange?: 'all' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'custom'
   dateFrom?: string
   dateTo?: string
-  period?: string
-  category?: string
-  subcategory?: string
-  status?: string
-  reconciliationStatus?: string
-  currency?: string
-  sortField?: string
-  sortDirection?: string
-  includeDeleted?: string
+  sortField?: 'date' | 'paidBy' | 'paidTo' | 'netAmount' | 'currency' | 'category' | 'status' | 'createdAt' | 'updatedAt'
+  sortDirection?: 'asc' | 'desc'
 }
 
+// GET /api/transactions - Fetch transactions with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const params: TransactionQueryParams = Object.fromEntries(searchParams.entries())
-
-    const companyId = params.companyId ? parseInt(params.companyId) : undefined
-    const skip = parseInt(params.skip || '0')
-    const take = Math.min(parseInt(params.take || '20'), 100)
-    const includeDeleted = params.includeDeleted === 'true'
-
-    if (!companyId) {
-      return NextResponse.json({ error: 'Company ID is required' }, { status: 400 })
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Build where clause
-    const where: Prisma.TransactionWhereInput = {
-      companyId,
-      isDeleted: includeDeleted ? undefined : false,
-    }
-
-    // Account filtering
-    if (params.accountId) {
-      where.accountId = params.accountId
-    }
-    if (params.accountType) {
-      where.accountType = params.accountType as any
-    }
-
-    // Status filtering
-    if (params.status) {
-      where.status = params.status as any
-    }
-    if (params.reconciliationStatus) {
-      where.reconciliationStatus = params.reconciliationStatus as any
-    }
-
-    // Category filtering
-    if (params.category) {
-      where.category = params.category
-    }
-    if (params.subcategory) {
-      where.subcategory = params.subcategory
-    }
-
-    // Currency filtering
-    if (params.currency) {
-      where.currency = params.currency
-    }
-
-    // Date filtering
-    if (params.dateFrom || params.dateTo || params.period) {
-      const dateFilter: Prisma.DateTimeFilter = {}
-
-      if (params.period) {
-        const now = new Date()
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-        switch (params.period) {
-          case 'today':
-            dateFilter.gte = startOfToday
-            break
-          case 'thisWeek':
-            const startOfWeek = new Date(startOfToday)
-            startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay())
-            dateFilter.gte = startOfWeek
-            break
-          case 'thisMonth':
-            dateFilter.gte = new Date(now.getFullYear(), now.getMonth(), 1)
-            break
-          case 'lastMonth':
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
-            dateFilter.gte = lastMonth
-            dateFilter.lte = endOfLastMonth
-            break
-          case 'thisYear':
-            dateFilter.gte = new Date(now.getFullYear(), 0, 1)
-            break
-          case 'lastYear':
-            dateFilter.gte = new Date(now.getFullYear() - 1, 0, 1)
-            dateFilter.lte = new Date(now.getFullYear() - 1, 11, 31)
-            break
-        }
-      } else {
-        if (params.dateFrom) {
-          dateFilter.gte = new Date(params.dateFrom)
-        }
-        if (params.dateTo) {
-          dateFilter.lte = new Date(params.dateTo)
-        }
-      }
-
-      if (Object.keys(dateFilter).length > 0) {
-        where.date = dateFilter
-      }
-    }
-
-    // Text search across multiple fields
-    if (params.search) {
-      const searchTerms = params.search.trim().split(/\s+/)
-      where.OR = searchTerms.flatMap(term => [
-        { paidBy: { contains: term, mode: 'insensitive' } },
-        { paidTo: { contains: term, mode: 'insensitive' } },
-        { description: { contains: term, mode: 'insensitive' } },
-        { notes: { contains: term, mode: 'insensitive' } },
-        { reference: { contains: term, mode: 'insensitive' } },
-        { category: { contains: term, mode: 'insensitive' } },
-        { subcategory: { contains: term, mode: 'insensitive' } },
-      ])
-    }
-
-    // Sorting
-    const sortField = params.sortField || 'date'
-    const sortDirection = params.sortDirection === 'asc' ? 'asc' : 'desc'
+    const { searchParams } = new URL(request.url);
     
-    const orderBy: Prisma.TransactionOrderByWithRelationInput = {}
-    if (sortField === 'amount') {
-      orderBy.netAmount = sortDirection
-    } else if (sortField === 'account') {
-      orderBy.account = { name: sortDirection }
-    } else {
-      orderBy[sortField as keyof Prisma.TransactionOrderByWithRelationInput] = sortDirection
+    // Parse query parameters with defaults
+    const params: TransactionQueryParams = {
+      skip: searchParams.get('skip') || '0',
+      take: searchParams.get('take') || '20',
+      searchTerm: searchParams.get('searchTerm') || '',
+      status: (searchParams.get('status') as any) || 'all',
+      reconciliationStatus: (searchParams.get('reconciliationStatus') as any) || 'all',
+      approvalStatus: (searchParams.get('approvalStatus') as any) || 'all',
+      accountId: searchParams.get('accountId') || undefined,
+      accountType: (searchParams.get('accountType') as any) || 'all',
+      currency: searchParams.get('currency') || undefined,
+      companyId: searchParams.get('companyId') || undefined,
+      dateRange: (searchParams.get('dateRange') as any) || 'all',
+      dateFrom: searchParams.get('dateFrom') || undefined,
+      dateTo: searchParams.get('dateTo') || undefined,
+      sortField: (searchParams.get('sortField') as any) || 'date',
+      sortDirection: (searchParams.get('sortDirection') as any) || 'desc',
+    };
+
+    const skip = parseInt(params.skip || '0');
+    const take = Math.min(parseInt(params.take || '20'), 100); // Limit to 100 items per request
+
+    // Build optimized where clause
+    const where: Prisma.TransactionWhereInput = {
+      isDeleted: false
+    };
+
+    // Search across multiple fields
+    if (params.searchTerm) {
+      where.OR = [
+        { paidBy: { contains: params.searchTerm, mode: 'insensitive' } },
+        { paidTo: { contains: params.searchTerm, mode: 'insensitive' } },
+        { reference: { contains: params.searchTerm, mode: 'insensitive' } },
+        { description: { contains: params.searchTerm, mode: 'insensitive' } },
+        { category: { contains: params.searchTerm, mode: 'insensitive' } },
+        { currency: { contains: params.searchTerm } },
+      ];
     }
 
-    // Execute queries in parallel
-    const [transactions, totalCount, stats] = await Promise.all([
+    // Status filters
+    if (params.status && params.status !== 'all') {
+      where.status = params.status.toUpperCase() as any;
+    }
+
+    if (params.reconciliationStatus && params.reconciliationStatus !== 'all') {
+      where.reconciliationStatus = params.reconciliationStatus.toUpperCase() as any;
+    }
+
+    if (params.approvalStatus && params.approvalStatus !== 'all') {
+      where.approvalStatus = params.approvalStatus.toUpperCase() as any;
+    }
+
+    // Account filters
+    if (params.accountId && params.accountId !== 'all') {
+      where.accountId = params.accountId;
+    }
+
+    if (params.accountType && params.accountType !== 'all') {
+      where.accountType = params.accountType;
+    }
+
+    // Currency filter
+    if (params.currency && params.currency !== 'all') {
+      where.currency = params.currency;
+    }
+
+    // Company filter
+    if (params.companyId && params.companyId !== 'all') {
+      where.companyId = parseInt(params.companyId);
+    }
+
+    // Date range filtering
+    if (params.dateRange && params.dateRange !== 'all') {
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+
+      switch (params.dateRange) {
+        case 'thisMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'lastMonth':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        case 'thisYear':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        case 'lastYear':
+          startDate = new Date(now.getFullYear() - 1, 0, 1);
+          endDate = new Date(now.getFullYear() - 1, 11, 31);
+          break;
+        case 'custom':
+          if (params.dateFrom && params.dateTo) {
+            startDate = new Date(params.dateFrom);
+            endDate = new Date(params.dateTo);
+          } else {
+            startDate = new Date(0); // Default to beginning of time
+          }
+          break;
+        default:
+          startDate = new Date(0);
+      }
+
+      where.date = {
+        gte: startDate,
+        lte: endDate
+      };
+    } else if (params.dateFrom && params.dateTo) {
+      // Custom date range
+      where.date = {
+        gte: new Date(params.dateFrom),
+        lte: new Date(params.dateTo)
+      };
+    }
+
+    // Build orderBy clause
+    const orderBy: Prisma.TransactionOrderByWithRelationInput = {};
+    switch (params.sortField) {
+      case 'date':
+        orderBy.date = params.sortDirection;
+        break;
+      case 'paidBy':
+        orderBy.paidBy = params.sortDirection;
+        break;
+      case 'paidTo':
+        orderBy.paidTo = params.sortDirection;
+        break;
+      case 'netAmount':
+        orderBy.netAmount = params.sortDirection;
+        break;
+      case 'currency':
+        orderBy.currency = params.sortDirection;
+        break;
+      case 'category':
+        orderBy.category = params.sortDirection;
+        break;
+      case 'status':
+        orderBy.status = params.sortDirection;
+        break;
+      case 'createdAt':
+        orderBy.createdAt = params.sortDirection;
+        break;
+      case 'updatedAt':
+        orderBy.updatedAt = params.sortDirection;
+        break;
+      default:
+        orderBy.date = params.sortDirection;
+    }
+
+    // Execute optimized queries in parallel
+    const [transactions, totalCount] = await Promise.all([
       prisma.transaction.findMany({
         where,
         orderBy,
         skip,
         take,
         include: {
+          // Include related data for rich transaction display
           company: {
-            select: { id: true, tradingName: true, legalName: true }
-          },
-          companyAccount: {
-            select: { id: true, name: true, type: true, currency: true }
-          },
-          bankAccount: {
-            select: { id: true, accountName: true, bankName: true, currency: true }
-          },
-          digitalWallet: {
-            select: { id: true, walletName: true, walletType: true, currency: true }
+            select: {
+              id: true,
+              tradingName: true,
+              legalName: true,
+            }
           },
           linkedEntry: {
-            select: { id: true, type: true, category: true, description: true }
+            select: {
+              id: true,
+              type: true,
+              category: true,
+              amount: true,
+              currency: true,
+              description: true,
+            }
           },
           attachments: {
-            select: { id: true, fileName: true, fileSize: true, mimeType: true }
-          },
-          _count: {
-            select: { childTransactions: true }
+            select: {
+              id: true,
+              fileName: true,
+              filePath: true,
+              fileSize: true,
+              mimeType: true,
+              createdAt: true,
+            }
           }
         }
       }),
       prisma.transaction.count({ where }),
-      prisma.transaction.aggregate({
-        where,
-        _sum: {
-          netAmount: true,
-          incomingAmount: true,
-          outgoingAmount: true,
-        },
-        _count: true,
-      })
-    ])
+    ]);
 
-    // Calculate additional statistics
-    const currencyBreakdown = await prisma.transaction.groupBy({
-      by: ['currency'],
-      where,
-      _sum: {
-        netAmount: true,
-        incomingAmount: true,
-        outgoingAmount: true,
-      },
-      _count: true,
-    })
+    // Calculate basic statistics for the current result set
+    const statistics = {
+      total: totalCount,
+      totalIncoming: transactions.reduce((sum, tx) => sum + tx.incomingAmount, 0),
+      totalOutgoing: transactions.reduce((sum, tx) => sum + tx.outgoingAmount, 0),
+      netAmount: transactions.reduce((sum, tx) => sum + tx.netAmount, 0),
+    };
 
-    const accountBreakdown = await prisma.transaction.groupBy({
-      by: ['accountId', 'accountType'],
-      where,
-      _sum: {
-        netAmount: true,
-        incomingAmount: true,
-        outgoingAmount: true,
-      },
-      _count: true,
-    })
-
-    return NextResponse.json({
+    const response = {
       data: transactions,
       pagination: {
         total: totalCount,
@@ -220,77 +243,142 @@ export async function GET(request: NextRequest) {
         take,
         hasMore: skip + take < totalCount,
       },
-      statistics: {
-        totalTransactions: stats._count,
-        totalNetAmount: stats._sum.netAmount || 0,
-        totalIncoming: stats._sum.incomingAmount || 0,
-        totalOutgoing: stats._sum.outgoingAmount || 0,
-        currencyBreakdown,
-        accountBreakdown,
-      }
-    })
+      statistics,
+    };
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Error fetching transactions:', error)
+    console.error('GET /api/transactions error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transactions' },
       { status: 500 }
-    )
+    );
   }
 }
 
+// POST /api/transactions - Create a new transaction
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json()
+    // Authenticate the request
+    const { user, error: authError } = await authenticateApiRequest(request);
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
 
     // Validate required fields
-    const requiredFields = ['companyId', 'date', 'paidBy', 'paidTo', 'netAmount', 'currency', 'accountId', 'accountType']
+    const requiredFields = [
+      'date', 'paidBy', 'paidTo', 'netAmount', 'incomingAmount', 'outgoingAmount',
+      'currency', 'baseCurrency', 'baseCurrencyAmount', 'exchangeRate',
+      'accountId', 'accountType', 'category', 'companyId'
+    ];
+
     for (const field of requiredFields) {
-      if (!data[field]) {
+      if (body[field] === undefined || body[field] === null) {
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }
-        )
+        );
       }
     }
 
-    // Create transaction
+    // Validate enum values
+    if (!['bank', 'wallet'].includes(body.accountType)) {
+      return NextResponse.json(
+        { error: 'Invalid accountType. Must be "bank" or "wallet"' },
+        { status: 400 }
+      );
+    }
+
+    if (body.status && !['PENDING', 'CLEARED', 'CANCELLED'].includes(body.status)) {
+      return NextResponse.json(
+        { error: 'Invalid status. Must be PENDING, CLEARED, or CANCELLED' },
+        { status: 400 }
+      );
+    }
+
+    // Create the transaction
     const transaction = await prisma.transaction.create({
       data: {
-        ...data,
-        date: new Date(data.date),
-        netAmount: parseFloat(data.netAmount),
-        incomingAmount: data.incomingAmount ? parseFloat(data.incomingAmount) : null,
-        outgoingAmount: data.outgoingAmount ? parseFloat(data.outgoingAmount) : null,
-        baseCurrencyAmount: parseFloat(data.baseCurrencyAmount || data.netAmount),
-        exchangeRate: data.exchangeRate ? parseFloat(data.exchangeRate) : null,
-        tags: data.tags || [],
-        status: data.status || 'CLEARED',
-        reconciliationStatus: data.reconciliationStatus || 'UNRECONCILED',
-        approvalStatus: data.approvalStatus || 'APPROVED',
-        isRecurring: data.isRecurring || false,
-        createdBy: data.createdBy,
+        date: new Date(body.date),
+        paidBy: body.paidBy,
+        paidTo: body.paidTo,
+        netAmount: body.netAmount,
+        incomingAmount: body.incomingAmount,
+        outgoingAmount: body.outgoingAmount,
+        currency: body.currency,
+        baseCurrency: body.baseCurrency,
+        baseCurrencyAmount: body.baseCurrencyAmount,
+        exchangeRate: body.exchangeRate,
+        accountId: body.accountId,
+        accountType: body.accountType,
+        reference: body.reference || null,
+        category: body.category,
+        description: body.description || null,
+        linkedEntryId: body.linkedEntryId || null,
+        linkedEntryType: body.linkedEntryType || null,
+        status: body.status || 'PENDING',
+        reconciliationStatus: body.reconciliationStatus || 'UNRECONCILED',
+        approvalStatus: body.approvalStatus || 'PENDING',
+        companyId: body.companyId,
+        isDeleted: false,
       },
       include: {
         company: {
-          select: { id: true, tradingName: true, legalName: true }
-        },
-        companyAccount: {
-          select: { id: true, name: true, type: true, currency: true }
+          select: {
+            id: true,
+            tradingName: true,
+            legalName: true,
+          }
         },
         linkedEntry: {
-          select: { id: true, type: true, category: true, description: true }
+          select: {
+            id: true,
+            type: true,
+            category: true,
+            amount: true,
+            currency: true,
+            description: true,
+          }
+        },
+        attachments: {
+          select: {
+            id: true,
+            fileName: true,
+            filePath: true,
+            fileSize: true,
+            mimeType: true,
+            createdAt: true,
+          }
         }
       }
-    })
+    });
 
-    return NextResponse.json(transaction, { status: 201 })
+    return NextResponse.json(transaction, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating transaction:', error)
+    console.error('POST /api/transactions error:', error);
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'A transaction with this data already exists' },
+          { status: 409 }
+        );
+      }
+      if (error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'Referenced company, account, or entry does not exist' },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: 'Failed to create transaction' },
       { status: 500 }
-    )
+    );
   }
 }

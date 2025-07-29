@@ -1,0 +1,30 @@
+[
+  {
+    "id": "cmdezjew300009k4fn5pe3evd",
+    "code": "TAX_10",
+    "name": "GST 10",
+    "description": "Goods Sold Tax 10 %",
+    "rate": 10,
+    "category": "standard",
+    "applicability": "[\"sales\"]",
+    "isActive": true,
+    "isDefault": false,
+    "companyId": null,
+    "createdAt": 1753215999267,
+    "updatedAt": 1753215999267
+  },
+  {
+    "id": "cmdf05ro300009klpgo3mnt7z",
+    "code": "TAX4",
+    "name": "TAX 4 %",
+    "description": "tax test 4 %",
+    "rate": 4,
+    "category": "exempt",
+    "applicability": "[\"assets\"]",
+    "isActive": true,
+    "isDefault": false,
+    "companyId": null,
+    "createdAt": 1753217042259,
+    "updatedAt": 1753217042259
+  }
+]

@@ -185,13 +185,59 @@ export async function GET(request: NextRequest) {
       prisma.invoice.count({ where }),
     ])
     
-    // Resolve polymorphic payment sources and add payment method names
+    // Resolve payment method names with priority: BookkeepingEntry > PaymentSources > PaymentMethodInvoices
     const invoicesWithResolvedPaymentMethods = await Promise.all(
       invoices.map(async (invoice) => {
         const paymentMethodNames = []
         
-        // Process new polymorphic payment sources
-        if (invoice.paymentSources && invoice.paymentSources.length > 0) {
+        // For PAID invoices, check BookkeepingEntry records first (most accurate)
+        if (invoice.status === 'PAID') {
+          try {
+            const bookkeepingEntries = await prisma.bookkeepingEntry.findMany({
+              where: {
+                invoiceId: invoice.id,
+                isFromInvoice: true
+              },
+              select: {
+                accountType: true,
+                accountId: true
+              }
+            })
+            
+            for (const entry of bookkeepingEntries) {
+              if (entry.accountId) {
+                let name = ''
+                
+                if (entry.accountType === 'bank') {
+                  const bankAccount = await prisma.bankAccount.findUnique({
+                    where: { id: entry.accountId },
+                    select: { bankName: true, currency: true }
+                  })
+                  if (bankAccount) {
+                    name = `${bankAccount.bankName} (${bankAccount.currency})`
+                  }
+                } else if (entry.accountType === 'wallet') {
+                  const digitalWallet = await prisma.digitalWallet.findUnique({
+                    where: { id: entry.accountId },
+                    select: { currency: true }
+                  })
+                  if (digitalWallet) {
+                    name = `CRYPTO (${digitalWallet.currency})`
+                  }
+                }
+                
+                if (name && !paymentMethodNames.includes(name)) {
+                  paymentMethodNames.push(name)
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Error resolving BookkeepingEntry payment methods for invoice ${invoice.id}:`, error)
+          }
+        }
+        
+        // If no payment methods found from BookkeepingEntry, process polymorphic payment sources
+        if (paymentMethodNames.length === 0 && invoice.paymentSources && invoice.paymentSources.length > 0) {
           for (const source of invoice.paymentSources) {
             try {
               let name = ''
@@ -210,7 +256,7 @@ export async function GET(request: NextRequest) {
                   select: { walletType: true, walletName: true, currency: true }
                 })
                 if (digitalWallet) {
-                  name = `${digitalWallet.walletType} (${digitalWallet.currency})`
+                  name = `CRYPTO (${digitalWallet.currency})`
                 }
               } else if (source.sourceType === 'PAYMENT_METHOD') {
                 const paymentMethod = await prisma.paymentMethod.findUnique({
@@ -222,7 +268,7 @@ export async function GET(request: NextRequest) {
                 }
               }
               
-              if (name) {
+              if (name && !paymentMethodNames.includes(name)) {
                 paymentMethodNames.push(name)
               }
             } catch (error) {
@@ -231,11 +277,14 @@ export async function GET(request: NextRequest) {
           }
         }
         
-        // Fallback to old payment method invoices if no polymorphic sources
+        // Final fallback to old payment method invoices
         if (paymentMethodNames.length === 0 && invoice.paymentMethodInvoices) {
           for (const pmi of invoice.paymentMethodInvoices) {
             if (pmi.paymentMethod) {
-              paymentMethodNames.push(`${pmi.paymentMethod.name} (${pmi.paymentMethod.currency})`)
+              const name = `${pmi.paymentMethod.name} (${pmi.paymentMethod.currency})`
+              if (!paymentMethodNames.includes(name)) {
+                paymentMethodNames.push(name)
+              }
             }
           }
         }

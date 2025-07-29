@@ -33,7 +33,6 @@ import Target from "lucide-react/dist/esm/icons/target";
 import BookOpen from "lucide-react/dist/esm/icons/book-open";
 import Landmark from "lucide-react/dist/esm/icons/landmark";
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
-import MonitorSpeaker from "lucide-react/dist/esm/icons/monitor-speaker";
 import {
   Sidebar,
   SidebarContent,
@@ -99,9 +98,7 @@ const navigation = [
             ]
           },
           { name: "Entries", href: "/accounting/bookkeeping/entries", icon: Receipt },
-          { name: "Journal", href: "/accounting/bookkeeping/journal", icon: BookOpen },
           { name: "Transactions", href: "/accounting/bookkeeping/transactions", icon: ArrowRightLeft },
-          { name: "Fixed Assets", href: "/accounting/fixed-assets", icon: MonitorSpeaker },
           { name: "Cash Flow", href: "/accounting/bookkeeping/cash-flow", icon: TrendingUp },
           { name: "Balances", href: "/accounting/bookkeeping/balances", icon: Landmark },
         ]

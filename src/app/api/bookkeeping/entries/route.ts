@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     
     // Filter parameters
     const companyId = searchParams.get('companyId')
-    const type = searchParams.get('type') as 'INCOME' | 'EXPENSE' | null
+    const type = searchParams.get('type') as 'revenue' | 'expense' | null
     const category = searchParams.get('category')
     const searchTerm = searchParams.get('search') || ''
     const dateFrom = searchParams.get('dateFrom')
@@ -28,14 +28,15 @@ export async function GET(request: NextRequest) {
     const where: Prisma.BookkeepingEntryWhereInput = {}
     
     // Company filter (required)
-    if (companyId) {
+    if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId)
-    } else {
+    } else if (!companyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
       )
     }
+    // If companyId is 'all', don't add a company filter (show all companies)
     
     // Type filter
     if (type) {
@@ -129,14 +130,7 @@ export async function GET(request: NextRequest) {
               logo: true,
             },
           },
-          account: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              currency: true,
-            },
-          },
+          // account: removed due to foreign key constraint removal
           transaction: true,
         },
       }),
@@ -156,12 +150,12 @@ export async function GET(request: NextRequest) {
     // Calculate income and expense totals
     const [incomeStats, expenseStats] = await Promise.all([
       prisma.bookkeepingEntry.aggregate({
-        where: { ...where, type: 'INCOME' },
+        where: { ...where, type: 'revenue' },
         _sum: { amount: true },
         _count: { _all: true },
       }),
       prisma.bookkeepingEntry.aggregate({
-        where: { ...where, type: 'EXPENSE' },
+        where: { ...where, type: 'expense' },
         _sum: { amount: true, cogs: true, cogsPaid: true },
         _count: { _all: true },
       }),

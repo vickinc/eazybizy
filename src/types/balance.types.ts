@@ -41,6 +41,9 @@ export interface CompanyAccountBalance {
   lastTransactionDate?: string;
 }
 
+// Alias for backward compatibility
+export type AccountBalance = CompanyAccountBalance;
+
 export interface BalanceFilterState {
   selectedPeriod: FilterPeriod;
   customDateRange: {

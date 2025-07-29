@@ -250,35 +250,6 @@ export default function AccountingPage() {
           </Link>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <Link href="/accounting/fixed-assets">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <CardTitle>Fixed Assets</CardTitle>
-                  <CardDescription>Asset register & depreciation</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
-                Track fixed assets, calculate depreciation, and manage 
-                disposal records for your business equipment and property.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  <span className="font-medium">Asset register</span> managed
-                </div>
-                <Button variant="outline" size="sm">
-                  Manage Assets
-                </Button>
-              </div>
-            </CardContent>
-          </Link>
-        </Card>
       </div>
 
       {/* Quick Actions */}

@@ -1,6 +1,5 @@
 export * from './useBookkeepingManagement';
 export * from './useChartOfAccountsManagement';
-export * from './useFixedAssetsManagement';
 export * from './useMobile';
 export * from './useInvoicesManagement';
 export * from './useTaxTreatmentManagementAPI';

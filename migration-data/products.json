@@ -1,0 +1,16 @@
+[
+  {
+    "id": "cmdhl9tuv00099k86wsy7pe3f",
+    "name": "Unlimited Internet",
+    "description": null,
+    "price": 10,
+    "currency": "USD",
+    "cost": 5,
+    "costCurrency": "USD",
+    "isActive": true,
+    "companyId": 15,
+    "vendorId": null,
+    "createdAt": 1753373436006,
+    "updatedAt": 1753373436006
+  }
+]

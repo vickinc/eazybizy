@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
-import SearchIcon from "lucide-react/dist/esm/icons/earch";
+import SearchIcon from "lucide-react/dist/esm/icons/search";
 
-import { cn } from "@/utils"
+import { cn } from "@/utils/index"
 import {
   Dialog,
   DialogContent,
@@ -90,9 +90,10 @@ function CommandList({
     <CommandPrimitive.List
       data-slot="command-list"
       className={cn(
-        "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto",
+        "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto overscroll-contain focus:outline-none",
         className
       )}
+      tabIndex={0}
       {...props}
     />
   )
