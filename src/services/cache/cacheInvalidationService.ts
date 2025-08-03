@@ -423,6 +423,33 @@ export class CacheInvalidationService {
   }
 
   /**
+   * Invalidate all cashflow-related caches
+   */
+  static async invalidateCashflow(): Promise<number> {
+    try {
+      const deletedCount = await CacheService.delPattern('cashflow:*')
+      return deletedCount
+    } catch (error) {
+      console.error('Failed to invalidate cashflow caches:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Invalidate cashflow caches for a specific company
+   */
+  static async invalidateCashflowCache(companyId: number): Promise<void> {
+    try {
+      await Promise.all([
+        this.invalidateCashflow(),
+        CacheService.delPattern(`cashflow:*${companyId}*`),
+      ])
+    } catch (error) {
+      console.error(`Failed to invalidate cashflow cache for company ${companyId}:`, error)
+    }
+  }
+
+  /**
    * Smart invalidation for chart of accounts mutations
    */
   static async invalidateOnChartOfAccountsMutation(accountId?: string | number, companyId?: string | number): Promise<void> {

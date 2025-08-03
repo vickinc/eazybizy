@@ -123,15 +123,6 @@ export async function GET(request: NextRequest) {
               legalName: true,
             },
           },
-          companyAccount: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              currency: true,
-              currentBalance: true,
-            },
-          },
           linkedEntry: {
             select: {
               id: true,

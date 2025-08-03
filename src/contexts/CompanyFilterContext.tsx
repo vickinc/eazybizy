@@ -77,18 +77,27 @@ function CompanyFilterProviderInner({ children }: { children: React.ReactNode })
       localStorage.setItem('selectedCompanyId', companyId.toString());
     }
     
-    // Update URL search params without navigation
-    const params = new URLSearchParams(searchParams.toString());
-    if (companyId === 'all') {
-      params.delete('companyId');
-    } else {
-      params.set('companyId', companyId.toString());
-    }
-    
-    const newUrl = `${pathname}${params.toString() ? '?' + params.toString() : ''}`;
-    
-    // Use replaceState to update URL without causing navigation/page reload
-    window.history.replaceState(null, '', newUrl);
+    // Defer URL update to avoid interfering with current page navigation
+    // Use a timeout to ensure the state update completes first
+    setTimeout(() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (companyId === 'all') {
+          params.delete('companyId');
+        } else {
+          params.set('companyId', companyId.toString());
+        }
+        
+        const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+        
+        // Only update URL if it's actually different to avoid unnecessary history changes
+        if (newUrl !== window.location.pathname + window.location.search) {
+          window.history.replaceState(null, '', newUrl);
+        }
+      } catch (error) {
+        console.warn('Failed to update URL with company filter:', error);
+      }
+    }, 0);
   };
   
   // Use API-based companies hook instead of localStorage

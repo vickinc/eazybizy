@@ -1,24 +1,85 @@
 import { Transaction, BankAccount, DigitalWallet } from '@/types';
 import { ManualCashflowEntry } from '@/services/business/cashflowBusinessService';
+import { CashflowApiService } from '@/services/api/cashflowApiService';
 
 export class CashflowStorageService {
-  // Manual cashflow entries
-  static getManualCashflowEntries(): ManualCashflowEntry[] {
+  // Check if we should use localStorage (for migration purposes)
+  private static shouldUseLocalStorage(): boolean {
+    // Check if there's data in localStorage that hasn't been migrated yet
+    try {
+      const saved = localStorage.getItem('app-manual-cashflow');
+      return saved && JSON.parse(saved).length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  // Manual cashflow entries - now uses API with localStorage fallback for migration
+  static async getManualCashflowEntries(companyId?: number | 'all'): Promise<ManualCashflowEntry[]> {
+    try {
+      // Check if we need to migrate from localStorage first
+      if (this.shouldUseLocalStorage()) {
+        const localEntries = this.getLocalStorageEntries();
+        
+        // Attempt migration
+        if (localEntries.length > 0) {
+          console.log('Migrating manual cashflow entries from localStorage to database...');
+          const migrationResult = await CashflowApiService.migrateFromLocalStorage(localEntries);
+          
+          if (migrationResult.success > 0) {
+            console.log(`Successfully migrated ${migrationResult.success} entries`);
+            // Clear localStorage after successful migration
+            localStorage.removeItem('app-manual-cashflow');
+          }
+          
+          if (migrationResult.failed > 0) {
+            console.error(`Failed to migrate ${migrationResult.failed} entries:`, migrationResult.errors);
+          }
+        }
+      }
+
+      // Fetch from API
+      const filters = companyId ? { companyId } : undefined;
+      const response = await CashflowApiService.getManualCashflowEntries(filters);
+      
+      // Transform the response to match the expected format
+      return response.data.map(entry => ({
+        id: entry.id,
+        companyId: entry.companyId,
+        accountId: entry.accountId,
+        accountType: entry.accountType,
+        type: entry.type,
+        amount: entry.amount,
+        currency: entry.currency,
+        period: entry.period,
+        description: entry.description,
+        notes: entry.notes,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+      }));
+    } catch (error) {
+      console.error('Error loading manual cashflow entries from API:', error);
+      
+      // Fallback to localStorage if API fails
+      return this.getLocalStorageEntries();
+    }
+  }
+
+  // Helper method to get entries from localStorage
+  private static getLocalStorageEntries(): ManualCashflowEntry[] {
     try {
       const saved = localStorage.getItem('app-manual-cashflow');
       return saved ? JSON.parse(saved) : [];
     } catch (error) {
-      console.error('Error loading manual cashflow entries:', error);
+      console.error('Error loading manual cashflow entries from localStorage:', error);
       return [];
     }
   }
 
+  // Save is now a no-op since we're using the API
   static saveManualCashflowEntries(entries: ManualCashflowEntry[]): void {
-    try {
-      localStorage.setItem('app-manual-cashflow', JSON.stringify(entries));
-    } catch (error) {
-      console.error('Error saving manual cashflow entries:', error);
-    }
+    // No-op - entries are now saved via API
+    console.log('Manual cashflow entries are now saved via API');
   }
 
   // Transactions (used for automatic cashflow calculation)
@@ -55,7 +116,7 @@ export class CashflowStorageService {
   }
 
   // Load all cashflow-related data in one go
-  static async loadAllCashflowData(): Promise<{
+  static async loadAllCashflowData(companyId?: number | 'all'): Promise<{
     transactions: Transaction[];
     bankAccounts: BankAccount[];
     digitalWallets: DigitalWallet[];
@@ -66,7 +127,7 @@ export class CashflowStorageService {
         Promise.resolve(this.getTransactions()),
         Promise.resolve(this.getBankAccounts()),
         Promise.resolve(this.getDigitalWallets()),
-        Promise.resolve(this.getManualCashflowEntries())
+        this.getManualCashflowEntries(companyId)
       ]);
 
       return {

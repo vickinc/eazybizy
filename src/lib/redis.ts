@@ -131,6 +131,11 @@ export const CacheKeys = {
     list: (filters: Record<string, any>) => `digital-wallets:list:${JSON.stringify(filters)}`,
     item: (id: string | number) => `digital-wallets:item:${id}`,
   },
+  cashflow: {
+    list: (filters: Record<string, any>) => `cashflow:list:${JSON.stringify(filters)}`,
+    item: (id: string | number) => `cashflow:item:${id}`,
+    summary: (filters: Record<string, any>) => `cashflow:summary:${JSON.stringify(filters)}`,
+  },
 }
 
 // Cache TTL constants (in seconds)
@@ -182,6 +187,11 @@ export const CacheTTL = {
   digitalWallets: {
     list: 30 * 60,      // 30 minutes (wallets rarely change)
     item: 60 * 60,      // 60 minutes
+  },
+  cashflow: {
+    list: 5 * 60,       // 5 minutes (cashflow is dynamic)
+    item: 10 * 60,      // 10 minutes
+    summary: 5 * 60,    // 5 minutes
   },
 }
 

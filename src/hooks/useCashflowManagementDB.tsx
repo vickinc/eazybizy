@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Transaction, BankAccount, DigitalWallet, Company } from '@/types';
-import { CashflowStorageService } from '@/services/storage/cashflowStorageService';
 import { CashflowApiService } from '@/services/api/cashflowApiService';
 import { 
   CashflowBusinessService,
@@ -17,7 +17,7 @@ import {
   EnhancedDigitalWallet
 } from '@/services/business/cashflowBusinessService';
 
-export interface CashflowManagementHook {
+export interface CashflowManagementDBHook {
   // Core Data
   transactions: Transaction[];
   bankAccounts: BankAccount[];
@@ -38,6 +38,7 @@ export interface CashflowManagementHook {
   
   // UI State
   isLoaded: boolean;
+  isLoading: boolean;
   selectedPeriod: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom';
   customDateRange: { start: string; end: string };
   groupBy: 'none' | 'month' | 'account' | 'currency';
@@ -66,24 +67,38 @@ export interface CashflowManagementHook {
   
   handleShowManualEntryDialog: () => void;
   handleCloseManualEntryDialog: () => void;
-  handleCreateManualEntry: () => void;
+  handleCreateManualEntry: () => Promise<void>;
   
-  // Utility Functions (only formatCurrency needed for main page summary)
+  // Utility Functions
   formatCurrency: (amount: number, currency?: string) => string;
 }
 
-export const useCashflowManagement = (
+// API functions (these would normally be in a separate service file)
+const fetchTransactions = async (companyId: number | 'all') => {
+  const response = await fetch(`/api/bookkeeping/transactions?companyId=${companyId}&take=1000`);
+  if (!response.ok) throw new Error('Failed to fetch transactions');
+  return response.json();
+};
+
+const fetchBankAccounts = async (companyId: number | 'all') => {
+  const response = await fetch(`/api/bank-accounts?companyId=${companyId}`);
+  if (!response.ok) throw new Error('Failed to fetch bank accounts');
+  return response.json();
+};
+
+const fetchDigitalWallets = async (companyId: number | 'all') => {
+  const response = await fetch(`/api/digital-wallets?companyId=${companyId}`);
+  if (!response.ok) throw new Error('Failed to fetch digital wallets');
+  return response.json();
+};
+
+export const useCashflowManagementDB = (
   selectedCompany: number | 'all',
   companies: Company[]
-): CashflowManagementHook => {
-  // Core Data State
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [digitalWallets, setDigitalWallets] = useState<DigitalWallet[]>([]);
-  const [manualEntries, setManualEntries] = useState<ManualCashflowEntry[]>([]);
-  
+): CashflowManagementDBHook => {
+  const queryClient = useQueryClient();
+
   // UI State
-  const [isLoaded, setIsLoaded] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom'>('thisMonth');
   const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
   const [groupBy, setGroupBy] = useState<'none' | 'month' | 'account' | 'currency'>('account');
@@ -98,65 +113,171 @@ export const useCashflowManagement = (
     CashflowBusinessService.getInitialNewManualEntry()
   );
 
-  // Load data on mount and when company changes
-  // For SSR pages, this data may already be available through React Query cache
+  // Track if we're in the hydration phase - must be before prefetching useEffect
+  const [isHydrated, setIsHydrated] = useState(false);
+  
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoaded(false);
-        
-        // Check if we're in a client environment and have access to React Query cache
-        if (typeof window !== 'undefined') {
-          // Try to get data from React Query cache first (SSR prefetch)
-          // This will be available immediately if the page was SSR'd
-          const cachedTransactions = (window as any).__REACT_QUERY_STATE__?.queries?.find(
-            (q: any) => q.queryKey?.[0] === 'transactions'
-          )?.state?.data?.data;
-          
-          const cachedBankAccounts = (window as any).__REACT_QUERY_STATE__?.queries?.find(
-            (q: any) => q.queryKey?.[0] === 'bank-accounts'
-          )?.state?.data?.data;
-          
-          const cachedDigitalWallets = (window as any).__REACT_QUERY_STATE__?.queries?.find(
-            (q: any) => q.queryKey?.[0] === 'digital-wallets'
-          )?.state?.data?.data;
-          
-          const cachedManualEntries = (window as any).__REACT_QUERY_STATE__?.queries?.find(
-            (q: any) => q.queryKey?.[0] === 'manual-cashflow-entries'
-          )?.state?.data?.data;
-          
-          // If we have cached data from SSR, use it immediately
-          if (cachedTransactions || cachedBankAccounts || cachedDigitalWallets || cachedManualEntries) {
-            setTransactions(cachedTransactions || []);
-            setBankAccounts(cachedBankAccounts || []);
-            setDigitalWallets(cachedDigitalWallets || []);
-            setManualEntries(cachedManualEntries || []);
-            setIsLoaded(true);
-            return;
-          }
-        }
-        
-        // Fallback to API/storage if no cached data
-        const data = await CashflowStorageService.loadAllCashflowData(selectedCompany);
-        
-        setTransactions(data.transactions);
-        setBankAccounts(data.bankAccounts);
-        setDigitalWallets(data.digitalWallets);
-        setManualEntries(data.manualEntries);
-        setIsLoaded(true);
-      } catch (error) {
-        console.error('Error loading cashflow data:', error);
-        toast.error('Failed to load cashflow data');
-        setIsLoaded(true);
-      }
-    };
-    
-    loadData();
-  }, [selectedCompany]);
+    setIsHydrated(true);
+  }, []);
 
-  // No longer need to save to localStorage - handled by API
+  // React Query data fetching with optimized SSR support and intelligent prefetching
+  const {
+    data: transactionsData,
+    isLoading: isLoadingTransactions,
+    isPlaceholderData: isTransactionsPlaceholder,
+    isPending: isTransactionsPending
+  } = useQuery({
+    queryKey: ['transactions', selectedCompany],
+    queryFn: () => fetchTransactions(selectedCompany),
+    select: (data) => data?.data || [],
+    // Optimized for SSR hydration
+    placeholderData: [],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus for performance
+    refetchOnMount: false, // Don't refetch on mount if we have fresh data
+  });
 
-  // Computed data
+  const {
+    data: bankAccountsData,
+    isLoading: isLoadingBankAccounts,
+    isPlaceholderData: isBankAccountsPlaceholder,
+    isPending: isBankAccountsPending
+  } = useQuery({
+    queryKey: ['bank-accounts', selectedCompany],
+    queryFn: () => fetchBankAccounts(selectedCompany),
+    select: (data) => data?.data || [],
+    // Bank accounts change rarely, optimize accordingly
+    placeholderData: [],
+    staleTime: 30 * 60 * 1000, // 30 minutes - bank accounts change rarely
+    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const {
+    data: digitalWalletsData,
+    isLoading: isLoadingDigitalWallets,
+    isPlaceholderData: isDigitalWalletsPlaceholder,
+    isPending: isDigitalWalletsPending
+  } = useQuery({
+    queryKey: ['digital-wallets', selectedCompany],
+    queryFn: () => fetchDigitalWallets(selectedCompany),
+    select: (data) => data?.data || [],
+    // Wallets change rarely, optimize accordingly
+    placeholderData: [],
+    staleTime: 30 * 60 * 1000, // 30 minutes - wallets change rarely
+    gcTime: 60 * 60 * 1000, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const {
+    data: manualEntriesData,
+    isLoading: isLoadingManualEntries,
+    isPlaceholderData: isManualEntriesPlaceholder,
+    isPending: isManualEntriesPending
+  } = useQuery({
+    queryKey: ['manual-cashflow-entries', selectedCompany],
+    queryFn: () => CashflowApiService.getManualCashflowEntries({ companyId: selectedCompany }),
+    select: (data) => data?.data?.map(entry => ({
+      id: entry.id,
+      companyId: entry.companyId,
+      accountId: entry.accountId,
+      accountType: entry.accountType,
+      type: entry.type,
+      amount: entry.amount,
+      currency: entry.currency,
+      period: entry.period,
+      description: entry.description,
+      notes: entry.notes,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+    })) || [],
+    // Manual entries are more dynamic
+    placeholderData: [],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  // Prefetch related data for better performance
+  const prefetchRelatedData = useCallback(() => {
+    // Prefetch data for common filter combinations
+    const commonFilters = [
+      { companyId: selectedCompany, viewFilter: 'automatic' },
+      { companyId: selectedCompany, viewFilter: 'manual' },
+      { companyId: selectedCompany, filterBy: 'banks' },
+      { companyId: selectedCompany, filterBy: 'wallets' }
+    ];
+
+    commonFilters.forEach(filter => {
+      queryClient.prefetchQuery({
+        queryKey: ['cashflow-filtered-data', selectedCompany, filter],
+        queryFn: () => CashflowApiService.getManualCashflowEntries(filter),
+        staleTime: 5 * 60 * 1000,
+      });
+    });
+
+    // Prefetch period-specific data
+    const currentDate = new Date();
+    const currentMonth = currentDate.toISOString().slice(0, 7);
+    const lastMonth = new Date(currentDate.setMonth(currentDate.getMonth() - 1)).toISOString().slice(0, 7);
+
+    [currentMonth, lastMonth].forEach(period => {
+      queryClient.prefetchQuery({
+        queryKey: ['cashflow-period-data', selectedCompany, period],
+        queryFn: () => CashflowApiService.getManualCashflowEntries({ 
+          companyId: selectedCompany, 
+          period 
+        }),
+        staleTime: 10 * 60 * 1000,
+      });
+    });
+  }, [selectedCompany, queryClient]);
+
+  // Trigger prefetching after hydration
+  useEffect(() => {
+    if (isHydrated && (transactionsData?.length > 0 || bankAccountsData?.length > 0)) {
+      // Delay prefetching to avoid blocking main thread
+      const timer = setTimeout(prefetchRelatedData, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isHydrated, transactionsData, bankAccountsData, prefetchRelatedData]);
+
+  // Create manual entry mutation
+  const createManualEntryMutation = useMutation({
+    mutationFn: CashflowApiService.createManualCashflowEntry,
+    onSuccess: () => {
+      // Invalidate and refetch manual entries
+      queryClient.invalidateQueries({ queryKey: ['manual-cashflow-entries'] });
+      toast.success('Manual cashflow entry created successfully');
+    },
+    onError: (error) => {
+      console.error('Error creating manual cashflow entry:', error);
+      toast.error('Failed to create manual cashflow entry');
+    }
+  });
+
+  // Extract data with defaults
+  const transactions = transactionsData || [];
+  const bankAccounts = bankAccountsData || [];
+  const digitalWallets = digitalWalletsData || [];
+  const manualEntries = manualEntriesData || [];
+
+  // Loading state logic that handles SSR hydration properly
+  const isActuallyLoading = isLoadingTransactions || isLoadingBankAccounts || isLoadingDigitalWallets || isLoadingManualEntries;
+  
+  // During SSR and initial hydration, assume we have data (prevents loading screen flash)
+  // Only show loading after hydration if we're actually loading and have no data
+  const hasData = transactions.length > 0 || bankAccounts.length > 0 || digitalWallets.length > 0 || manualEntries.length > 0;
+  
+  // Show loading immediately on navigation for better UX, then rely on cached/SSR data
+  const isLoading = isHydrated ? (isActuallyLoading && !hasData) : isActuallyLoading;
+  const isLoaded = isHydrated ? !isLoading : !isActuallyLoading; // Show skeleton during initial load
+
+  // Computed data using business service
   const filteredTransactions = useMemo(() => {
     return CashflowBusinessService.getFilteredTransactions(
       transactions,
@@ -306,8 +427,7 @@ export const useCashflowManagement = (
     }
 
     try {
-      // Create via API
-      const createdEntry = await CashflowApiService.createManualCashflowEntry({
+      await createManualEntryMutation.mutateAsync({
         companyId: newManualEntry.companyId,
         accountId: newManualEntry.accountId,
         accountType: newManualEntry.accountType,
@@ -319,33 +439,14 @@ export const useCashflowManagement = (
         notes: newManualEntry.notes,
       });
 
-      // Convert API response to local format
-      const entry: ManualCashflowEntry = {
-        id: createdEntry.id,
-        companyId: createdEntry.companyId,
-        accountId: createdEntry.accountId,
-        accountType: createdEntry.accountType,
-        type: createdEntry.type,
-        amount: createdEntry.amount,
-        currency: createdEntry.currency,
-        period: createdEntry.period,
-        description: createdEntry.description,
-        notes: createdEntry.notes,
-        createdAt: createdEntry.createdAt,
-        updatedAt: createdEntry.updatedAt,
-      };
-
-      setManualEntries(prev => [entry, ...prev]);
       setShowManualEntryDialog(false);
       setNewManualEntry(CashflowBusinessService.getInitialNewManualEntry());
-      toast.success('Manual cashflow entry created successfully');
     } catch (error) {
-      console.error('Error creating manual cashflow entry:', error);
-      toast.error('Failed to create manual cashflow entry');
+      // Error already handled by mutation
     }
-  }, [newManualEntry]);
+  }, [newManualEntry, createManualEntryMutation]);
 
-  // Utility functions (minimal - only what main page needs)
+  // Utility functions
   const formatCurrency = useCallback((amount: number, currency: string = 'USD'): string => {
     return CashflowBusinessService.formatCurrency(amount, currency);
   }, []);
@@ -371,6 +472,7 @@ export const useCashflowManagement = (
     
     // UI State
     isLoaded,
+    isLoading,
     selectedPeriod,
     customDateRange,
     groupBy,
@@ -401,7 +503,7 @@ export const useCashflowManagement = (
     handleCloseManualEntryDialog,
     handleCreateManualEntry,
     
-    // Utility Functions (minimal - only what main page needs)
+    // Utility Functions
     formatCurrency
   };
 };

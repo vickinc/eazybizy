@@ -1,170 +1,237 @@
-"use client";
+import { redirect } from 'next/navigation';
+import { authenticateRequest } from '@/lib/api-auth';
+import { QueryClient, dehydrate } from '@tanstack/react-query';
+import { HydrationBoundary } from '@tanstack/react-query';
+import { CashflowSSRService } from '@/services/database/cashflowSSRService';
+import { CompanySSRService } from '@/services/database/companySSRService';
+import { defaultQueryOptions } from '@/lib/queryOptions';
+import CashflowClient from './CashflowClient';
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import TrendingUp from "lucide-react/dist/esm/icons/trending-up";
-import Plus from "lucide-react/dist/esm/icons/plus";
-import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
-import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
-import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
-import { useCashflowManagement } from '@/hooks/useCashflowManagement';
-import { CashflowFilterBar } from '@/components/features/CashflowFilterBar';
-import { CashflowSummaryCards } from '@/components/features/CashflowSummaryCards';
-import { CashflowAccountsList } from '@/components/features/CashflowAccountsList';
-import { ManualEntryDialog } from '@/components/features/ManualEntryDialog';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
+// Force dynamic rendering for private data
+export const dynamic = 'force-dynamic';
 
-
-export default function CashflowPage() {
-  const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
+export default async function CashflowPage() {
+  const startTime = Date.now();
   
-  // Use the comprehensive hook for all state and business logic
-  const {
-    // Computed Data
-    enhancedGroupedCashflow,
-    enhancedBankAccounts,
-    enhancedDigitalWallets,
-    cashflowSummary,
-    pageTitle,
-    pageDescription,
-    
-    // UI State
-    isLoaded,
-    selectedPeriod,
-    customDateRange,
-    groupBy,
-    filterBy,
-    viewFilter,
-    groupedView,
-    searchTerm,
-    expandedGroups,
-    isAllExpanded,
-    showManualEntryDialog,
-    newManualEntry,
-    
-    // Event Handlers
-    setSelectedPeriod,
-    setCustomDateRange,
-    setGroupBy,
-    setFilterBy,
-    setViewFilter,
-    setGroupedView,
-    setSearchTerm,
-    updateNewManualEntry,
-    
-    toggleGroupExpansion,
-    toggleAllExpansion,
-    
-    handleShowManualEntryDialog,
-    handleCloseManualEntryDialog,
-    handleCreateManualEntry,
-    
-    // Utility Functions (minimal - only what main page needs)
-    formatCurrency
-  } = useCashflowManagement(globalSelectedCompany || 'all', companies);
-
-  if (!isLoaded) {
-    return <LoadingScreen />;
+  // Server-side authentication check only
+  const { user, error } = await authenticateRequest();
+  
+  if (!user || error) {
+    // Redirect to login if not authenticated
+    redirect('/auth/login');
   }
 
+  // Create server-side QueryClient with shared configuration
+  const queryClient = new QueryClient({
+    defaultOptions: defaultQueryOptions,
+  });
+
+  // Comprehensive server-side data pre-fetching for optimal performance
+  // Execute multiple queries in parallel for maximum efficiency
+  try {
+    console.log('[CashflowPage] Starting comprehensive SSR data prefetch...');
+    
+    // Execute all data fetching operations in parallel for optimal performance
+    const [
+      // Core cashflow data with larger initial dataset
+      cashflowData,
+      // Companies data for context and filtering
+      companiesData,
+      // Additional cashflow data for different periods (cache warming)
+      thisMonthData,
+      lastMonthData,
+      thisYearData
+    ] = await Promise.allSettled([
+      // Primary cashflow data with more comprehensive initial load
+      CashflowSSRService.getCashflowDataForSSR({
+        companyId: 'all',
+        take: 50, // Increased from 10 to 50 for better initial experience
+        period: undefined,
+      }),
+      
+      // Companies data for dropdown and context
+      CompanySSRService.getCompaniesForSSR({
+        skip: 0,
+        take: 100, // All companies for filter dropdown
+        searchTerm: '',
+        status: 'Active',
+        sortField: 'updatedAt',
+        sortDirection: 'desc'
+      }),
+      
+      // Cache warming: Pre-fetch common period filters
+      CashflowSSRService.getCashflowDataForSSR({
+        companyId: 'all',
+        take: 30,
+        period: new Date().toISOString().slice(0, 7), // Current month YYYY-MM
+      }),
+      
+      CashflowSSRService.getCashflowDataForSSR({
+        companyId: 'all',
+        take: 30,
+        period: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7), // Last month
+      }),
+      
+      CashflowSSRService.getCashflowDataForSSR({
+        companyId: 'all',
+        take: 50,
+        periodFrom: new Date(new Date().getFullYear(), 0, 1).toISOString(), // This year start
+        periodTo: new Date().toISOString(), // Now
+      })
+    ]);
+
+    // Handle primary cashflow data
+    if (cashflowData.status === 'fulfilled') {
+      const data = cashflowData.value;
+      
+      // Prefetch main dataset with larger cache
+      queryClient.setQueryData(
+        ['transactions', 'all'],
+        {
+          data: data.transactions,
+          total: data.transactions.length
+        }
+      );
+
+      queryClient.setQueryData(
+        ['bank-accounts', 'all'],
+        {
+          data: data.bankAccounts,
+          total: data.bankAccounts.length
+        }
+      );
+
+      queryClient.setQueryData(
+        ['digital-wallets', 'all'],
+        {
+          data: data.digitalWallets,
+          total: data.digitalWallets.length
+        }
+      );
+
+      queryClient.setQueryData(
+        ['manual-cashflow-entries', 'all'],
+        {
+          data: data.manualEntries,
+          total: data.manualEntries.length
+        }
+      );
+
+      queryClient.setQueryData(
+        ['cashflow-summary', 'all'],
+        data.summary
+      );
+
+      // Additional prefetching for common query patterns
+      queryClient.setQueryData(
+        ['cashflow-data', 'all', 'full'],
+        data
+      );
+
+      console.log(`[CashflowPage] Primary data prefetched: ${data.transactions.length} transactions, ${data.bankAccounts.length} banks, ${data.digitalWallets.length} wallets, ${data.manualEntries.length} manual entries`);
+    } else {
+      console.error('[CashflowPage] Primary cashflow data prefetch failed:', cashflowData.reason);
+    }
+
+    // Handle companies data
+    if (companiesData.status === 'fulfilled') {
+      const companies = companiesData.value;
+      
+      queryClient.setQueryData(
+        ['companies', { searchTerm: '', status: 'Active' }],
+        {
+          data: companies.data,
+          total: companies.total,
+          pagination: companies.pagination
+        }
+      );
+
+      // Prefetch for company filter dropdown
+      queryClient.setQueryData(
+        ['companies', 'fast'],
+        {
+          data: companies.data,
+          total: companies.total
+        }
+      );
+
+      console.log(`[CashflowPage] Companies data prefetched: ${companies.data.length} companies`);
+    } else {
+      console.error('[CashflowPage] Companies data prefetch failed:', companiesData.reason);
+    }
+
+    // Handle period-specific data for cache warming
+    const periodResults = [
+      { data: thisMonthData, period: 'thisMonth' },
+      { data: lastMonthData, period: 'lastMonth' },
+      { data: thisYearData, period: 'thisYear' }
+    ];
+
+    periodResults.forEach(({ data, period }) => {
+      if (data.status === 'fulfilled') {
+        // Cache period-specific summary data
+        queryClient.setQueryData(
+          ['cashflow-summary', 'all', period],
+          data.value.summary
+        );
+
+        // Cache period-specific transaction counts
+        queryClient.setQueryData(
+          ['cashflow-period-data', 'all', period],
+          {
+            transactionCount: data.value.transactions.length,
+            manualEntryCount: data.value.manualEntries.length,
+            summary: data.value.summary
+          }
+        );
+
+        console.log(`[CashflowPage] ${period} data cached: ${data.value.transactions.length} transactions`);
+      } else {
+        console.warn(`[CashflowPage] ${period} data prefetch failed:`, data.reason);
+      }
+    });
+
+    // Additional performance optimizations
+    // Prefetch related query patterns that users commonly access
+    const currentDate = new Date();
+    const currentMonth = currentDate.toISOString().slice(0, 7);
+    const lastMonth = new Date(currentDate.setMonth(currentDate.getMonth() - 1)).toISOString().slice(0, 7);
+
+    // Cache common filter combinations
+    const commonFilters = [
+      { viewFilter: 'all', filterBy: 'all' },
+      { viewFilter: 'automatic', filterBy: 'all' },
+      { viewFilter: 'manual', filterBy: 'all' },
+      { viewFilter: 'all', filterBy: 'banks' },
+      { viewFilter: 'all', filterBy: 'wallets' }
+    ];
+
+    commonFilters.forEach(filter => {
+      queryClient.setQueryData(
+        ['cashflow-filtered-data', 'all', filter],
+        null // Placeholder to indicate this query pattern is expected
+      );
+    });
+
+    const totalPrefetchTime = Date.now() - startTime;
+    console.log(`[CashflowPage] Comprehensive SSR prefetch completed in ${totalPrefetchTime}ms with optimized caching`);
+
+    // Background cache warming for future requests (don't await this)
+    CashflowSSRService.warmCashflowCache('all').catch(error => {
+      console.warn('[CashflowPage] Background cache warming failed:', error);
+    });
+    
+  } catch (error) {
+    console.error('[CashflowPage] SSR prefetch failed:', error);
+    // Don't fail the page, just log and continue - client will handle the error
+  }
+
+  // Dehydrate the query cache to send to client
+  const dehydratedState = dehydrate(queryClient);
+
   return (
-    <div className="min-h-screen bg-lime-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 sm:mb-8">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-              {pageTitle}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 line-clamp-2">
-              {pageDescription}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <CashflowSummaryCards
-        summary={cashflowSummary}
-        formatCurrency={formatCurrency}
-      />
-
-      {/* Filters and Search */}
-      <CashflowFilterBar
-        viewFilter={viewFilter}
-        groupedView={groupedView}
-        selectedPeriod={selectedPeriod}
-        customDateRange={customDateRange}
-        filterBy={filterBy}
-        groupBy={groupBy}
-        searchTerm={searchTerm}
-        setViewFilter={setViewFilter}
-        setGroupedView={setGroupedView}
-        setSelectedPeriod={setSelectedPeriod}
-        setCustomDateRange={setCustomDateRange}
-        setFilterBy={setFilterBy}
-        setGroupBy={setGroupBy}
-        setSearchTerm={setSearchTerm}
-      />
-
-      {/* Action Buttons */}
-      <div className="mb-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-4">
-            <Button
-              className="bg-black hover:bg-gray-800 text-white"
-              onClick={handleShowManualEntryDialog}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Manual Cashflow
-            </Button>
-          </div>
-          
-          {/* Expand All Button */}
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={toggleAllExpansion}
-          >
-            {isAllExpanded ? (
-              <>
-                <Minimize2 className="h-4 w-4 mr-2" />
-                Collapse All
-              </>
-            ) : (
-              <>
-                <Maximize2 className="h-4 w-4 mr-2" />
-                Expand All
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* Cashflow Display */}
-      <CashflowAccountsList
-        enhancedGroupedCashflow={enhancedGroupedCashflow}
-        groupedView={groupedView}
-        expandedGroups={expandedGroups}
-        toggleGroupExpansion={toggleGroupExpansion}
-      />
-
-      {/* Manual Entry Dialog */}
-      <ManualEntryDialog
-        open={showManualEntryDialog}
-        onClose={handleCloseManualEntryDialog}
-        newManualEntry={newManualEntry}
-        enhancedBankAccounts={enhancedBankAccounts}
-        enhancedDigitalWallets={enhancedDigitalWallets}
-        selectedCompany={globalSelectedCompany}
-        updateNewManualEntry={updateNewManualEntry}
-        handleCreateManualEntry={handleCreateManualEntry}
-      />
-      </div>
-    </div>
+    <HydrationBoundary state={dehydratedState}>
+      <CashflowClient />
+    </HydrationBoundary>
   );
 } 

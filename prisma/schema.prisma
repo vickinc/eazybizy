@@ -56,6 +56,7 @@ model Company {
   taxTreatments         TaxTreatment[]
   transactions          Transaction[]
   vendors               Vendor[]
+  manualCashflowEntries ManualCashflowEntry[]
 
   @@index([createdAt, id])
   @@index([status, createdAt, id])
@@ -817,5 +818,32 @@ model TaxTreatment {
   @@index([rate, createdAt, id])
   @@index([createdAt, id])
   @@map("tax_treatments")
+}
+
+model ManualCashflowEntry {
+  id          String   @id @default(cuid())
+  companyId   Int
+  accountId   String
+  accountType String   // 'bank' | 'wallet'
+  type        String   // 'inflow' | 'outflow'
+  amount      Float
+  currency    String
+  period      String   // Format: YYYY-MM
+  description String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, period])
+  @@index([companyId, accountId])
+  @@index([companyId, type])
+  @@index([companyId, createdAt])
+  @@index([accountId, period])
+  @@index([accountType])
+  @@index([type])
+  @@index([period])
+  @@index([createdAt])
+  @@map("manual_cashflow_entries")
 }
 
