@@ -35,6 +35,7 @@ export interface CashflowManagementDBHook {
   cashflowSummary: CashflowSummary;
   pageTitle: string;
   pageDescription: string;
+  hasPaymentMethods: boolean;
   
   // UI State
   isLoaded: boolean;
@@ -252,11 +253,11 @@ export const useCashflowManagementDB = (
     onSuccess: () => {
       // Invalidate and refetch manual entries
       queryClient.invalidateQueries({ queryKey: ['manual-cashflow-entries'] });
-      toast.success('Manual cashflow entry created successfully');
+      toast.success('Manual cash flow entry created successfully');
     },
     onError: (error) => {
-      console.error('Error creating manual cashflow entry:', error);
-      toast.error('Failed to create manual cashflow entry');
+      console.error('Error creating manual cash flow entry:', error);
+      toast.error('Failed to create manual cash flow entry');
     }
   });
 
@@ -357,14 +358,24 @@ export const useCashflowManagementDB = (
 
   // Pre-computed display data
   const pageTitle = useMemo(() => {
+    // Prevent hydration mismatch by providing stable title during initial render
+    if (!isHydrated) {
+      return 'Cash Flow Analysis';
+    }
+    
     if (selectedCompany === 'all') {
       return 'Cash Flow Analysis';
     }
     const company = companies.find(c => c.id === selectedCompany);
     return company ? `${company.tradingName} - Cash Flow` : 'Cash Flow Analysis';
-  }, [selectedCompany, companies]);
+  }, [selectedCompany, companies, isHydrated]);
 
   const pageDescription = useMemo(() => {
+    // Prevent hydration mismatch by providing stable description during initial render
+    if (!isHydrated) {
+      return 'Track automatic and manual cash flow for all banks and wallets';
+    }
+    
     if (selectedCompany === 'all') {
       return 'Track automatic and manual cash flow for all banks and wallets across companies';
     }
@@ -372,7 +383,12 @@ export const useCashflowManagementDB = (
     return company 
       ? `Cash flow analysis for ${company.tradingName} - automatic from transactions and manual entries`
       : 'Track automatic and manual cash flow for all banks and wallets';
-  }, [selectedCompany, companies]);
+  }, [selectedCompany, companies, isHydrated]);
+
+  // Check if payment methods are available for manual entries
+  const hasPaymentMethods = useMemo(() => {
+    return bankAccounts.length > 0 || digitalWallets.length > 0;
+  }, [bankAccounts, digitalWallets]);
 
   // Event handlers
   const toggleGroupExpansion = useCallback((groupKey: string) => {
@@ -403,7 +419,7 @@ export const useCashflowManagementDB = (
 
   const handleShowManualEntryDialog = useCallback(() => {
     if (selectedCompany === 'all') {
-      toast.error('Please select a specific company to add manual cashflow entries.');
+      toast.error('Please select a specific company to add manual cash flow entries.');
       return;
     }
     setNewManualEntry(prev => ({ 
@@ -469,6 +485,7 @@ export const useCashflowManagementDB = (
     cashflowSummary,
     pageTitle,
     pageDescription,
+    hasPaymentMethods,
     
     // UI State
     isLoaded,

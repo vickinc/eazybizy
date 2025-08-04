@@ -106,11 +106,28 @@ export class BalanceBusinessService {
   ): { netAmount: number; totalIncoming: number; totalOutgoing: number } {
     const transactions = TransactionsStorageService.getTransactions();
     
+    // For multi-currency wallets, extract the original wallet ID
+    const originalAccountId = accountType === 'wallet' && accountId.includes('-') 
+      ? accountId.split('-')[0] 
+      : accountId;
+    
     // Filter transactions for this account and period
     const filteredTransactions = transactions.filter(transaction => {
-      // Account filter
-      if (transaction.accountId !== accountId || transaction.accountType !== accountType) {
+      // Account filter - for multi-currency wallets, match original wallet ID
+      if (transaction.accountType !== accountType) {
         return false;
+      }
+      
+      if (accountType === 'wallet' && accountId.includes('-')) {
+        // For multi-currency wallet entries, match original wallet ID
+        if (transaction.accountId !== originalAccountId) {
+          return false;
+        }
+      } else {
+        // For regular accounts (banks or single-currency wallets), exact match
+        if (transaction.accountId !== accountId) {
+          return false;
+        }
       }
 
       // Company filter
@@ -149,8 +166,23 @@ export class BalanceBusinessService {
   private static getLastTransactionDate(accountId: string, accountType: 'bank' | 'wallet'): string | undefined {
     const transactions = TransactionsStorageService.getTransactions();
     
+    // For multi-currency wallets, extract the original wallet ID
+    const originalAccountId = accountType === 'wallet' && accountId.includes('-') 
+      ? accountId.split('-')[0] 
+      : accountId;
+    
     const accountTransactions = transactions
-      .filter(t => t.accountId === accountId && t.accountType === accountType)
+      .filter(t => {
+        if (t.accountType !== accountType) return false;
+        
+        if (accountType === 'wallet' && accountId.includes('-')) {
+          // For multi-currency wallet entries, match original wallet ID
+          return t.accountId === originalAccountId;
+        } else {
+          // For regular accounts (banks or single-currency wallets), exact match
+          return t.accountId === accountId;
+        }
+      })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return accountTransactions.length > 0 ? accountTransactions[0].date : undefined;

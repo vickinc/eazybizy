@@ -425,18 +425,53 @@ export class BanksWalletsBusinessService {
     const bankAccounts = BanksWalletsStorageService.getAllBankAccounts();
     const digitalWallets = BanksWalletsStorageService.getAllDigitalWallets();
     
-    // Add explicit type metadata and unified interface for balance calculations
+    // Add bank accounts with explicit type metadata
+    const bankAccountsWithMeta = bankAccounts.map(account => ({
+      ...account,
+      name: account.bankName, // Use bank name for better identification
+      __accountType: 'bank' as const, // Explicit type metadata for reliable detection
+    }));
+
+    // Process digital wallets, handling multi-currency support
+    const walletAccountsWithMeta: any[] = [];
+    
+    digitalWallets.forEach(wallet => {
+      // Parse currencies string into array if it exists
+      let currenciesArray: string[] = [];
+      if (wallet.currencies) {
+        if (Array.isArray(wallet.currencies)) {
+          currenciesArray = wallet.currencies;
+        } else if (typeof wallet.currencies === 'string') {
+          // Parse comma-separated string into array
+          currenciesArray = wallet.currencies.split(',').map(c => c.trim()).filter(c => c.length > 0);
+        }
+      }
+      
+      // Check if wallet supports multiple currencies
+      if (currenciesArray.length > 0) {
+        // Create separate account entries for each supported currency
+        currenciesArray.forEach(currency => {
+          walletAccountsWithMeta.push({
+            ...wallet,
+            id: `${wallet.id}-${currency}`, // Unique ID for each currency
+            name: `${wallet.walletName} (${currency})`, // Include currency in name
+            currency: currency, // Override currency for this entry
+            __accountType: 'wallet' as const,
+          });
+        });
+      } else {
+        // Fall back to single currency wallet
+        walletAccountsWithMeta.push({
+          ...wallet,
+          name: wallet.walletName, // Unified name field for balance display
+          __accountType: 'wallet' as const, // Explicit type metadata for reliable detection
+        });
+      }
+    });
+    
     const unifiedAccounts = [
-      ...bankAccounts.map(account => ({
-        ...account,
-        name: account.bankName, // Use bank name for better identification
-        __accountType: 'bank' as const, // Explicit type metadata for reliable detection
-      })),
-      ...digitalWallets.map(wallet => ({
-        ...wallet,
-        name: wallet.walletName, // Unified name field for balance display
-        __accountType: 'wallet' as const, // Explicit type metadata for reliable detection
-      }))
+      ...bankAccountsWithMeta,
+      ...walletAccountsWithMeta
     ];
     
     return unifiedAccounts;
@@ -456,10 +491,22 @@ export class BanksWalletsBusinessService {
         }
       }
     } else {
-      const wallet = BanksWalletsStorageService.getAllDigitalWallets().find((w: DigitalWallet) => w.id === accountId);
+      // For wallets, handle both original ID and multi-currency ID format
+      const originalWalletId = accountId.includes('-') ? accountId.split('-')[0] : accountId;
+      const wallet = BanksWalletsStorageService.getAllDigitalWallets().find((w: DigitalWallet) => w.id === originalWalletId);
       if (wallet) {
         const company = companies.find(c => c.id === wallet.companyId);
         if (company) {
+          // If this is a multi-currency account ID, extract the currency and override
+          if (accountId.includes('-')) {
+            const currency = accountId.split('-')[1];
+            return { 
+              ...wallet, 
+              company,
+              currency: currency, // Override currency for this specific currency account
+              name: `${wallet.walletName} (${currency})` // Include currency in name
+            };
+          }
           return { ...wallet, company };
         }
       }

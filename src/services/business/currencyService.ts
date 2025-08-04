@@ -52,15 +52,20 @@ export class CurrencyService {
    * Example: 100 EUR with rate { EUR: 1.10 } becomes 110 USD.
    */
   static convertToUSD(amount: number, fromCurrency: string): number {
-    if (fromCurrency === 'USD') return amount;
-    const rates = this.getExchangeRates();
-    const rate = rates[fromCurrency]; // USD per unit of fromCurrency
+    try {
+      if (fromCurrency === 'USD') return amount;
+      const rates = this.getExchangeRates();
+      const rate = rates[fromCurrency]; // USD per unit of fromCurrency
 
-    if (typeof rate !== 'number') {
-      console.warn(`Exchange rate not found for ${fromCurrency}. Returning original amount.`);
-      return amount;
+      if (typeof rate !== 'number') {
+        console.warn(`Exchange rate not found for ${fromCurrency}. Returning original amount.`);
+        return amount;
+      }
+      return amount * rate;
+    } catch (error) {
+      console.error(`Error converting ${amount} ${fromCurrency} to USD:`, error);
+      return amount; // Return original amount on error
     }
-    return amount * rate;
   }
 
   /**

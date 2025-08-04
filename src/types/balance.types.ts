@@ -61,9 +61,16 @@ export interface BalanceSummary {
   totalAssets: number;
   totalLiabilities: number;
   netWorth: number;
+  // USD converted totals
+  totalAssetsUSD: number;
+  totalLiabilitiesUSD: number;
+  netWorthUSD: number;
+  baseCurrency: string; // Always "USD" for now
+  // Account counts
   accountCount: number;
   bankAccountCount: number;
   walletCount: number;
+  // Currency breakdown (in original currencies)
   currencyBreakdown: Record<string, {
     assets: number;
     liabilities: number;

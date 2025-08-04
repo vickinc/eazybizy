@@ -28,9 +28,9 @@ export const CashflowAccountsList: React.FC<CashflowAccountsListProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cashflow by Account</CardTitle>
+        <CardTitle>Cash Flow by Account</CardTitle>
         <CardDescription>
-          Automatic cashflow from transactions and manual entries for all bank accounts and wallets
+          Automatic cash flow from transactions and manual entries for all bank accounts and wallets
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -38,7 +38,7 @@ export const CashflowAccountsList: React.FC<CashflowAccountsListProps> = ({
           <div className="text-center py-8 text-gray-500">
             <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium mb-2">No Accounts Found</p>
-            <p>Add bank accounts or digital wallets to start tracking cashflow.</p>
+            <p>Add bank accounts or digital wallets to start tracking cash flow.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -108,7 +108,7 @@ export const CashflowAccountsList: React.FC<CashflowAccountsListProps> = ({
                                 </div>
                               </div>
 
-                              {/* Right side - Cashflow Summary */}
+                              {/* Right side - Cash Flow Summary */}
                               <div className="w-full sm:w-auto space-y-2">
                                 <div className="grid grid-cols-3 gap-4 text-center">
                                   <div>

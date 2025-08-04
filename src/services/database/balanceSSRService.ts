@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { CurrencyService } from '@/services/business/currencyService'
 
 export interface BalanceListItem {
   account: any // BankAccount | DigitalWallet
@@ -24,6 +25,11 @@ export interface BalanceListResponse {
     totalAssets: number
     totalLiabilities: number
     netWorth: number
+    // USD converted totals
+    totalAssetsUSD: number
+    totalLiabilitiesUSD: number
+    netWorthUSD: number
+    baseCurrency: string
     accountCount: number
     bankAccountCount: number
     walletCount: number
@@ -198,10 +204,51 @@ export class BalanceSSRService {
         })
       ])
 
-      // Combine accounts with type metadata for easier identification
+      // Combine accounts with type metadata and handle multi-currency wallets
+      const bankAccountsWithMeta = bankAccounts.map(account => ({ 
+        ...account, 
+        __accountType: 'bank' as const 
+      }));
+
+      // Process digital wallets, handling multi-currency support
+      const walletAccountsWithMeta: any[] = [];
+      
+      digitalWallets.forEach(wallet => {
+        // Parse currencies string into array if it exists
+        let currenciesArray: string[] = [];
+        if (wallet.currencies) {
+          if (Array.isArray(wallet.currencies)) {
+            currenciesArray = wallet.currencies;
+          } else if (typeof wallet.currencies === 'string') {
+            // Parse comma-separated string into array
+            currenciesArray = wallet.currencies.split(',').map(c => c.trim()).filter(c => c.length > 0);
+          }
+        }
+        
+        // Check if wallet supports multiple currencies
+        if (currenciesArray.length > 0) {
+          // Create separate account entries for each supported currency
+          currenciesArray.forEach(currency => {
+            walletAccountsWithMeta.push({
+              ...wallet,
+              id: `${wallet.id}-${currency}`, // Unique ID for each currency
+              walletName: `${wallet.walletName} (${currency})`, // Include currency in name
+              currency: currency, // Override currency for this entry
+              __accountType: 'wallet' as const,
+            });
+          });
+        } else {
+          // Fall back to single currency wallet
+          walletAccountsWithMeta.push({
+            ...wallet,
+            __accountType: 'wallet' as const
+          });
+        }
+      });
+
       const allAccounts = [
-        ...bankAccounts.map(account => ({ ...account, __accountType: 'bank' as const })),
-        ...digitalWallets.map(account => ({ ...account, __accountType: 'wallet' as const }))
+        ...bankAccountsWithMeta,
+        ...walletAccountsWithMeta
       ]
 
       // Get initial balances from database
@@ -320,9 +367,14 @@ export class BalanceSSRService {
     customRange: { startDate: string; endDate: string }
   ): Promise<{ netAmount: number; totalIncoming: number; totalOutgoing: number }> {
     try {
-      // Build where clause for transactions
+      // For multi-currency wallets, extract the original wallet ID
+      const originalAccountId = accountType === 'wallet' && accountId.includes('-') 
+        ? accountId.split('-')[0] 
+        : accountId;
+
+      // Build where clause for transactions - use original account ID for multi-currency wallets
       const where: Prisma.TransactionWhereInput = {
-        accountId,
+        accountId: originalAccountId,
         accountType,
         companyId
       }
@@ -394,9 +446,14 @@ export class BalanceSSRService {
    */
   private static async getLastTransactionDate(accountId: string, accountType: 'bank' | 'wallet'): Promise<string | undefined> {
     try {
+      // For multi-currency wallets, extract the original wallet ID
+      const originalAccountId = accountType === 'wallet' && accountId.includes('-') 
+        ? accountId.split('-')[0] 
+        : accountId;
+
       const lastTransaction = await prisma.transaction.findFirst({
         where: {
-          accountId,
+          accountId: originalAccountId,
           accountType,
         },
         orderBy: {
@@ -529,16 +586,72 @@ export class BalanceSSRService {
   }
 
   /**
-   * Calculate summary statistics
+   * Calculate summary statistics - count unique accounts, not currency entries
+   * Also converts totals to USD using exchange rates
    */
   private static calculateSummary(balances: BalanceListItem[]) {
+    // Calculate unique account counts
+    const uniqueAccountIds = new Set<string>();
+    const uniqueBankIds = new Set<string>();
+    const uniqueWalletIds = new Set<string>();
+
+    // Calculate USD converted totals
+    let totalAssetsUSD = 0;
+    let totalLiabilitiesUSD = 0;
+
+    balances.forEach(balance => {
+      const accountType = balance.account.__accountType;
+      let originalAccountId = balance.account.id;
+      
+      // For multi-currency wallets, extract original wallet ID
+      if (accountType === 'wallet' && originalAccountId.includes('-')) {
+        originalAccountId = originalAccountId.split('-')[0];
+      }
+      
+      uniqueAccountIds.add(originalAccountId);
+      
+      if (accountType === 'bank') {
+        uniqueBankIds.add(originalAccountId);
+      } else {
+        uniqueWalletIds.add(originalAccountId);
+      }
+
+      // Convert balance to USD for totals
+      try {
+        const balanceInUSD = CurrencyService.convertToUSD(balance.finalBalance, balance.currency);
+        if (balanceInUSD >= 0) {
+          totalAssetsUSD += balanceInUSD;
+        } else {
+          totalLiabilitiesUSD += Math.abs(balanceInUSD);
+        }
+      } catch (error) {
+        console.error('Error converting balance to USD in SSR service:', error);
+        // Fallback to original amount for totals
+        if (balance.finalBalance >= 0) {
+          totalAssetsUSD += balance.finalBalance;
+        } else {
+          totalLiabilitiesUSD += Math.abs(balance.finalBalance);
+        }
+      }
+    });
+
+    const netWorthUSD = totalAssetsUSD - totalLiabilitiesUSD;
+
     return {
+      // Original currency totals (kept for backward compatibility)
       totalAssets: balances.reduce((sum, b) => sum + (b.finalBalance >= 0 ? b.finalBalance : 0), 0),
       totalLiabilities: balances.reduce((sum, b) => sum + (b.finalBalance < 0 ? Math.abs(b.finalBalance) : 0), 0),
       netWorth: balances.reduce((sum, b) => sum + b.finalBalance, 0),
-      accountCount: balances.length,
-      bankAccountCount: balances.filter(b => b.account.__accountType === 'bank').length,
-      walletCount: balances.filter(b => b.account.__accountType === 'wallet').length,
+      // USD converted totals
+      totalAssetsUSD,
+      totalLiabilitiesUSD,
+      netWorthUSD,
+      baseCurrency: 'USD',
+      // Account counts
+      accountCount: uniqueAccountIds.size, // Count unique accounts, not currency entries
+      bankAccountCount: uniqueBankIds.size, // Count unique banks
+      walletCount: uniqueWalletIds.size, // Count unique wallets
+      // Currency breakdown (in original currencies)
       currencyBreakdown: balances.reduce((breakdown, balance) => {
         const currency = balance.currency
         if (!breakdown[currency]) {

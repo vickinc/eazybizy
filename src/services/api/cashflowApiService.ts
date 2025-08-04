@@ -135,19 +135,19 @@ export class CashflowApiService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch manual cashflow entries');
+        throw new Error(error.error || 'Failed to fetch manual cash flow entries');
       }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error fetching manual cashflow entries:', error);
+      console.error('Error fetching manual cash flow entries:', error);
       throw error;
     }
   }
 
   /**
-   * Get a single manual cashflow entry by ID
+   * Get a single manual cash flow entry by ID
    */
   static async getManualCashflowEntryById(
     id: string
@@ -162,18 +162,18 @@ export class CashflowApiService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch manual cashflow entry');
+        throw new Error(error.error || 'Failed to fetch manual cash flow entry');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching manual cashflow entry:', error);
+      console.error('Error fetching manual cash flow entry:', error);
       throw error;
     }
   }
 
   /**
-   * Create a new manual cashflow entry
+   * Create a new manual cash flow entry
    */
   static async createManualCashflowEntry(
     data: CreateManualCashflowEntryDto
@@ -189,18 +189,18 @@ export class CashflowApiService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create manual cashflow entry');
+        throw new Error(error.error || 'Failed to create manual cash flow entry');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating manual cashflow entry:', error);
+      console.error('Error creating manual cash flow entry:', error);
       throw error;
     }
   }
 
   /**
-   * Update a manual cashflow entry
+   * Update a manual cash flow entry
    */
   static async updateManualCashflowEntry(
     id: string,
@@ -217,18 +217,18 @@ export class CashflowApiService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update manual cashflow entry');
+        throw new Error(error.error || 'Failed to update manual cash flow entry');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating manual cashflow entry:', error);
+      console.error('Error updating manual cash flow entry:', error);
       throw error;
     }
   }
 
   /**
-   * Delete a manual cashflow entry
+   * Delete a manual cash flow entry
    */
   static async deleteManualCashflowEntry(id: string): Promise<void> {
     try {
@@ -241,16 +241,16 @@ export class CashflowApiService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete manual cashflow entry');
+        throw new Error(error.error || 'Failed to delete manual cash flow entry');
       }
     } catch (error) {
-      console.error('Error deleting manual cashflow entry:', error);
+      console.error('Error deleting manual cash flow entry:', error);
       throw error;
     }
   }
 
   /**
-   * Migrate manual cashflow entries from localStorage to database
+   * Migrate manual cash flow entries from localStorage to database
    */
   static async migrateFromLocalStorage(
     entries: ManualCashflowEntry[]

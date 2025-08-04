@@ -13,6 +13,7 @@ import { CashflowSummaryCards } from '@/components/features/CashflowSummaryCards
 import { CashflowAccountsList } from '@/components/features/CashflowAccountsList';
 import { ManualEntryDialog } from '@/components/features/ManualEntryDialog';
 import { CashflowSkeleton } from '@/components/ui/CashflowSkeleton';
+import { PaymentMethodsNotice } from '@/components/features/PaymentMethodsNotice';
 
 export default function CashflowClient() {
   const { selectedCompany: globalSelectedCompany, companies } = useCompanyFilter();
@@ -26,6 +27,7 @@ export default function CashflowClient() {
     cashflowSummary,
     pageTitle,
     pageDescription,
+    hasPaymentMethods,
     
     // UI State
     isLoaded,
@@ -86,6 +88,24 @@ export default function CashflowClient() {
         </div>
       </div>
 
+      {/* Payment Methods Notice */}
+      {!hasPaymentMethods && (
+        <PaymentMethodsNotice className="mb-6" />
+      )}
+
+      {/* Add Manual Cash Flow Button - positioned above summary cards */}
+      {hasPaymentMethods && (
+        <div className="mb-6">
+          <Button
+            className="bg-black hover:bg-gray-800 text-white"
+            onClick={handleShowManualEntryDialog}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Manual Cash Flow
+          </Button>
+        </div>
+      )}
+
       {/* Summary Cards */}
       <CashflowSummaryCards
         summary={cashflowSummary}
@@ -110,41 +130,28 @@ export default function CashflowClient() {
         setSearchTerm={setSearchTerm}
       />
 
-      {/* Action Buttons */}
-      <div className="mb-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-4">
-            <Button
-              className="bg-black hover:bg-gray-800 text-white"
-              onClick={handleShowManualEntryDialog}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Manual Cashflow
-            </Button>
-          </div>
-          
-          {/* Expand All Button */}
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={toggleAllExpansion}
-          >
-            {isAllExpanded ? (
-              <>
-                <Minimize2 className="h-4 w-4 mr-2" />
-                Collapse All
-              </>
-            ) : (
-              <>
-                <Maximize2 className="h-4 w-4 mr-2" />
-                Expand All
-              </>
-            )}
-          </Button>
-        </div>
+      {/* Expand All Button */}
+      <div className="mb-6 flex justify-end">
+        <Button 
+          variant="outline"
+          size="sm"
+          onClick={toggleAllExpansion}
+        >
+          {isAllExpanded ? (
+            <>
+              <Minimize2 className="h-4 w-4 mr-2" />
+              Collapse All
+            </>
+          ) : (
+            <>
+              <Maximize2 className="h-4 w-4 mr-2" />
+              Expand All
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Cashflow Display */}
+      {/* Cash Flow Display */}
       <CashflowAccountsList
         enhancedGroupedCashflow={enhancedGroupedCashflow}
         groupedView={groupedView}

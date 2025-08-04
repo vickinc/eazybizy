@@ -73,7 +73,7 @@ export const CashflowSummaryCards: React.FC<CashflowSummaryCardsProps> = ({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
                   <DollarSign className="h-4 w-4 mr-2 text-blue-600" />
-                  Net Cashflow
+                  Net Cash Flow
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -87,7 +87,7 @@ export const CashflowSummaryCards: React.FC<CashflowSummaryCardsProps> = ({
             </Card>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Net cashflow (Total Inflow - Total Outflow)</p>
+            <p>Net cash flow (Total Inflow - Total Outflow)</p>
           </TooltipContent>
         </Tooltip>
         

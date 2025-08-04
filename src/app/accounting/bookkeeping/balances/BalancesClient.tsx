@@ -15,6 +15,7 @@ import { BalanceList } from "@/components/features/BalanceList";
 import { ManualBalanceDialog } from "@/components/features/ManualBalanceDialog";
 import { BalancesSummaryDialog } from "@/components/features/BalancesSummaryDialog";
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { BalancePageSkeleton } from '@/components/ui/balance-skeleton';
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { AccountBalance } from '@/types/balance.types';
@@ -98,6 +99,20 @@ export default function BalancesClient() {
     setIsSummaryDialogOpen(false);
   };
 
+  // Helper function to count unique accounts (not currency entries)
+  const getUniqueAccountCount = (accountBalances: AccountBalance[]) => {
+    const uniqueAccountIds = new Set<string>();
+    accountBalances.forEach(balance => {
+      let originalAccountId = balance.account.id;
+      // For multi-currency wallets, extract original wallet ID
+      if (balance.account.id.includes('-')) {
+        originalAccountId = balance.account.id.split('-')[0];
+      }
+      uniqueAccountIds.add(originalAccountId);
+    });
+    return uniqueAccountIds.size;
+  };
+
   const handleExport = (format: 'csv' | 'json' = 'csv') => {
     const data = exportBalances(format);
     const blob = new Blob([data], { 
@@ -115,7 +130,7 @@ export default function BalancesClient() {
 
   // Handle initial loading state
   if (showLoader && balances.length === 0) {
-    return <LoadingScreen />;
+    return <BalancePageSkeleton />;
   }
 
   // Handle error state
@@ -254,7 +269,7 @@ export default function BalancesClient() {
             {/* Results Summary */}
             {!isLoading && hasBalances && (
               <div className="mb-4 text-sm text-gray-600">
-                Showing {filteredCount} account{filteredCount !== 1 ? 's' : ''} 
+                Showing {getUniqueAccountCount(balances)} account{getUniqueAccountCount(balances) !== 1 ? 's' : ''} 
                 {filters.groupBy !== 'none' && ` in ${Object.keys(groupedBalances).length} groups`}
               </div>
             )}

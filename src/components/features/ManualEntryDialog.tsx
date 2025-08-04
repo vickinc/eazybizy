@@ -46,9 +46,9 @@ export const ManualEntryDialog: React.FC<ManualEntryDialogProps> = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Manual Cashflow Entry</DialogTitle>
+          <DialogTitle>Add Manual Cash Flow Entry</DialogTitle>
           <DialogDescription>
-            Add a manual cashflow entry for a specific account and period
+            Add a manual cash flow entry for a specific account and period
           </DialogDescription>
         </DialogHeader>
         

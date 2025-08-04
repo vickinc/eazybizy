@@ -63,7 +63,7 @@ export const CashflowFilterBar: React.FC<CashflowFilterBarProps> = ({
                     onClick={() => setViewFilter('all')}
                     className="rounded-none border-0 px-3 h-9"
                   >
-                    All Cashflow
+                    All Cash Flow
                   </Button>
                   <Button
                     variant={viewFilter === 'automatic' ? 'default' : 'ghost'}

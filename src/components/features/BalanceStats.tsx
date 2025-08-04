@@ -12,6 +12,7 @@ import Building from "lucide-react/dist/esm/icons/building";
 import MousePointer2 from "lucide-react/dist/esm/icons/mouse-pointer-2";
 import { BalanceSummary } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
+import { BalanceStatsSkeleton } from '@/components/ui/balance-skeleton';
 
 interface BalanceStatsProps {
   summary: BalanceSummary;
@@ -43,20 +44,7 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-20"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <BalanceStatsSkeleton />;
   }
 
   const mainCurrencies = Object.keys(summary.currencyBreakdown)
@@ -88,12 +76,12 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`text-xl sm:text-2xl font-bold ${getChangeColor(summary.totalAssets)}`}>
-                  {formatCurrency(summary.totalAssets)}
+                <div className={`text-xl sm:text-2xl font-bold ${getChangeColor(summary.totalAssetsUSD)}`}>
+                  {formatCurrency(summary.totalAssetsUSD, 'USD')}
                 </div>
                 {mainCurrencies.length > 1 && (
                   <div className="text-xs text-gray-500 mt-1">
-                    Multi-currency
+                    Multi-currency (USD equivalent)
                   </div>
                 )}
                 {onSummaryClick && (
@@ -106,13 +94,13 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
-              <p>Total value of all positive balances</p>
+              <p>Total value of all positive balances (USD equivalent)</p>
               {onSummaryClick && (
                 <p className="text-blue-600 font-medium">Click to view detailed summary</p>
               )}
               {Object.keys(summary.currencyBreakdown).length > 1 && (
                 <div className="text-xs">
-                  <p className="font-medium">By Currency:</p>
+                  <p className="font-medium">By Original Currency:</p>
                   {mainCurrencies.map(currency => (
                     <p key={currency}>
                       {currency}: {formatCurrency(summary.currencyBreakdown[currency].assets, currency)}
@@ -135,12 +123,12 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`text-xl sm:text-2xl font-bold ${summary.totalLiabilities > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                  {formatCurrency(summary.totalLiabilities)}
+                <div className={`text-xl sm:text-2xl font-bold ${summary.totalLiabilitiesUSD > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                  {formatCurrency(summary.totalLiabilitiesUSD, 'USD')}
                 </div>
                 {mainCurrencies.length > 1 && (
                   <div className="text-xs text-gray-500 mt-1">
-                    Multi-currency
+                    Multi-currency (USD equivalent)
                   </div>
                 )}
               </CardContent>
@@ -148,10 +136,10 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
-              <p>Total value of all negative balances</p>
+              <p>Total value of all negative balances (USD equivalent)</p>
               {Object.keys(summary.currencyBreakdown).length > 1 && (
                 <div className="text-xs">
-                  <p className="font-medium">By Currency:</p>
+                  <p className="font-medium">By Original Currency:</p>
                   {mainCurrencies.map(currency => (
                     <p key={currency}>
                       {currency}: {formatCurrency(summary.currencyBreakdown[currency].liabilities, currency)}
@@ -174,12 +162,12 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`text-xl sm:text-2xl font-bold ${getChangeColor(summary.netWorth)}`}>
-                  {formatCurrency(summary.netWorth)}
+                <div className={`text-xl sm:text-2xl font-bold ${getChangeColor(summary.netWorthUSD)}`}>
+                  {formatCurrency(summary.netWorthUSD, 'USD')}
                 </div>
-                {summary.totalAssets > 0 && (
+                {summary.totalAssetsUSD > 0 && (
                   <div className="text-xs text-gray-500 mt-1">
-                    {((summary.netWorth / summary.totalAssets) * 100).toFixed(1)}% of assets
+                    {((summary.netWorthUSD / summary.totalAssetsUSD) * 100).toFixed(1)}% of assets
                   </div>
                 )}
               </CardContent>
@@ -187,14 +175,14 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <div className="space-y-1">
-              <p>Net worth (Assets - Liabilities)</p>
+              <p>Net worth (Assets - Liabilities in USD)</p>
               <p className="text-xs">
-                Assets: {formatCurrency(summary.totalAssets)} - 
-                Liabilities: {formatCurrency(summary.totalLiabilities)}
+                Assets: {formatCurrency(summary.totalAssetsUSD, 'USD')} - 
+                Liabilities: {formatCurrency(summary.totalLiabilitiesUSD, 'USD')}
               </p>
               {Object.keys(summary.currencyBreakdown).length > 1 && (
                 <div className="text-xs">
-                  <p className="font-medium">By Currency:</p>
+                  <p className="font-medium">By Original Currency:</p>
                   {mainCurrencies.map(currency => (
                     <p key={currency}>
                       {currency}: {formatCurrency(summary.currencyBreakdown[currency].netWorth, currency)}

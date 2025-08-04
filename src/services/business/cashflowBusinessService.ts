@@ -341,13 +341,39 @@ export class CashflowBusinessService {
     
     digitalWallets.forEach(wallet => {
       if (selectedCompany === 'all' || wallet.companyId === selectedCompany) {
-        accounts.push({
-          id: wallet.id,
-          type: 'wallet',
-          name: wallet.walletName,
-          companyId: wallet.companyId,
-          currency: wallet.currency
-        });
+        // Parse currencies string into array if it exists
+        let currenciesArray: string[] = [];
+        if (wallet.currencies) {
+          if (Array.isArray(wallet.currencies)) {
+            currenciesArray = wallet.currencies;
+          } else if (typeof wallet.currencies === 'string') {
+            // Parse comma-separated string into array
+            currenciesArray = wallet.currencies.split(',').map(c => c.trim()).filter(c => c.length > 0);
+          }
+        }
+        
+        // Check if wallet supports multiple currencies
+        if (currenciesArray.length > 0) {
+          // Create separate account entries for each supported currency
+          currenciesArray.forEach(currency => {
+            accounts.push({
+              id: `${wallet.id}-${currency}`,
+              type: 'wallet',
+              name: `${wallet.walletName} (${currency})`,
+              companyId: wallet.companyId,
+              currency: currency
+            });
+          });
+        } else {
+          // Fall back to single currency wallet
+          accounts.push({
+            id: wallet.id,
+            type: 'wallet',
+            name: wallet.walletName,
+            companyId: wallet.companyId,
+            currency: wallet.currency
+          });
+        }
       }
     });
     
@@ -405,18 +431,41 @@ export class CashflowBusinessService {
     filteredTransactions: Transaction[],
     filteredManualEntries: ManualCashflowEntry[]
   ): CashflowData {
+    // For multi-currency wallets, extract the original wallet ID
+    const originalAccountId = accountType === 'wallet' && accountId.includes('-') 
+      ? accountId.split('-')[0] 
+      : accountId;
+    
     // Calculate automatic cashflow from transactions
-    const accountTransactions = filteredTransactions.filter(t => 
-      t.accountId === accountId && t.accountType === accountType
-    );
+    // For multi-currency wallets, match both original ID and currency-specific ID
+    const accountTransactions = filteredTransactions.filter(t => {
+      if (t.accountType !== accountType) return false;
+      
+      if (accountType === 'wallet' && accountId.includes('-')) {
+        // For multi-currency wallet entries, match original wallet ID
+        return t.accountId === originalAccountId;
+      }
+      
+      // For regular accounts (banks or single-currency wallets), exact match
+      return t.accountId === accountId;
+    });
     
     const automaticInflow = accountTransactions.reduce((sum, t) => sum + (t.incomingAmount || 0), 0);
     const automaticOutflow = accountTransactions.reduce((sum, t) => sum + (t.outgoingAmount || 0), 0);
     
     // Calculate manual cashflow from manual entries
-    const accountManualEntries = filteredManualEntries.filter(e => 
-      e.accountId === accountId && e.accountType === accountType
-    );
+    // For multi-currency wallets, match both original ID and currency-specific ID
+    const accountManualEntries = filteredManualEntries.filter(e => {
+      if (e.accountType !== accountType) return false;
+      
+      if (accountType === 'wallet' && accountId.includes('-')) {
+        // For multi-currency wallet entries, match original wallet ID or currency-specific ID
+        return e.accountId === originalAccountId || e.accountId === accountId;
+      }
+      
+      // For regular accounts (banks or single-currency wallets), exact match
+      return e.accountId === accountId;
+    });
     
     const manualInflow = accountManualEntries
       .filter(e => e.type === 'inflow')
@@ -566,7 +615,10 @@ export class CashflowBusinessService {
     if (accountType === 'bank') {
       return bankAccounts.find(acc => acc.id === accountId);
     }
-    return digitalWallets.find(acc => acc.id === accountId);
+    
+    // For wallets, handle both original ID and multi-currency ID format
+    const originalWalletId = accountId.includes('-') ? accountId.split('-')[0] : accountId;
+    return digitalWallets.find(acc => acc.id === originalWalletId);
   }
 
   // Generate initial new manual entry

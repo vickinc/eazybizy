@@ -15,6 +15,8 @@ import EyeOff from "lucide-react/dist/esm/icons/eye-off";
 import { AccountBalance, GroupedBalances, BalanceGroupBy } from '@/types/balance.types';
 import { BalanceListItem } from './BalanceListItem';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
+import { CurrencyService } from '@/services/business/currencyService';
+import { BalanceListSkeleton, BalanceListItemSkeleton } from '@/components/ui/balance-skeleton';
 
 interface BalanceListProps {
   balances: AccountBalance[];
@@ -41,18 +43,33 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({
   compact = false
 }) => {
   const totalBalance = balances.reduce((sum, balance) => sum + balance.finalBalance, 0);
-  const accountCount = balances.length;
+  
+  // Count unique accounts, not currency entries
+  const uniqueAccountIds = new Set<string>();
+  balances.forEach(balance => {
+    let originalAccountId = balance.account.id;
+    // For multi-currency wallets, extract original wallet ID
+    if (balance.account.id.includes('-')) {
+      originalAccountId = balance.account.id.split('-')[0];
+    }
+    uniqueAccountIds.add(originalAccountId);
+  });
+  const accountCount = uniqueAccountIds.size;
+  
   const currencies = [...new Set(balances.map(b => b.currency))];
   
-  // Get primary currency for display (most common or first)
-  const primaryCurrency = currencies.length === 1 ? currencies[0] : 
-    currencies.reduce((a, b) => 
-      balances.filter(bal => bal.currency === a).length >= 
-      balances.filter(bal => bal.currency === b).length ? a : b
-    );
+  // Convert total balance to USD for consistent display
+  const totalBalanceUSD = balances.reduce((sum, balance) => {
+    try {
+      return sum + CurrencyService.convertToUSD(balance.finalBalance, balance.currency);
+    } catch (error) {
+      console.error('Error converting balance to USD:', error);
+      return sum + balance.finalBalance; // Fallback to original amount
+    }
+  }, 0);
 
   const formatCurrency = (amount: number) => {
-    return BalanceBusinessService.formatCurrency(amount, primaryCurrency);
+    return BalanceBusinessService.formatCurrency(amount, 'USD');
   };
 
   const getGroupIcon = () => {
@@ -93,12 +110,12 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({
           </div>
 
           <div className="text-right">
-            <div className={`font-bold text-lg ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(totalBalance)}
+            <div className={`font-bold text-lg ${totalBalanceUSD >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(totalBalanceUSD)}
             </div>
             {currencies.length > 1 && (
               <div className="text-xs text-gray-500">
-                Multi-currency
+                Multi-currency (USD equivalent)
               </div>
             )}
           </div>
@@ -118,11 +135,11 @@ export const BalanceList: React.FC<BalanceListProps> = ({
 }) => {
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
 
-  // Initialize all groups as expanded
+  // Initialize all groups as collapsed by default
   React.useEffect(() => {
     const initialExpanded: Record<string, boolean> = {};
     Object.keys(groupedBalances).forEach(groupName => {
-      initialExpanded[groupName] = true;
+      initialExpanded[groupName] = false;
     });
     setExpandedGroups(initialExpanded);
   }, [groupedBalances]);
@@ -144,21 +161,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
   };
 
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Balances</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading balances...</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <BalanceListSkeleton />;
   }
 
   if (balances.length === 0) {
@@ -190,7 +193,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
             <div>
               <CardTitle>Account Balances</CardTitle>
               <CardDescription>
-                {balances.length} account{balances.length !== 1 ? 's' : ''} found
+                {getUniqueAccountCount(balances)} account{getUniqueAccountCount(balances) !== 1 ? 's' : ''} found
               </CardDescription>
             </div>
           </div>
@@ -211,6 +214,20 @@ export const BalanceList: React.FC<BalanceListProps> = ({
     );
   }
 
+  // Helper function to count unique accounts (not currency entries)
+  const getUniqueAccountCount = (accountBalances: AccountBalance[]) => {
+    const uniqueAccountIds = new Set<string>();
+    accountBalances.forEach(balance => {
+      let originalAccountId = balance.account.id;
+      // For multi-currency wallets, extract original wallet ID
+      if (balance.account.id.includes('-')) {
+        originalAccountId = balance.account.id.split('-')[0];
+      }
+      uniqueAccountIds.add(originalAccountId);
+    });
+    return uniqueAccountIds.size;
+  };
+
   // Grouped view
   const groupNames = Object.keys(groupedBalances);
   const allExpanded = Object.values(expandedGroups).every(Boolean);
@@ -224,7 +241,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
             <div>
               <CardTitle>Account Balances</CardTitle>
               <CardDescription>
-                {balances.length} account{balances.length !== 1 ? 's' : ''} in {groupNames.length} group{groupNames.length !== 1 ? 's' : ''}
+                {getUniqueAccountCount(balances)} account{getUniqueAccountCount(balances) !== 1 ? 's' : ''} in {groupNames.length} group{groupNames.length !== 1 ? 's' : ''}
               </CardDescription>
             </div>
             

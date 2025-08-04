@@ -21,30 +21,46 @@ const DEFAULT_EXCHANGE_RATES = {
 export class SettingsStorageService {
   static getExchangeRates(): { [key: string]: number } {
     let rates: { [key: string]: number } = { 'USD': 1 };
-    const loadedFromStorage = false;
+    let loadedFromStorage = false;
 
     try {
       // SSR guard: Check if we're in browser environment
       if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-        return DEFAULT_EXCHANGE_RATES;
+        return { ...DEFAULT_EXCHANGE_RATES };
       }
 
       const fiatRatesRaw = localStorage.getItem(FIAT_RATES_STORAGE_KEY);
       if (fiatRatesRaw) {
-        const fiatData = JSON.parse(fiatRatesRaw);
-        fiatData.forEach((currency: CurrencyRate) => {
-          rates[currency.code] = currency.rate;
-        });
-        loadedFromStorage = true;
+        try {
+          const fiatData = JSON.parse(fiatRatesRaw);
+          if (Array.isArray(fiatData)) {
+            fiatData.forEach((currency: CurrencyRate) => {
+              if (currency && currency.code && typeof currency.rate === 'number') {
+                rates[currency.code] = currency.rate;
+              }
+            });
+            loadedFromStorage = true;
+          }
+        } catch (parseError) {
+          console.warn('Error parsing fiat rates from localStorage:', parseError);
+        }
       }
 
       const cryptoRatesRaw = localStorage.getItem(CRYPTO_RATES_STORAGE_KEY);
       if (cryptoRatesRaw) {
-        const cryptoData = JSON.parse(cryptoRatesRaw);
-        cryptoData.forEach((currency: CurrencyRate) => {
-          rates[currency.code] = currency.rate;
-        });
-        loadedFromStorage = true;
+        try {
+          const cryptoData = JSON.parse(cryptoRatesRaw);
+          if (Array.isArray(cryptoData)) {
+            cryptoData.forEach((currency: CurrencyRate) => {
+              if (currency && currency.code && typeof currency.rate === 'number') {
+                rates[currency.code] = currency.rate;
+              }
+            });
+            loadedFromStorage = true;
+          }
+        } catch (parseError) {
+          console.warn('Error parsing crypto rates from localStorage:', parseError);
+        }
       }
 
       if (loadedFromStorage && Object.keys(rates).length > 1) { // USD is always there
@@ -52,7 +68,8 @@ export class SettingsStorageService {
       }
     } catch (error) {
       console.error('Error loading exchange rates from localStorage:', error);
-      // Fall through to default if error or nothing substantial loaded
+      // Return defaults on any error
+      return { ...DEFAULT_EXCHANGE_RATES };
     }
 
     // If nothing loaded from storage or error occurred, return defaults
