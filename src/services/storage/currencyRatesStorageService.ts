@@ -1,10 +1,12 @@
 import { CurrencyRate } from '@/types';
 import { CurrencyRatesBusinessService } from '../business/currencyRatesBusinessService';
+import { CurrencyRatesApiService } from '../api/currencyRatesApiService';
 
 const FIAT_RATES_STORAGE_KEY = 'app-fiat-rates';
 const CRYPTO_RATES_STORAGE_KEY = 'app-crypto-rates';
 const DATA_VERSION_KEY = 'app-currency-rates-version';
-const CURRENT_DATA_VERSION = '1.0.0';
+const MIGRATION_FLAG_KEY = 'app-currency-rates-migrated';
+const CURRENT_DATA_VERSION = '2.0.0'; // Updated version for database storage
 
 export interface CurrencyRatesData {
   fiatRates: CurrencyRate[];
@@ -14,111 +16,241 @@ export interface CurrencyRatesData {
 export class CurrencyRatesStorageService {
   static async loadAllCurrencyRatesData(): Promise<CurrencyRatesData> {
     try {
+      console.log('🚀 Starting currency rates data loading...');
       await this.migrateDataIfNeeded();
       
-      const fiatRates = this.loadFiatRates();
-      const cryptoRates = this.loadCryptoRates();
+      // Try to load from database first
+      console.log('📡 Loading fiat and crypto rates in parallel...');
+      const [fiatRates, cryptoRates] = await Promise.all([
+        this.loadFiatRates(),
+        this.loadCryptoRates()
+      ]);
 
+      console.log(`🎯 Final result: ${fiatRates.length} fiat rates, ${cryptoRates.length} crypto rates`);
+      
       return {
         fiatRates,
         cryptoRates
       };
     } catch (error) {
-      console.error('Error loading currency rates data:', error);
+      console.error('❌ Error loading currency rates data:', error);
+      
+      // Fallback to defaults and ensure they're in database
+      console.log('🏗️ Loading fallback defaults...');
+      const fiatDefaults = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
+      const cryptoDefaults = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
+      
+      // Try to initialize defaults in database
+      try {
+        await CurrencyRatesApiService.initializeDefaults([...fiatDefaults, ...cryptoDefaults]);
+        console.log(`💾 Initialized ${fiatDefaults.length + cryptoDefaults.length} default rates in database`);
+      } catch (dbError) {
+        console.error('❌ Error initializing default rates in database:', dbError);
+      }
+      
       return {
-        fiatRates: CurrencyRatesBusinessService.getDefaultFiatCurrencies(),
-        cryptoRates: CurrencyRatesBusinessService.getDefaultCryptoCurrencies()
+        fiatRates: fiatDefaults,
+        cryptoRates: cryptoDefaults
       };
     }
   }
 
-  static loadFiatRates(): CurrencyRate[] {
+  static async loadFiatRates(): Promise<CurrencyRate[]> {
     try {
-      const savedRates = localStorage.getItem(FIAT_RATES_STORAGE_KEY);
-      if (savedRates) {
-        const parsed = JSON.parse(savedRates);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Ensure all rates are valid numbers
-          return parsed.map(rate => ({
-            ...rate,
-            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
-          }));
-        }
+      console.log('🔄 Loading fiat rates from database...');
+      // Try database first
+      const dbRates = await CurrencyRatesApiService.findByType('fiat');
+      console.log(`✅ Loaded ${dbRates.length} fiat rates from database`);
+      if (dbRates.length > 0) {
+        return dbRates;
+      }
+      
+      console.log('⚠️ No fiat rates in database, checking localStorage...');
+      // Fallback to localStorage for migration
+      const savedRates = this.loadFiatRatesFromLocalStorage();
+      if (savedRates.length > 0) {
+        console.log(`🔄 Migrating ${savedRates.length} fiat rates from localStorage to database...`);
+        // Migrate to database
+        await this.migrateFiatRatesToDatabase(savedRates);
+        return savedRates;
       }
     } catch (error) {
-      console.error('Error loading fiat rates:', error);
+      console.error('❌ Error loading fiat rates from database:', error);
+      
+      // Try localStorage fallback
+      try {
+        const localRates = this.loadFiatRatesFromLocalStorage();
+        console.log(`📦 Loaded ${localRates.length} fiat rates from localStorage fallback`);
+        return localRates;
+      } catch (localStorageError) {
+        console.error('❌ Error loading fiat rates from localStorage:', localStorageError);
+      }
     }
     
+    // Final fallback to defaults
+    console.log('🏗️ Loading default fiat rates...');
     const defaultRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
-    this.saveFiatRates(defaultRates);
+    try {
+      await this.saveFiatRates(defaultRates);
+      console.log(`💾 Saved ${defaultRates.length} default fiat rates to database`);
+    } catch (error) {
+      console.error('❌ Error saving default fiat rates:', error);
+    }
     return defaultRates;
   }
 
-  static loadCryptoRates(): CurrencyRate[] {
+  static async loadCryptoRates(): Promise<CurrencyRate[]> {
     try {
-      const savedRates = localStorage.getItem(CRYPTO_RATES_STORAGE_KEY);
-      if (savedRates) {
-        const parsed = JSON.parse(savedRates);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Ensure all rates are valid numbers
-          return parsed.map(rate => ({
-            ...rate,
-            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
-          }));
-        }
+      console.log('🔄 Loading crypto rates from database...');
+      // Try database first
+      const dbRates = await CurrencyRatesApiService.findByType('crypto');
+      console.log(`✅ Loaded ${dbRates.length} crypto rates from database`);
+      if (dbRates.length > 0) {
+        return dbRates;
+      }
+      
+      console.log('⚠️ No crypto rates in database, checking localStorage...');
+      // Fallback to localStorage for migration
+      const savedRates = this.loadCryptoRatesFromLocalStorage();
+      if (savedRates.length > 0) {
+        console.log(`🔄 Migrating ${savedRates.length} crypto rates from localStorage to database...`);
+        // Migrate to database
+        await this.migrateCryptoRatesToDatabase(savedRates);
+        return savedRates;
       }
     } catch (error) {
-      console.error('Error loading crypto rates:', error);
+      console.error('❌ Error loading crypto rates from database:', error);
+      
+      // Try localStorage fallback
+      try {
+        const localRates = this.loadCryptoRatesFromLocalStorage();
+        console.log(`📦 Loaded ${localRates.length} crypto rates from localStorage fallback`);
+        return localRates;
+      } catch (localStorageError) {
+        console.error('❌ Error loading crypto rates from localStorage:', localStorageError);
+      }
     }
     
+    // Final fallback to defaults
+    console.log('🏗️ Loading default crypto rates...');
     const defaultRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
-    this.saveCryptoRates(defaultRates);
+    try {
+      await this.saveCryptoRates(defaultRates);
+      console.log(`💾 Saved ${defaultRates.length} default crypto rates to database`);
+    } catch (error) {
+      console.error('❌ Error saving default crypto rates:', error);
+    }
     return defaultRates;
   }
 
-  static saveFiatRates(rates: CurrencyRate[]): void {
+  static async saveFiatRates(rates: CurrencyRate[]): Promise<void> {
     try {
-      localStorage.setItem(FIAT_RATES_STORAGE_KEY, JSON.stringify(rates));
-      this.setDataVersion();
+      console.log(`💾 Saving ${rates.length} fiat rates to database...`);
+      // Save to database via API
+      const fiatRates = rates.filter(rate => rate.type === 'fiat');
+      console.log(`🔄 Filtered to ${fiatRates.length} fiat rates for API call`);
       
-      window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+      await CurrencyRatesApiService.saveRates(fiatRates);
+      console.log(`✅ Successfully saved ${fiatRates.length} fiat rates to database`);
+      
+      // Also save to localStorage as backup
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(FIAT_RATES_STORAGE_KEY, JSON.stringify(rates));
+        this.setDataVersion();
+        console.log(`📦 Backed up ${rates.length} fiat rates to localStorage`);
+      }
+      
+      // Dispatch event for immediate UI updates
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+        console.log(`📡 Dispatched currencyRatesUpdated event`);
+      }
     } catch (error) {
-      console.error('Error saving fiat rates:', error);
-      throw new Error('Failed to save fiat currency rates');
+      console.error('❌ Error saving fiat rates to database:', error);
+      
+      // Fallback to localStorage only
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(FIAT_RATES_STORAGE_KEY, JSON.stringify(rates));
+          this.setDataVersion();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+          }
+          console.log(`📦 Fell back to localStorage-only save for ${rates.length} fiat rates`);
+        }
+      } catch (localStorageError) {
+        console.error('❌ Even localStorage fallback failed:', localStorageError);
+        throw new Error('Failed to save fiat currency rates');
+      }
     }
   }
 
-  static saveCryptoRates(rates: CurrencyRate[]): void {
+  static async saveCryptoRates(rates: CurrencyRate[]): Promise<void> {
     try {
-      localStorage.setItem(CRYPTO_RATES_STORAGE_KEY, JSON.stringify(rates));
-      this.setDataVersion();
+      // Save to database via API
+      const cryptoRates = rates.filter(rate => rate.type === 'crypto');
+      await CurrencyRatesApiService.saveRates(cryptoRates);
       
-      window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+      // Also save to localStorage as backup
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(CRYPTO_RATES_STORAGE_KEY, JSON.stringify(rates));
+        this.setDataVersion();
+      }
+      
+      // Dispatch event for immediate UI updates
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+      }
     } catch (error) {
       console.error('Error saving crypto rates:', error);
-      throw new Error('Failed to save crypto currency rates');
+      
+      // Fallback to localStorage only
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(CRYPTO_RATES_STORAGE_KEY, JSON.stringify(rates));
+          this.setDataVersion();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+          }
+        }
+      } catch (localStorageError) {
+        throw new Error('Failed to save crypto currency rates');
+      }
     }
   }
 
-  static saveAllRates(fiatRates: CurrencyRate[], cryptoRates: CurrencyRate[]): void {
+  static async saveAllRates(fiatRates: CurrencyRate[], cryptoRates: CurrencyRate[]): Promise<void> {
     try {
-      this.saveFiatRates(fiatRates);
-      this.saveCryptoRates(cryptoRates);
+      // Save all rates in a single API call
+      const allRates = [...fiatRates, ...cryptoRates];
+      await CurrencyRatesApiService.saveRates(allRates);
+      
+      // Also save to localStorage as backup
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(FIAT_RATES_STORAGE_KEY, JSON.stringify(fiatRates));
+        localStorage.setItem(CRYPTO_RATES_STORAGE_KEY, JSON.stringify(cryptoRates));
+        this.setDataVersion();
+      }
+      
+      // Dispatch event for immediate UI updates
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('currencyRatesUpdated'));
+      }
     } catch (error) {
       console.error('Error saving all currency rates:', error);
       throw new Error('Failed to save currency rates');
     }
   }
 
-  static resetFiatRatesToDefaults(): CurrencyRate[] {
+  static async resetFiatRatesToDefaults(): Promise<CurrencyRate[]> {
     const defaultRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
-    this.saveFiatRates(defaultRates);
+    await this.saveFiatRates(defaultRates);
     return defaultRates;
   }
 
-  static resetCryptoRatesToDefaults(): CurrencyRate[] {
+  static async resetCryptoRatesToDefaults(): Promise<CurrencyRate[]> {
     const defaultRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
-    this.saveCryptoRates(defaultRates);
+    await this.saveCryptoRates(defaultRates);
     return defaultRates;
   }
 
@@ -192,42 +324,74 @@ export class CurrencyRatesStorageService {
 
   private static async migrateDataIfNeeded(): Promise<void> {
     const currentVersion = this.getDataVersion();
+    const migrationFlag = this.getMigrationFlag();
     
-    if (!currentVersion || currentVersion !== CURRENT_DATA_VERSION) {
-      
+    console.log(`🔧 Migration check: version=${currentVersion}, migrated=${migrationFlag}`);
+    
+    // Check if we need to migrate from localStorage to database
+    // Only migrate if we haven't migrated before
+    if (!migrationFlag) {
       try {
-        const fiatRates = this.loadFiatRates();
-        const cryptoRates = this.loadCryptoRates();
+        console.log('🔄 Starting currency rates migration to database...');
         
-        this.saveFiatRates(fiatRates);
-        this.saveCryptoRates(cryptoRates);
+        // First, check if there's already data in the database
+        const existingFiatRates = await CurrencyRatesApiService.findByType('fiat');
+        const existingCryptoRates = await CurrencyRatesApiService.findByType('crypto');
+        
+        console.log(`🗄️ Found ${existingFiatRates.length} fiat and ${existingCryptoRates.length} crypto rates in database`);
+        
+        if (existingFiatRates.length > 0 || existingCryptoRates.length > 0) {
+          console.log('✅ Database already has data, skipping migration');
+        } else {
+          // Database is empty, check localStorage for migration
+          const fiatRates = this.loadFiatRatesFromLocalStorage();
+          const cryptoRates = this.loadCryptoRatesFromLocalStorage();
+          
+          console.log(`📦 Found ${fiatRates.length} fiat and ${cryptoRates.length} crypto rates in localStorage`);
+          
+          if (fiatRates.length > 0 || cryptoRates.length > 0) {
+            // Migrate from localStorage to database
+            await CurrencyRatesApiService.migrateFromLocalStorage(fiatRates, cryptoRates);
+            console.log(`✅ Successfully migrated ${fiatRates.length + cryptoRates.length} currency rates to database`);
+          } else {
+            // No existing data anywhere, initialize defaults
+            console.log('🏗️ No data found anywhere, initializing defaults...');
+            const defaultFiat = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
+            const defaultCrypto = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
+            await CurrencyRatesApiService.initializeDefaults([...defaultFiat, ...defaultCrypto]);
+            console.log(`💾 Initialized ${defaultFiat.length + defaultCrypto.length} default currency rates in database`);
+          }
+        }
+        
+        // Mark migration as complete
+        this.setMigrationFlag();
+        this.setDataVersion();
+        console.log('🎯 Migration completed and marked as done');
         
       } catch (error) {
-        console.error('Error during currency rates data migration:', error);
+        console.error('❌ Error during currency rates migration:', error);
+        // Don't throw - let the app continue with fallback behavior
       }
+    } else {
+      console.log('✅ No migration needed - data already migrated');
     }
   }
 
-  static getStorageInfo(): { 
+  static async getStorageInfo(): Promise<{ 
     fiatCount: number; 
     cryptoCount: number; 
     lastUpdated: string;
     dataVersion: string;
-  } {
+  }> {
     try {
-      const fiatRates = this.loadFiatRates();
-      const cryptoRates = this.loadCryptoRates();
+      // Get stats from database via API
+      const stats = await CurrencyRatesApiService.getStats();
       const version = this.getDataVersion() || 'Unknown';
       
-      const allRates = [...fiatRates, ...cryptoRates];
-      const lastUpdated = allRates.length > 0 
-        ? new Date(Math.max(...allRates.map(r => new Date(r.lastUpdated).getTime()))).toISOString()
-        : new Date().toISOString();
-      
       return {
-        fiatCount: fiatRates.length,
-        cryptoCount: cryptoRates.length,
-        lastUpdated,
+        fiatCount: stats.fiatRates,
+        cryptoCount: stats.cryptoRates,
+        lastUpdated: stats.lastUpdated || new Date().toISOString(),
         dataVersion: version
       };
     } catch (error) {
@@ -238,6 +402,89 @@ export class CurrencyRatesStorageService {
         lastUpdated: new Date().toISOString(),
         dataVersion: 'Unknown'
       };
+    }
+  }
+
+  // Helper methods for localStorage fallback and migration
+  private static loadFiatRatesFromLocalStorage(): CurrencyRate[] {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      
+      const savedRates = localStorage.getItem(FIAT_RATES_STORAGE_KEY);
+      if (savedRates) {
+        const parsed = JSON.parse(savedRates);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(rate => ({
+            ...rate,
+            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading fiat rates from localStorage:', error);
+    }
+    return [];
+  }
+
+  private static loadCryptoRatesFromLocalStorage(): CurrencyRate[] {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      
+      const savedRates = localStorage.getItem(CRYPTO_RATES_STORAGE_KEY);
+      if (savedRates) {
+        const parsed = JSON.parse(savedRates);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(rate => ({
+            ...rate,
+            rate: typeof rate.rate === 'number' ? rate.rate : parseFloat(rate.rate) || 0
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading crypto rates from localStorage:', error);
+    }
+    return [];
+  }
+
+  private static async migrateFiatRatesToDatabase(rates: CurrencyRate[]): Promise<void> {
+    try {
+      const migratedRates = rates.map(rate => ({ ...rate, source: 'migration' }));
+      await CurrencyRatesApiService.saveRates(migratedRates);
+      console.log(`Migrated ${rates.length} fiat rates to database`);
+    } catch (error) {
+      console.error('Error migrating fiat rates to database:', error);
+      throw error;
+    }
+  }
+
+  private static async migrateCryptoRatesToDatabase(rates: CurrencyRate[]): Promise<void> {
+    try {
+      const migratedRates = rates.map(rate => ({ ...rate, source: 'migration' }));
+      await CurrencyRatesApiService.saveRates(migratedRates);
+      console.log(`Migrated ${rates.length} crypto rates to database`);
+    } catch (error) {
+      console.error('Error migrating crypto rates to database:', error);
+      throw error;
+    }
+  }
+
+  private static getMigrationFlag(): boolean {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      return localStorage.getItem(MIGRATION_FLAG_KEY) === 'true';
+    } catch (error) {
+      console.error('Error getting migration flag:', error);
+      return false;
+    }
+  }
+
+  private static setMigrationFlag(): void {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(MIGRATION_FLAG_KEY, 'true');
+      }
+    } catch (error) {
+      console.error('Error setting migration flag:', error);
     }
   }
 }

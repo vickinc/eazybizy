@@ -18,7 +18,7 @@ interface BankAccountFormData {
 
 interface DigitalWalletFormData {
   companyId: number;
-  walletType: 'PAYPAL' | 'STRIPE' | 'WISE' | 'CRYPTO' | 'OTHER';
+  walletType: 'paypal' | 'stripe' | 'wise' | 'crypto' | 'other';
   walletName: string;
   walletAddress: string;
   currency: string;
@@ -151,10 +151,10 @@ const initialBankAccount: BankAccountFormData = {
 
 const initialDigitalWallet: DigitalWalletFormData = {
   companyId: 0,
-  walletType: 'OTHER',
+  walletType: 'crypto',
   walletName: '',
   walletAddress: '',
-  currency: 'USD',
+  currency: '',
   currencies: '',
   description: '',
   blockchain: '',
@@ -450,7 +450,11 @@ export const useBanksWalletsManagementDB = (
   
   const resetForms = useCallback(() => {
     setNewBankAccount(initialBankAccount);
-    setNewDigitalWallet(initialDigitalWallet);
+    setNewDigitalWallet({
+      ...initialDigitalWallet,
+      walletType: 'crypto', // Ensure crypto is default even on reset
+      currency: '' // User must select currency
+    });
   }, []);
   
   // CRUD operations

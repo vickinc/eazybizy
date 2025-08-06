@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { authenticateRequest } from '@/lib/api-auth'
 import { CurrencyService } from '@/services/business/currencyService'
+import { BalanceBusinessService } from '@/services/business/balanceBusinessService'
 // Note: Server-side route should use database queries directly instead of localStorage services
 
 export async function GET(request: NextRequest) {
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
     // Sorting parameters
     const sortField = searchParams.get('sortField') || 'finalBalance'
     const sortDirection = searchParams.get('sortDirection') || 'desc'
+    
+    // Blockchain balance option
+    const includeBlockchainBalances = searchParams.get('includeBlockchainBalances') === 'true'
 
     // Get all accounts directly from database
     const bankAccountsWhere: Prisma.BankAccountWhereInput = {}
@@ -269,6 +273,19 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Optionally enrich with blockchain data (if requested and API is configured)
+    if (includeBlockchainBalances) {
+      try {
+        filteredBalances = await BalanceBusinessService.enrichWithBlockchainBalances(
+          filteredBalances as any[], // Cast to AccountBalance[] for compatibility
+          true
+        ) as any[] // Cast back to maintain existing structure
+      } catch (error) {
+        console.error('Error enriching balances with blockchain data in API route:', error)
+        // Continue without blockchain data if enrichment fails
+      }
+    }
+
     // Calculate summary statistics - count unique accounts, not currency entries
     const uniqueAccountIds = new Set<string>();
     const uniqueBankIds = new Set<string>();
@@ -278,7 +295,7 @@ export async function GET(request: NextRequest) {
     let totalAssetsUSD = 0;
     let totalLiabilitiesUSD = 0;
 
-    filteredBalances.forEach(balance => {
+    for (const balance of filteredBalances) {
       const accountType = balance.account.__accountType;
       let originalAccountId = balance.account.id;
       
@@ -295,9 +312,9 @@ export async function GET(request: NextRequest) {
         uniqueWalletIds.add(originalAccountId);
       }
 
-      // Convert balance to USD for totals
+      // Convert balance to USD for totals using database-backed rates
       try {
-        const balanceInUSD = CurrencyService.convertToUSD(balance.finalBalance, balance.currency);
+        const balanceInUSD = await CurrencyService.convertToUSDAsync(balance.finalBalance, balance.currency);
         if (balanceInUSD >= 0) {
           totalAssetsUSD += balanceInUSD;
         } else {
@@ -312,7 +329,7 @@ export async function GET(request: NextRequest) {
           totalLiabilitiesUSD += Math.abs(balance.finalBalance);
         }
       }
-    });
+    }
 
     const netWorthUSD = totalAssetsUSD - totalLiabilitiesUSD;
 

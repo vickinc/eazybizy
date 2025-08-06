@@ -12,11 +12,13 @@ import {
   NewDigitalWallet,
   BanksWalletsBusinessService 
 } from '@/services/business/banksWalletsBusinessService';
+import { BlockchainValidationService } from '@/services/validation/blockchainValidationService';
 import Building2 from "lucide-react/dist/esm/icons/building-2";
 import CreditCard from "lucide-react/dist/esm/icons/credit-card";
 import Globe from "lucide-react/dist/esm/icons/globe";
 import Wallet from "lucide-react/dist/esm/icons/wallet";
 import Info from "lucide-react/dist/esm/icons/info";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
 
 interface BanksWalletsDialogsProps {
   // Company options for dropdowns
@@ -69,6 +71,44 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
   onCloseAddWalletDialog,
   onCloseEditWalletDialog
 }) => {
+  // State for address validation
+  const [addressValidation, setAddressValidation] = React.useState<{
+    isValid: boolean;
+    error?: string;
+  } | null>(null);
+  
+  const [editAddressValidation, setEditAddressValidation] = React.useState<{
+    isValid: boolean;
+    error?: string;
+  } | null>(null);
+
+  // Validate wallet address when blockchain or address changes
+  React.useEffect(() => {
+    if (newDigitalWallet.walletAddress && newDigitalWallet.blockchain && 
+        (newDigitalWallet.walletType === 'crypto' || newDigitalWallet.walletType === 'CRYPTO')) {
+      const validation = BlockchainValidationService.validateAddress(
+        newDigitalWallet.walletAddress,
+        newDigitalWallet.blockchain
+      );
+      setAddressValidation(validation);
+    } else {
+      setAddressValidation(null);
+    }
+  }, [newDigitalWallet.walletAddress, newDigitalWallet.blockchain, newDigitalWallet.walletType]);
+  
+  // Validate edit wallet address when blockchain or address changes
+  React.useEffect(() => {
+    if (editingWallet && editingWallet.walletAddress && editingWallet.blockchain && 
+        (editingWallet.walletType === 'crypto' || editingWallet.walletType === 'CRYPTO')) {
+      const validation = BlockchainValidationService.validateAddress(
+        editingWallet.walletAddress,
+        editingWallet.blockchain
+      );
+      setEditAddressValidation(validation);
+    } else {
+      setEditAddressValidation(null);
+    }
+  }, [editingWallet?.walletAddress, editingWallet?.blockchain, editingWallet?.walletType]);
   const renderCompanySelect = (
     value: number,
     onValueChange: (value: string) => void,
@@ -346,28 +386,22 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                   />
                 </div>
                 
-                <div className="md:col-span-2">
-                  <Label htmlFor="wallet-address" className="text-sm font-medium">
-                    {newDigitalWallet.walletType === 'crypto' ? 'Wallet Address *' : 'Account Email/ID *'}
-                  </Label>
-                  <Input 
-                    id="wallet-address" 
-                    placeholder={
-                      newDigitalWallet.walletType === 'crypto' 
-                        ? "e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-                        : "e.g., business@company.com"
-                    }
-                    value={newDigitalWallet.walletAddress}
-                    onChange={(e) => updateNewDigitalWallet('walletAddress', e.target.value)}
-                    className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {newDigitalWallet.walletType === 'crypto' 
-                      ? "The public address of your cryptocurrency wallet"
-                      : "The email or account identifier for this payment method"
-                    }
-                  </p>
-                </div>
+                {/* Show account email/ID field for non-crypto wallets in basic info */}
+                {newDigitalWallet.walletType !== 'crypto' && (
+                  <div className="md:col-span-2">
+                    <Label htmlFor="wallet-address" className="text-sm font-medium">Account Email/ID *</Label>
+                    <Input 
+                      id="wallet-address" 
+                      placeholder="e.g., business@company.com"
+                      value={newDigitalWallet.walletAddress}
+                      onChange={(e) => updateNewDigitalWallet('walletAddress', e.target.value)}
+                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      The email or account identifier for this payment method
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -382,23 +416,73 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="wallet-blockchain" className="text-sm font-medium">Blockchain Network *</Label>
+                    <Select 
+                      value={newDigitalWallet.blockchain} 
+                      onValueChange={(value) => {
+                        updateNewDigitalWallet('blockchain', value);
+                        // Clear currencies when blockchain changes
+                        updateNewDigitalWallet('currencies', []);
+                        updateNewDigitalWallet('currency', '');
+                      }}
+                    >
+                      <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
+                        <SelectValue placeholder="Select blockchain network" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BlockchainValidationService.getSupportedBlockchains().map(blockchain => (
+                          <SelectItem key={blockchain.value} value={blockchain.value}>
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium">{blockchain.label}</span>
+                              <span className="text-xs text-gray-500">{blockchain.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="wallet-address" className="text-sm font-medium">Wallet Address *</Label>
                     <Input 
-                      id="wallet-blockchain" 
-                      placeholder="e.g., Ethereum, Bitcoin, Polygon, BSC"
-                      value={newDigitalWallet.blockchain}
-                      onChange={(e) => updateNewDigitalWallet('blockchain', e.target.value)}
-                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
+                      id="wallet-address" 
+                      placeholder={newDigitalWallet.blockchain ? 
+                        BlockchainValidationService.getAddressFormatHint(newDigitalWallet.blockchain) : 
+                        "Select blockchain network first"
+                      }
+                      value={newDigitalWallet.walletAddress}
+                      onChange={(e) => updateNewDigitalWallet('walletAddress', e.target.value)}
+                      className={`mt-1 bg-lime-50 border-lime-200 focus:bg-white ${
+                        addressValidation?.isValid === false ? 'border-red-300 bg-red-50' : ''
+                      }`}
+                      disabled={!newDigitalWallet.blockchain}
                     />
+                    {addressValidation?.isValid === false && (
+                      <div className="flex items-center gap-1 mt-1 text-red-600">
+                        <AlertTriangle className="h-3 w-3" />
+                        <p className="text-xs">{addressValidation.error}</p>
+                      </div>
+                    )}
+                    {addressValidation?.isValid === true && (
+                      <div className="flex items-center gap-1 mt-1 text-green-600">
+                        <div className="w-3 h-3 rounded-full bg-green-600" />
+                        <p className="text-xs">Valid {addressValidation.blockchain?.label} address</p>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
-                      The blockchain network this wallet operates on
+                      The public address of your cryptocurrency wallet
                     </p>
                   </div>
                   
                   <div>
                     <Label htmlFor="wallet-currencies" className="text-sm font-medium">Supported Cryptocurrencies *</Label>
-                    <div className="space-y-2 mt-1">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
-                        {BanksWalletsBusinessService.CRYPTO_CURRENCIES.map(currency => (
+                    {!newDigitalWallet.blockchain ? (
+                      <div className="mt-1 p-3 border border-gray-200 rounded-md bg-gray-50">
+                        <p className="text-sm text-gray-500">Please select a blockchain network first to see available cryptocurrencies.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 mt-1">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
+                          {BlockchainValidationService.getSupportedCurrencies(newDigitalWallet.blockchain).map(currency => (
                           <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
                             <input
                               type="checkbox"
@@ -415,7 +499,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                                   if (newCurrencies.length > 0) {
                                     updateNewDigitalWallet('currency', newCurrencies[0]);
                                   } else {
-                                    updateNewDigitalWallet('currency', 'USDT');
+                                    updateNewDigitalWallet('currency', '');
                                   }
                                 }
                               }}
@@ -423,21 +507,22 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                             />
                             <span className="text-sm font-medium">{currency}</span>
                           </label>
-                        ))}
-                      </div>
-                      {newDigitalWallet.currencies.length > 0 && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-md p-2">
-                          <p className="text-sm font-medium text-purple-800">Selected currencies:</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {newDigitalWallet.currencies.map(currency => (
-                              <Badge key={currency} variant="secondary" className="text-xs bg-purple-100 text-purple-800">
-                                {currency}
-                              </Badge>
-                            ))}
-                          </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                        {newDigitalWallet.currencies.length > 0 && (
+                          <div className="bg-purple-50 border border-purple-200 rounded-md p-2">
+                            <p className="text-sm font-medium text-purple-800">Selected currencies:</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {newDigitalWallet.currencies.map(currency => (
+                                <Badge key={currency} variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                                  {currency}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -802,28 +887,22 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                     />
                   </div>
                   
-                  <div className="md:col-span-2">
-                    <Label htmlFor="edit-wallet-address" className="text-sm font-medium">
-                      {editingWallet.walletType === 'crypto' ? 'Wallet Address *' : 'Account Email/ID *'}
-                    </Label>
-                    <Input 
-                      id="edit-wallet-address" 
-                      placeholder={
-                        editingWallet.walletType === 'crypto' 
-                          ? "e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-                          : "e.g., business@company.com"
-                      }
-                      value={editingWallet.walletAddress}
-                      onChange={(e) => setEditingWallet({ ...editingWallet, walletAddress: e.target.value })}
-                      className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {editingWallet.walletType === 'crypto' 
-                        ? "The public address of your cryptocurrency wallet"
-                        : "The email or account identifier for this payment method"
-                      }
-                    </p>
-                  </div>
+                  {/* Show account email/ID field for non-crypto wallets in basic info */}
+                  {editingWallet.walletType !== 'crypto' && (
+                    <div className="md:col-span-2">
+                      <Label htmlFor="edit-wallet-address" className="text-sm font-medium">Account Email/ID *</Label>
+                      <Input 
+                        id="edit-wallet-address" 
+                        placeholder="e.g., business@company.com"
+                        value={editingWallet.walletAddress}
+                        onChange={(e) => setEditingWallet({ ...editingWallet, walletAddress: e.target.value })}
+                        className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        The email or account identifier for this payment method
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -838,23 +917,74 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="edit-wallet-blockchain" className="text-sm font-medium">Blockchain Network *</Label>
+                      <Select 
+                        value={editingWallet.blockchain || ''} 
+                        onValueChange={(value) => setEditingWallet({ 
+                          ...editingWallet, 
+                          blockchain: value,
+                          // Clear currencies when blockchain changes
+                          currencies: '',
+                          currency: ''
+                        })}
+                      >
+                        <SelectTrigger className="mt-1 bg-lime-50 border-lime-200 hover:bg-lime-100">
+                          <SelectValue placeholder="Select blockchain network" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BlockchainValidationService.getSupportedBlockchains().map(blockchain => (
+                            <SelectItem key={blockchain.value} value={blockchain.value}>
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">{blockchain.label}</span>
+                                <span className="text-xs text-gray-500">{blockchain.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="edit-wallet-address" className="text-sm font-medium">Wallet Address *</Label>
                       <Input 
-                        id="edit-wallet-blockchain" 
-                        placeholder="e.g., Ethereum, Bitcoin, Polygon, BSC"
-                        value={editingWallet.blockchain || ''}
-                        onChange={(e) => setEditingWallet({ ...editingWallet, blockchain: e.target.value })}
-                        className="mt-1 bg-lime-50 border-lime-200 focus:bg-white"
+                        id="edit-wallet-address" 
+                        placeholder={editingWallet.blockchain ? 
+                          BlockchainValidationService.getAddressFormatHint(editingWallet.blockchain) : 
+                          "Select blockchain network first"
+                        }
+                        value={editingWallet.walletAddress}
+                        onChange={(e) => setEditingWallet({ ...editingWallet, walletAddress: e.target.value })}
+                        className={`mt-1 bg-lime-50 border-lime-200 focus:bg-white ${
+                          editAddressValidation?.isValid === false ? 'border-red-300 bg-red-50' : ''
+                        }`}
+                        disabled={!editingWallet.blockchain}
                       />
+                      {editAddressValidation?.isValid === false && (
+                        <div className="flex items-center gap-1 mt-1 text-red-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          <p className="text-xs">{editAddressValidation.error}</p>
+                        </div>
+                      )}
+                      {editAddressValidation?.isValid === true && (
+                        <div className="flex items-center gap-1 mt-1 text-green-600">
+                          <div className="w-3 h-3 rounded-full bg-green-600" />
+                          <p className="text-xs">Valid {editAddressValidation.blockchain?.label} address</p>
+                        </div>
+                      )}
                       <p className="text-xs text-gray-500 mt-1">
-                        The blockchain network this wallet operates on
+                        The public address of your cryptocurrency wallet
                       </p>
                     </div>
                     
                     <div>
                       <Label htmlFor="edit-wallet-currencies" className="text-sm font-medium">Supported Cryptocurrencies *</Label>
-                      <div className="space-y-2 mt-1">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
-                          {BanksWalletsBusinessService.CRYPTO_CURRENCIES.map(currency => (
+                      {!editingWallet.blockchain ? (
+                        <div className="mt-1 p-3 border border-gray-200 rounded-md bg-gray-50">
+                          <p className="text-sm text-gray-500">Please select a blockchain network first to see available cryptocurrencies.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 mt-1">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
+                            {BlockchainValidationService.getSupportedCurrencies(editingWallet.blockchain).map(currency => (
                             <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
                               <input
                                 type="checkbox"
@@ -881,7 +1011,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                                     setEditingWallet({
                                       ...editingWallet,
                                       currencies: newCurrencies.join(', '),
-                                      currency: newCurrencies.length > 0 ? newCurrencies[0] : 'USDT'
+                                      currency: newCurrencies.length > 0 ? newCurrencies[0] : ''
                                     });
                                   }
                                 }}
@@ -889,21 +1019,22 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                               />
                               <span className="text-sm font-medium">{currency}</span>
                             </label>
-                          ))}
-                        </div>
-                        {editingWallet.currencies && editingWallet.currencies.trim() && (
-                          <div className="bg-purple-50 border border-purple-200 rounded-md p-2">
-                            <p className="text-sm font-medium text-purple-800">Selected currencies:</p>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {editingWallet.currencies.split(', ').filter(c => c.trim()).map(currency => (
-                                <Badge key={currency} variant="secondary" className="text-xs bg-purple-100 text-purple-800">
-                                  {currency}
-                                </Badge>
-                              ))}
-                            </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
+                          {editingWallet.currencies && editingWallet.currencies.trim() && (
+                            <div className="bg-purple-50 border border-purple-200 rounded-md p-2">
+                              <p className="text-sm font-medium text-purple-800">Selected currencies:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {editingWallet.currencies.split(', ').filter(c => c.trim()).map(currency => (
+                                  <Badge key={currency} variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                                    {currency}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (

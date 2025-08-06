@@ -1,5 +1,6 @@
 import { AppSettings, IFRSSettings, CompanySettings, UserPreferences, DEFAULT_IFRS_SETTINGS, DEFAULT_COMPANY_SETTINGS, DEFAULT_USER_PREFERENCES } from '../../types/settings.types';
 import { CurrencyRate } from '../../types/currency.types';
+import { CurrencyRatesBusinessService } from '../business/currencyRatesBusinessService';
 
 const FIAT_RATES_STORAGE_KEY = 'app-fiat-rates';
 const CRYPTO_RATES_STORAGE_KEY = 'app-crypto-rates';
@@ -22,11 +23,18 @@ export class SettingsStorageService {
   static getExchangeRates(): { [key: string]: number } {
     let rates: { [key: string]: number } = { 'USD': 1 };
     let loadedFromStorage = false;
+    
+    // Always prepare crypto defaults
+    const cryptoDefaults: { [key: string]: number } = {};
+    CurrencyRatesBusinessService.DEFAULT_CRYPTO_CURRENCIES.forEach(crypto => {
+      cryptoDefaults[crypto.code] = crypto.rate;
+    });
 
     try {
       // SSR guard: Check if we're in browser environment
       if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-        return { ...DEFAULT_EXCHANGE_RATES };
+        // Include crypto defaults for server-side rendering
+        return { ...DEFAULT_EXCHANGE_RATES, ...cryptoDefaults };
       }
 
       const fiatRatesRaw = localStorage.getItem(FIAT_RATES_STORAGE_KEY);
@@ -63,18 +71,25 @@ export class SettingsStorageService {
         }
       }
 
+      // Apply crypto defaults to override any outdated localStorage values
+      
       if (loadedFromStorage && Object.keys(rates).length > 1) { // USD is always there
-        return rates;
+        // Merge with crypto defaults overriding stored values
+        return { ...DEFAULT_EXCHANGE_RATES, ...rates, ...cryptoDefaults };
       }
     } catch (error) {
       console.error('Error loading exchange rates from localStorage:', error);
-      // Return defaults on any error
-      return { ...DEFAULT_EXCHANGE_RATES };
+      // Return defaults on any error including crypto defaults
+      const cryptoDefaults: { [key: string]: number } = {};
+      CurrencyRatesBusinessService.DEFAULT_CRYPTO_CURRENCIES.forEach(crypto => {
+        cryptoDefaults[crypto.code] = crypto.rate;
+      });
+      return { ...DEFAULT_EXCHANGE_RATES, ...cryptoDefaults };
     }
 
     // If nothing loaded from storage or error occurred, return defaults
-    // Merge with USD:1 to ensure it's always present.
-    return { ...DEFAULT_EXCHANGE_RATES, ...rates };
+    // Merge with crypto defaults from CurrencyRatesBusinessService (already created above)
+    return { ...DEFAULT_EXCHANGE_RATES, ...rates, ...cryptoDefaults };
   }
 
   // Assuming fiat and crypto rates are saved separately by whatever mechanism updates them

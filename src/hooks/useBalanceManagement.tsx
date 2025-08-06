@@ -46,62 +46,69 @@ export const useBalanceManagement = (selectedCompany: number | 'all') => {
   });
 
   // Load and filter balances
-  const loadBalances = useCallback(() => {
-    setState(prev => {
-      const currentFilters = prev.filters;
+  const loadBalances = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const currentFilters = state.filters;
+      console.log('🔄 Loading balances with database-backed currency rates...');
       
-      try {
-        const balances = BalanceBusinessService.getAccountBalances(currentFilters, selectedCompany);
-        const groupedBalances = BalanceBusinessService.groupBalances(balances, currentFilters.groupBy);
-        const summary = BalanceBusinessService.calculateBalanceSummary(balances);
+      const balances = BalanceBusinessService.getAccountBalances(currentFilters, selectedCompany);
+      const groupedBalances = BalanceBusinessService.groupBalances(balances, currentFilters.groupBy);
+      const summary = await BalanceBusinessService.calculateBalanceSummary(balances);
 
-        return {
-          ...prev,
-          balances,
-          groupedBalances,
-          summary,
-          loading: false,
-          error: null
-        };
-      } catch (error) {
-        return {
-          ...prev,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Failed to load balances'
-        };
-      }
-    });
-  }, [selectedCompany]);
+      console.log(`✅ Calculated balance summary: $${summary.totalAssets.toFixed(2)} total assets`);
+
+      setState(prev => ({
+        ...prev,
+        balances,
+        groupedBalances,
+        summary,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('❌ Error loading balances:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load balances'
+      }));
+    }
+  }, [selectedCompany, state.filters]);
 
   // Update filters and reload balances
-  const updateFilters = useCallback((newFilters: Partial<BalanceFilterState>) => {
-    setState(prev => {
-      const updatedFilters = { ...prev.filters, ...newFilters };
+  const updateFilters = useCallback(async (newFilters: Partial<BalanceFilterState>) => {
+    setState(prev => ({ ...prev, loading: true, filters: { ...prev.filters, ...newFilters } }));
+    
+    try {
+      const updatedFilters = { ...state.filters, ...newFilters };
+      console.log('🔄 Updating filters and recalculating balances...');
       
-      try {
-        const balances = BalanceBusinessService.getAccountBalances(updatedFilters, selectedCompany);
-        const groupedBalances = BalanceBusinessService.groupBalances(balances, updatedFilters.groupBy);
-        const summary = BalanceBusinessService.calculateBalanceSummary(balances);
+      const balances = BalanceBusinessService.getAccountBalances(updatedFilters, selectedCompany);
+      const groupedBalances = BalanceBusinessService.groupBalances(balances, updatedFilters.groupBy);
+      const summary = await BalanceBusinessService.calculateBalanceSummary(balances);
 
-        return {
-          ...prev,
-          filters: updatedFilters,
-          balances,
-          groupedBalances,
-          summary,
-          loading: false,
-          error: null
-        };
-      } catch (error) {
-        return {
-          ...prev,
-          filters: updatedFilters,
-          loading: false,
-          error: error instanceof Error ? error.message : 'Failed to load balances'
-        };
-      }
-    });
-  }, [selectedCompany]);
+      console.log(`✅ Updated balance summary: $${summary.totalAssets.toFixed(2)} total assets`);
+
+      setState(prev => ({
+        ...prev,
+        filters: updatedFilters,
+        balances,
+        groupedBalances,
+        summary,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('❌ Error updating filters:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to update filters'
+      }));
+    }
+  }, [selectedCompany, state.filters]);
 
   // Set period filter
   const setPeriodFilter = useCallback((period: FilterPeriod) => {

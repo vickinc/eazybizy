@@ -38,6 +38,7 @@ export interface BalanceQueryParams {
   endDate?: string
   sortField?: string
   sortDirection?: 'asc' | 'desc'
+  includeBlockchainBalances?: boolean
 }
 
 export interface InitialBalanceFormData {
@@ -91,6 +92,11 @@ export class BalanceApiService {
     // Add sorting
     if (params.sortField) searchParams.set('sortField', params.sortField)
     if (params.sortDirection) searchParams.set('sortDirection', params.sortDirection)
+    
+    // Add blockchain balance option
+    if (params.includeBlockchainBalances !== undefined) {
+      searchParams.set('includeBlockchainBalances', params.includeBlockchainBalances.toString())
+    }
 
     const response = await fetch(`${this.baseUrl}?${searchParams.toString()}`)
     

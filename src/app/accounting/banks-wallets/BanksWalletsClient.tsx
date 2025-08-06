@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Banknote from "lucide-react/dist/esm/icons/banknote";
@@ -171,6 +171,14 @@ export default function BanksWalletsClient() {
     resetForms
   } = useBanksWalletsManagementDB(globalSelectedCompany, companies);
 
+  // Determine if banks/wallets can be added (only when a specific company is selected)
+  // Use hydration-safe approach to avoid SSR mismatch
+  const [canAddBankWallet, setCanAddBankWallet] = useState(false);
+  
+  useEffect(() => {
+    setCanAddBankWallet(globalSelectedCompany !== 'all' && globalSelectedCompany !== null);
+  }, [globalSelectedCompany]);
+
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
 
@@ -205,9 +213,6 @@ export default function BanksWalletsClient() {
     label: company.tradingName
   }));
 
-  // Determine if banks/wallets can be added (only when a specific company is selected)
-  const canAddBankWallet = globalSelectedCompany !== 'all' && globalSelectedCompany !== null;
-
   // Dialog handlers
   const handleShowAddBankForm = () => {
     // Auto-set company ID and account name when opening add form
@@ -223,10 +228,13 @@ export default function BanksWalletsClient() {
   };
   
   const handleShowAddWalletForm = () => {
-    // Auto-set company ID when opening add form
+    // Auto-set company ID and ensure crypto is default when opening add form
     if (globalSelectedCompany !== 'all') {
       updateNewDigitalWallet('companyId', globalSelectedCompany);
     }
+    // Ensure crypto is always the default but user must select currency
+    updateNewDigitalWallet('walletType', 'crypto');
+    updateNewDigitalWallet('currency', '');
     setShowAddWalletForm(true);
   };
   

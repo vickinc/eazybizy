@@ -16,7 +16,7 @@ import { AccountBalance, GroupedBalances, BalanceGroupBy } from '@/types/balance
 import { BalanceListItem } from './BalanceListItem';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 import { CurrencyService } from '@/services/business/currencyService';
-import { BalanceListSkeleton, BalanceListItemSkeleton } from '@/components/ui/balance-skeleton';
+import { Skeleton } from '@/components/ui/loading-states';
 
 interface BalanceListProps {
   balances: AccountBalance[];
@@ -24,6 +24,7 @@ interface BalanceListProps {
   groupBy: BalanceGroupBy;
   loading?: boolean;
   onEditInitialBalance?: (accountId: string, accountType: 'bank' | 'wallet') => void;
+  onRefreshBlockchain?: (walletId: string) => Promise<void>;
   compact?: boolean;
 }
 
@@ -59,14 +60,25 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({
   const currencies = [...new Set(balances.map(b => b.currency))];
   
   // Convert total balance to USD for consistent display
-  const totalBalanceUSD = balances.reduce((sum, balance) => {
-    try {
-      return sum + CurrencyService.convertToUSD(balance.finalBalance, balance.currency);
-    } catch (error) {
-      console.error('Error converting balance to USD:', error);
-      return sum + balance.finalBalance; // Fallback to original amount
-    }
-  }, 0);
+  const [totalBalanceUSD, setTotalBalanceUSD] = React.useState(0);
+
+  React.useEffect(() => {
+    const convertBalancesToUSD = async () => {
+      let totalUSD = 0;
+      for (const balance of balances) {
+        try {
+          const convertedAmount = await CurrencyService.convertToUSDAsync(balance.finalBalance, balance.currency);
+          totalUSD += convertedAmount;
+        } catch (error) {
+          console.error('Error converting balance to USD:', error);
+          totalUSD += balance.finalBalance; // Fallback to original amount
+        }
+      }
+      setTotalBalanceUSD(totalUSD);
+    };
+
+    convertBalancesToUSD();
+  }, [balances]);
 
   const formatCurrency = (amount: number) => {
     return BalanceBusinessService.formatCurrency(amount, 'USD');
@@ -131,6 +143,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
   groupBy,
   loading = false,
   onEditInitialBalance,
+  onRefreshBlockchain,
   compact = false
 }) => {
   const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
@@ -160,11 +173,45 @@ export const BalanceList: React.FC<BalanceListProps> = ({
     setExpandedGroups(newState);
   };
 
-  if (loading) {
-    return <BalanceListSkeleton />;
-  }
+  // Show structure immediately and let individual items handle loading states
 
   if (balances.length === 0) {
+    if (loading) {
+      return (
+        <div className="bg-white rounded-lg shadow border">
+          <div className="p-4 border-b border-gray-200">
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <div className="divide-y divide-gray-200">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-12 w-12 rounded-lg" />
+                    <div>
+                      <Skeleton className="h-5 w-40 mb-2" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Skeleton className="h-5 w-24 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="text-center">
+                      <Skeleton className="h-4 w-20 mx-auto mb-2" />
+                      <Skeleton className="h-5 w-16 mx-auto" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <Card>
         <CardHeader>
@@ -205,6 +252,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
                 key={`${balance.account.id}-${BalanceBusinessService.isAccountBank(balance.account) ? 'bank' : 'wallet'}`}
                 balance={balance}
                 onEditInitialBalance={onEditInitialBalance}
+                onRefreshBlockchain={onRefreshBlockchain}
                 compact={compact}
               />
             ))}
@@ -289,6 +337,7 @@ export const BalanceList: React.FC<BalanceListProps> = ({
                     key={`${balance.account.id}-${BalanceBusinessService.isAccountBank(balance.account) ? 'bank' : 'wallet'}`}
                     balance={balance}
                     onEditInitialBalance={onEditInitialBalance}
+                    onRefreshBlockchain={onRefreshBlockchain}
                     compact={compact}
                   />
                 ))}

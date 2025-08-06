@@ -12,7 +12,7 @@ import Building from "lucide-react/dist/esm/icons/building";
 import MousePointer2 from "lucide-react/dist/esm/icons/mouse-pointer-2";
 import { BalanceSummary } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
-import { BalanceStatsSkeleton } from '@/components/ui/balance-skeleton';
+import { Skeleton } from '@/components/ui/loading-states';
 
 interface BalanceStatsProps {
   summary: BalanceSummary;
@@ -44,7 +44,20 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
   };
 
   if (loading) {
-    return <BalanceStatsSkeleton />;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
+        {[...Array(4)].map((_, index) => (
+          <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
+            <div className="flex items-center mb-2">
+              <Skeleton className="h-4 w-4 mr-2" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <Skeleton className="h-8 w-20 mb-1" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   const mainCurrencies = Object.keys(summary.currencyBreakdown)
@@ -99,13 +112,21 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                 <p className="text-blue-600 font-medium">Click to view detailed summary</p>
               )}
               {Object.keys(summary.currencyBreakdown).length > 1 && (
-                <div className="text-xs">
-                  <p className="font-medium">By Original Currency:</p>
-                  {mainCurrencies.map(currency => (
-                    <p key={currency}>
-                      {currency}: {formatCurrency(summary.currencyBreakdown[currency].assets, currency)}
+                <div className="text-xs mt-2 pt-2 border-t">
+                  <p className="font-medium mb-1">By Original Currency:</p>
+                  {mainCurrencies.map(currency => {
+                    const amount = summary.currencyBreakdown[currency].assets;
+                    return (
+                      <p key={currency}>
+                        {currency}: {amount.toFixed(currency === 'ETH' || currency === 'BTC' ? 8 : 2)} {currency}
+                      </p>
+                    );
+                  })}
+                  {mainCurrencies.length < Object.keys(summary.currencyBreakdown).length && (
+                    <p className="text-gray-400 mt-1">
+                      +{Object.keys(summary.currencyBreakdown).length - mainCurrencies.length} more...
                     </p>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -138,13 +159,21 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
             <div className="space-y-1">
               <p>Total value of all negative balances (USD equivalent)</p>
               {Object.keys(summary.currencyBreakdown).length > 1 && (
-                <div className="text-xs">
-                  <p className="font-medium">By Original Currency:</p>
-                  {mainCurrencies.map(currency => (
-                    <p key={currency}>
-                      {currency}: {formatCurrency(summary.currencyBreakdown[currency].liabilities, currency)}
+                <div className="text-xs mt-2 pt-2 border-t">
+                  <p className="font-medium mb-1">By Original Currency:</p>
+                  {mainCurrencies.map(currency => {
+                    const amount = summary.currencyBreakdown[currency].liabilities;
+                    return (
+                      <p key={currency}>
+                        {currency}: {amount.toFixed(currency === 'ETH' || currency === 'BTC' ? 8 : 2)} {currency}
+                      </p>
+                    );
+                  })}
+                  {mainCurrencies.length < Object.keys(summary.currencyBreakdown).length && (
+                    <p className="text-gray-400 mt-1">
+                      +{Object.keys(summary.currencyBreakdown).length - mainCurrencies.length} more...
                     </p>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -181,13 +210,21 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                 Liabilities: {formatCurrency(summary.totalLiabilitiesUSD, 'USD')}
               </p>
               {Object.keys(summary.currencyBreakdown).length > 1 && (
-                <div className="text-xs">
-                  <p className="font-medium">By Original Currency:</p>
-                  {mainCurrencies.map(currency => (
-                    <p key={currency}>
-                      {currency}: {formatCurrency(summary.currencyBreakdown[currency].netWorth, currency)}
+                <div className="text-xs mt-2 pt-2 border-t">
+                  <p className="font-medium mb-1">By Original Currency:</p>
+                  {mainCurrencies.map(currency => {
+                    const amount = summary.currencyBreakdown[currency].netWorth;
+                    return (
+                      <p key={currency}>
+                        {currency}: {amount.toFixed(currency === 'ETH' || currency === 'BTC' ? 8 : 2)} {currency}
+                      </p>
+                    );
+                  })}
+                  {mainCurrencies.length < Object.keys(summary.currencyBreakdown).length && (
+                    <p className="text-gray-400 mt-1">
+                      +{Object.keys(summary.currencyBreakdown).length - mainCurrencies.length} more...
                     </p>
-                  ))}
+                  )}
                 </div>
               )}
             </div>

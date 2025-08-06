@@ -1,18 +1,15 @@
 import { CurrencyRate } from '@/types/currency.types'
 import { CurrencyRatesBusinessService, CurrencyRatesData } from '@/services/business/currencyRatesBusinessService'
+import { CurrencyRatesDatabaseService } from '@/services/api/currencyRatesDatabaseService'
 
 /**
  * Direct database service for Currency Rates SSR
- * Since currency rates are currently stored in localStorage,
- * this service provides a server-side interface to the business logic
- * 
- * Future enhancement: When currency rates are moved to database,
- * this service will query the database directly instead of using defaults
+ * Loads currency rates data from the database for server-side rendering
  */
 export class CurrencyRatesSSRService {
   /**
    * Get currency rates for server-side rendering
-   * Currently returns default rates as there's no database persistence
+   * Loads data from the database or falls back to defaults
    * 
    * @param userId - User ID (for future multi-user support)
    * @param companyId - Company ID (for future company-specific rates)
@@ -23,36 +20,61 @@ export class CurrencyRatesSSRService {
     companyId?: string
   ): Promise<CurrencyRatesData> {
     try {
-      // For now, return default rates since there's no database persistence
-      // In the future, this will query the database
-      const defaultFiatRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies()
-      const defaultCryptoRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies()
-      const defaultRates = [...defaultFiatRates, ...defaultCryptoRates]
+      console.log('🚀 SSR: Loading currency rates from database...');
       
-      return {
-        rates: defaultRates,
-        baseCurrency: 'USD',
-        lastSaved: new Date().toISOString(),
-        version: 1,
-        // Additional metadata for SSR
-        cached: false,
-        userId,
-        companyId,
+      // Load rates from database
+      const dbRates = await CurrencyRatesDatabaseService.findAll();
+      console.log(`✅ SSR: Loaded ${dbRates.length} rates from database`);
+      
+      if (dbRates.length > 0) {
+        // Convert database rates to application format
+        const rates = CurrencyRatesDatabaseService.toCurrencyRates(dbRates);
+        
+        // Get the latest update timestamp
+        const latestUpdate = dbRates.reduce((latest, rate) => {
+          return rate.lastUpdated > latest ? rate.lastUpdated : latest;
+        }, new Date(0));
+        
+        return {
+          rates,
+          baseCurrency: 'USD',
+          lastSaved: latestUpdate.toISOString(),
+          version: 2, // Updated version for database storage
+          cached: false,
+          userId,
+          companyId,
+        };
+      } else {
+        console.log('⚠️ SSR: No rates in database, using defaults');
+        // Database is empty, return defaults
+        const defaultFiatRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
+        const defaultCryptoRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
+        const defaultRates = [...defaultFiatRates, ...defaultCryptoRates];
+        
+        return {
+          rates: defaultRates,
+          baseCurrency: 'USD',
+          lastSaved: new Date().toISOString(),
+          version: 2,
+          cached: false,
+          userId,
+          companyId,
+        };
       }
     } catch (error) {
-      console.error('CurrencyRatesSSRService error:', error)
+      console.error('❌ SSR: CurrencyRatesSSRService error:', error);
       // Return minimal default data on error
-      const fallbackFiatRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies()
-      const fallbackCryptoRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies()
+      const fallbackFiatRates = CurrencyRatesBusinessService.getDefaultFiatCurrencies();
+      const fallbackCryptoRates = CurrencyRatesBusinessService.getDefaultCryptoCurrencies();
       return {
         rates: [...fallbackFiatRates, ...fallbackCryptoRates],
         baseCurrency: 'USD',
         lastSaved: new Date().toISOString(),
-        version: 1,
+        version: 2,
         cached: false,
         userId,
         companyId,
-      }
+      };
     }
   }
 
@@ -130,16 +152,32 @@ export class CurrencyRatesSSRService {
   }
 
   /**
-   * Future method: Save currency rates to database
-   * Currently not implemented as rates are stored in localStorage
+   * Save currency rates to database
+   * Used for server-side operations that need to persist rates
    */
   static async saveCurrencyRates(
     rates: CurrencyRate[],
     userId: string,
     companyId?: string
   ): Promise<boolean> {
-    // TODO: Implement when database schema is added
-    console.warn('CurrencyRatesSSRService.saveCurrencyRates not implemented - rates are currently stored in localStorage')
-    return false
+    try {
+      console.log(`💾 SSR: Saving ${rates.length} currency rates to database...`);
+      
+      const createInputs = rates.map(rate => ({
+        code: rate.code,
+        name: rate.name,
+        rate: rate.rate,
+        type: rate.type,
+        source: 'ssr'
+      }));
+      
+      await CurrencyRatesDatabaseService.bulkUpsert(createInputs);
+      console.log(`✅ SSR: Successfully saved ${rates.length} currency rates`);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ SSR: Error saving currency rates:', error);
+      return false;
+    }
   }
 }

@@ -55,17 +55,12 @@ const AVAILABLE_FIAT_CURRENCIES = [
 const AVAILABLE_CRYPTO_CURRENCIES = [
   { code: 'BTC', name: 'Bitcoin' },
   { code: 'ETH', name: 'Ethereum' },
-  { code: 'BNB', name: 'Binance Coin' },
-  { code: 'ADA', name: 'Cardano' },
-  { code: 'XRP', name: 'Ripple' },
   { code: 'SOL', name: 'Solana' },
-  { code: 'DOT', name: 'Polkadot' },
-  { code: 'DOGE', name: 'Dogecoin' },
-  { code: 'MATIC', name: 'Polygon' },
-  { code: 'LTC', name: 'Litecoin' },
-  { code: 'LINK', name: 'Chainlink' },
+  { code: 'BNB', name: 'Binance Coin' },
+  { code: 'TRX', name: 'TRON' },
   { code: 'USDT', name: 'Tether' },
   { code: 'USDC', name: 'USD Coin' },
+  { code: 'BUSD', name: 'Binance USD' },
 ];
 
 export const CurrencyRatesAPIControls: React.FC<CurrencyRatesAPIControlsProps> = ({

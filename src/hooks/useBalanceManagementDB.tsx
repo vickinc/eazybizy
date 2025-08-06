@@ -115,7 +115,8 @@ export function useBalanceManagementDB(
       groupBy: filters.groupBy,
       selectedPeriod: filters.selectedPeriod,
       startDate: filters.customDateRange.startDate || undefined,
-      endDate: filters.customDateRange.endDate || undefined
+      endDate: filters.customDateRange.endDate || undefined,
+      includeBlockchainBalances: true // Enable blockchain balance fetching
     };
     return params;
   }, [selectedCompany, filters]);

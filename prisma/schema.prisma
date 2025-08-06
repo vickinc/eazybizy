@@ -847,3 +847,23 @@ model ManualCashflowEntry {
   @@map("manual_cashflow_entries")
 }
 
+model CurrencyRate {
+  id          String   @id @default(cuid())
+  code        String   @unique  // Currency code (USD, EUR, BTC, ETH, etc.)
+  name        String              // Display name
+  rate        Float               // Exchange rate value
+  type        String              // 'fiat' | 'crypto'
+  source      String   @default("manual")  // 'manual' | 'api' | 'system'
+  isActive    Boolean  @default(true)
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type, isActive])
+  @@index([code, type])
+  @@index([lastUpdated])
+  @@index([source])
+  @@index([isActive])
+  @@map("currency_rates")
+}
+

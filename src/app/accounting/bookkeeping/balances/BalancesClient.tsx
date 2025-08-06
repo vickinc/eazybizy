@@ -9,13 +9,101 @@ import Landmark from "lucide-react/dist/esm/icons/landmark";
 import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBalanceManagementDB } from "@/hooks/useBalanceManagementDB";
-import { BalanceFilterBar } from "@/components/features/BalanceFilterBar";
-import { BalanceStats } from "@/components/features/BalanceStats";
-import { BalanceList } from "@/components/features/BalanceList";
 import { ManualBalanceDialog } from "@/components/features/ManualBalanceDialog";
 import { BalancesSummaryDialog } from "@/components/features/BalancesSummaryDialog";
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
-import { BalancePageSkeleton } from '@/components/ui/balance-skeleton';
+import { Skeleton } from '@/components/ui/loading-states';
+import BalancesLoading from "./loading";
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+// Lazy load heavy components to improve initial bundle size
+const BalanceFilterBar = dynamic(
+  () => import('@/components/features/BalanceFilterBar').then(mod => ({ default: mod.BalanceFilterBar })),
+  {
+    loading: () => (
+      <div className="mb-6 bg-white rounded-lg shadow border p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i}>
+              <Skeleton className="h-4 w-20 mb-2" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-20" />
+          <div className="flex space-x-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </div>
+      </div>
+    ),
+    ssr: true
+  }
+);
+
+const BalanceStats = dynamic(
+  () => import('@/components/features/BalanceStats').then(mod => ({ default: mod.BalanceStats })),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
+        {[...Array(4)].map((_, index) => (
+          <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
+            <div className="flex items-center mb-2">
+              <Skeleton className="h-4 w-4 mr-2" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <Skeleton className="h-8 w-20 mb-1" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        ))}
+      </div>
+    ),
+    ssr: true
+  }
+);
+
+const BalanceList = dynamic(
+  () => import('@/components/features/BalanceList').then(mod => ({ default: mod.BalanceList })),
+  {
+    loading: () => (
+      <div className="bg-white rounded-lg shadow border">
+        <div className="p-4 border-b border-gray-200">
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="divide-y divide-gray-200">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="p-4 sm:p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-lg" />
+                  <div>
+                    <Skeleton className="h-5 w-40 mb-2" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Skeleton className="h-5 w-24 mb-1" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-4 w-20 mx-auto mb-2" />
+                    <Skeleton className="h-5 w-16 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    ssr: true
+  }
+);
 import { ErrorBoundary, ApiErrorBoundary } from "@/components/ui/error-boundary";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { AccountBalance } from '@/types/balance.types';
@@ -26,6 +114,11 @@ export default function BalancesClient() {
   const [isManualBalanceDialogOpen, setIsManualBalanceDialogOpen] = useState(false);
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [blockchainRefreshStatus, setBlockchainRefreshStatus] = useState<{
+    walletId?: string;
+    status: 'idle' | 'loading' | 'success' | 'error';
+    message?: string;
+  }>({ status: 'idle' });
 
   // Prevent hydration mismatches by only showing dynamic content after hydration
   useEffect(() => {
@@ -99,6 +192,79 @@ export default function BalancesClient() {
     setIsSummaryDialogOpen(false);
   };
 
+  const handleRefreshBlockchain = async (walletId: string) => {
+    setBlockchainRefreshStatus({ 
+      walletId, 
+      status: 'loading', 
+      message: 'Fetching blockchain balance...' 
+    });
+
+    try {
+      // Find the wallet in balances to get its details
+      const walletBalance = balances.find(b => b.account.id === walletId);
+      if (!walletBalance || 'bankName' in walletBalance.account) {
+        throw new Error('Wallet not found or invalid');
+      }
+
+      const wallet = walletBalance.account as any; // DigitalWallet type
+      if (!wallet.walletAddress || wallet.walletType?.toLowerCase() !== 'crypto') {
+        throw new Error('Not a crypto wallet or no address configured');
+      }
+
+      // Call the blockchain balance API
+      const response = await fetch('/api/blockchain/balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          address: wallet.walletAddress,
+          blockchain: wallet.blockchain || 'ethereum',
+          network: 'mainnet', // TODO: Add network field to wallet
+          tokenSymbol: wallet.currency,
+          forceRefresh: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch blockchain balance');
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown error');
+      }
+
+      // Refresh the balances to reflect the new blockchain data
+      await loadBalances();
+      
+      setBlockchainRefreshStatus({ 
+        walletId, 
+        status: 'success', 
+        message: 'Blockchain balance updated successfully' 
+      });
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setBlockchainRefreshStatus({ status: 'idle' });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error refreshing blockchain balance:', error);
+      setBlockchainRefreshStatus({ 
+        walletId, 
+        status: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to refresh blockchain balance' 
+      });
+
+      // Clear error message after 5 seconds
+      setTimeout(() => {
+        setBlockchainRefreshStatus({ status: 'idle' });
+      }, 5000);
+    }
+  };
+
   // Helper function to count unique accounts (not currency entries)
   const getUniqueAccountCount = (accountBalances: AccountBalance[]) => {
     const uniqueAccountIds = new Set<string>();
@@ -128,9 +294,11 @@ export default function BalancesClient() {
     document.body.removeChild(a);
   };
 
-  // Handle initial loading state
-  if (showLoader && balances.length === 0) {
-    return <BalancePageSkeleton />;
+  // Don't show full page skeleton - show structure immediately and let individual components handle their loading states
+
+  // Handle loading state with skeleton UI
+  if (showLoader) {
+    return <BalancesLoading />;
   }
 
   // Handle error state
@@ -249,39 +417,138 @@ export default function BalancesClient() {
               </Alert>
             )}
 
-            {/* Balance Statistics */}
-            {hasBalances && (
-              <BalanceStats
-                summary={summary}
-                loading={isLoading}
-                onSummaryClick={handleOpenSummaryDialog}
-              />
+            {/* Blockchain Refresh Status */}
+            {blockchainRefreshStatus.status !== 'idle' && (
+              <Alert className={`mb-6 ${
+                blockchainRefreshStatus.status === 'success' ? 'border-green-200 bg-green-50' :
+                blockchainRefreshStatus.status === 'error' ? 'border-red-200 bg-red-50' :
+                'border-blue-200 bg-blue-50'
+              }`}>
+                <AlertCircle className={`h-4 w-4 ${
+                  blockchainRefreshStatus.status === 'success' ? 'text-green-600' :
+                  blockchainRefreshStatus.status === 'error' ? 'text-red-600' :
+                  'text-blue-600'
+                }`} />
+                <AlertDescription className={
+                  blockchainRefreshStatus.status === 'success' ? 'text-green-800' :
+                  blockchainRefreshStatus.status === 'error' ? 'text-red-800' :
+                  'text-blue-800'
+                }>
+                  {blockchainRefreshStatus.message}
+                </AlertDescription>
+              </Alert>
             )}
 
+            {/* Balance Statistics */}
+            <Suspense fallback={
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
+                {[...Array(4)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
+                    <div className="flex items-center mb-2">
+                      <Skeleton className="h-4 w-4 mr-2" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-8 w-20 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                ))}
+              </div>
+            }>
+              {hasBalances && (
+                <BalanceStats
+                  summary={summary}
+                  loading={isLoading}
+                  onSummaryClick={handleOpenSummaryDialog}
+                />
+              )}
+            </Suspense>
+
             {/* Filters */}
-            <BalanceFilterBar
-              filters={filters}
-              onUpdateFilters={updateFilters}
-              onResetFilters={resetFilters}
-              loading={isLoading}
-            />
+            <Suspense fallback={
+              <div className="mb-6 bg-white rounded-lg shadow border p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-8 w-20" />
+                  <div className="flex space-x-2">
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                </div>
+              </div>
+            }>
+              <BalanceFilterBar
+                filters={filters}
+                onUpdateFilters={updateFilters}
+                onResetFilters={resetFilters}
+                loading={isLoading}
+              />
+            </Suspense>
 
             {/* Results Summary */}
-            {!isLoading && hasBalances && (
+            {hasBalances && (
               <div className="mb-4 text-sm text-gray-600">
-                Showing {getUniqueAccountCount(balances)} account{getUniqueAccountCount(balances) !== 1 ? 's' : ''} 
-                {filters.groupBy !== 'none' && ` in ${Object.keys(groupedBalances).length} groups`}
+                {isLoading ? (
+                  <Skeleton className="h-4 w-32" />
+                ) : (
+                  <>
+                    Showing {getUniqueAccountCount(balances)} account{getUniqueAccountCount(balances) !== 1 ? 's' : ''} 
+                    {filters.groupBy !== 'none' && ` in ${Object.keys(groupedBalances).length} groups`}
+                  </>
+                )}
               </div>
             )}
 
             {/* Balance List */}
-            <BalanceList
-              balances={balances}
-              groupedBalances={groupedBalances}
-              groupBy={filters.groupBy}
-              loading={isLoading}
-              onEditInitialBalance={handleEditInitialBalance}
-            />
+            <Suspense fallback={
+              <div className="bg-white rounded-lg shadow border">
+                <div className="p-4 border-b border-gray-200">
+                  <Skeleton className="h-6 w-32" />
+                </div>
+                <div className="divide-y divide-gray-200">
+                  {[...Array(3)].map((_, index) => (
+                    <div key={index} className="p-4 sm:p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <Skeleton className="h-12 w-12 rounded-lg" />
+                          <div>
+                            <Skeleton className="h-5 w-40 mb-2" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Skeleton className="h-5 w-24 mb-1" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="text-center">
+                            <Skeleton className="h-4 w-20 mx-auto mb-2" />
+                            <Skeleton className="h-5 w-16 mx-auto" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            }>
+              <BalanceList
+                balances={balances}
+                groupedBalances={groupedBalances}
+                groupBy={filters.groupBy}
+                loading={isLoading}
+                onEditInitialBalance={handleEditInitialBalance}
+                onRefreshBlockchain={handleRefreshBlockchain}
+              />
+            </Suspense>
 
             {/* Manual Balance Dialog */}
             <ManualBalanceDialog

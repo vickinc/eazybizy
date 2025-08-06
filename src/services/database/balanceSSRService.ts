@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { CurrencyService } from '@/services/business/currencyService'
+import { BalanceBusinessService } from '@/services/business/balanceBusinessService'
 
 export interface BalanceListItem {
   account: any // BankAccount | DigitalWallet
@@ -64,6 +65,7 @@ export interface BalanceListParams {
   endDate?: string
   sortField?: string
   sortDirection?: 'asc' | 'desc'
+  includeBlockchainBalances?: boolean
 }
 
 /**
@@ -149,11 +151,12 @@ export class BalanceSSRService {
       startDate = '',
       endDate = '',
       sortField = 'finalBalance',
-      sortDirection = 'desc'
+      sortDirection = 'desc',
+      includeBlockchainBalances = false
     } = params
 
     // Generate cache key for this specific query
-    const cacheKey = `balances:${company}:${accountType}:${search}:${showZeroBalances}:${viewFilter}:${groupBy}:${selectedPeriod}:${startDate}:${endDate}:${sortField}:${sortDirection}`
+    const cacheKey = `balances:${company}:${accountType}:${search}:${showZeroBalances}:${viewFilter}:${groupBy}:${selectedPeriod}:${startDate}:${endDate}:${sortField}:${sortDirection}:${includeBlockchainBalances}`
     
     // Check cache first (30 second TTL for SSR)
     const cachedResult = ssrCache.get<BalanceListResponse>(cacheKey)
@@ -323,8 +326,21 @@ export class BalanceSSRService {
       // Sort balances
       filteredBalances = this.sortBalances(filteredBalances, sortField, sortDirection)
 
+      // Optionally enrich with blockchain data (if requested and API is configured)
+      if (includeBlockchainBalances) {
+        try {
+          filteredBalances = await BalanceBusinessService.enrichWithBlockchainBalances(
+            filteredBalances as any[], // Cast to AccountBalance[] for compatibility
+            true
+          ) as BalanceListItem[] // Cast back to BalanceListItem[]
+        } catch (error) {
+          console.error('Error enriching balances with blockchain data in SSR:', error)
+          // Continue without blockchain data if enrichment fails
+        }
+      }
+
       // Calculate summary statistics
-      const summary = this.calculateSummary(filteredBalances)
+      const summary = await this.calculateSummary(filteredBalances)
 
       const responseTime = Date.now() - startTime
 
@@ -589,7 +605,7 @@ export class BalanceSSRService {
    * Calculate summary statistics - count unique accounts, not currency entries
    * Also converts totals to USD using exchange rates
    */
-  private static calculateSummary(balances: BalanceListItem[]) {
+  private static async calculateSummary(balances: BalanceListItem[]) {
     // Calculate unique account counts
     const uniqueAccountIds = new Set<string>();
     const uniqueBankIds = new Set<string>();
@@ -599,7 +615,7 @@ export class BalanceSSRService {
     let totalAssetsUSD = 0;
     let totalLiabilitiesUSD = 0;
 
-    balances.forEach(balance => {
+    for (const balance of balances) {
       const accountType = balance.account.__accountType;
       let originalAccountId = balance.account.id;
       
@@ -616,9 +632,9 @@ export class BalanceSSRService {
         uniqueWalletIds.add(originalAccountId);
       }
 
-      // Convert balance to USD for totals
+      // Convert balance to USD for totals using database-backed rates
       try {
-        const balanceInUSD = CurrencyService.convertToUSD(balance.finalBalance, balance.currency);
+        const balanceInUSD = await CurrencyService.convertToUSDAsync(balance.finalBalance, balance.currency);
         if (balanceInUSD >= 0) {
           totalAssetsUSD += balanceInUSD;
         } else {
@@ -633,7 +649,7 @@ export class BalanceSSRService {
           totalLiabilitiesUSD += Math.abs(balance.finalBalance);
         }
       }
-    });
+    }
 
     const netWorthUSD = totalAssetsUSD - totalLiabilitiesUSD;
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,18 +12,25 @@ import Edit2 from "lucide-react/dist/esm/icons/edit-2";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
 import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 import Info from "lucide-react/dist/esm/icons/info";
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import Clock from "lucide-react/dist/esm/icons/clock";
 import { AccountBalance } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
+import { DigitalWallet } from '@/types/payment.types';
 
 interface BalanceListItemProps {
   balance: AccountBalance;
   onEditInitialBalance?: (accountId: string, accountType: 'bank' | 'wallet') => void;
+  onRefreshBlockchain?: (walletId: string) => Promise<void>;
   compact?: boolean;
 }
 
 export const BalanceListItem: React.FC<BalanceListItemProps> = ({
   balance,
   onEditInitialBalance,
+  onRefreshBlockchain,
   compact = false
 }) => {
   const { 
@@ -35,8 +42,12 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
     incomingAmount, 
     outgoingAmount, 
     currency, 
-    lastTransactionDate 
+    lastTransactionDate,
+    blockchainBalance,
+    blockchainSyncStatus
   } = balance;
+  
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const isBank = BalanceBusinessService.isAccountBank(account);
   const isPositive = finalBalance >= 0;
@@ -63,6 +74,40 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
       onEditInitialBalance(account.id, isBank ? 'bank' : 'wallet');
     }
   };
+
+  const handleRefreshBlockchain = async () => {
+    if (!onRefreshBlockchain || isBank) return;
+    
+    setIsRefreshing(true);
+    try {
+      await onRefreshBlockchain(account.id);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const getBlockchainSyncIcon = () => {
+    if (isRefreshing) {
+      return <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />;
+    }
+    
+    switch (blockchainSyncStatus) {
+      case 'synced':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'syncing':
+        return <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />;
+    }
+  };
+
+  const isCryptoWallet = !isBank && (account as DigitalWallet).walletType?.toLowerCase() === 'crypto';
+  const hasBlockchainData = blockchainBalance && blockchainBalance.isLive;
+
+  // Debug log removed - blockchain integration is working!
+
 
   if (compact) {
     return (
@@ -221,6 +266,112 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Blockchain Balance Section - Only for crypto wallets */}
+        {isCryptoWallet && (
+          <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <h4 className="text-sm font-medium text-purple-900">Blockchain Balance</h4>
+                {getBlockchainSyncIcon()}
+              </div>
+              {onRefreshBlockchain && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleRefreshBlockchain}
+                  disabled={isRefreshing}
+                  className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-100"
+                >
+                  <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              )}
+            </div>
+            
+            {hasBlockchainData ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">On-chain Balance:</span>
+                  <span className={`font-semibold ${getBalanceColor(blockchainBalance.balance)}`}>
+                    {blockchainBalance.balance} {blockchainBalance.unit}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Calculated Balance:</span>
+                  <span className={`font-semibold ${getBalanceColor(finalBalance)}`}>
+                    {formatCurrency(finalBalance)}
+                  </span>
+                </div>
+                {Math.abs(blockchainBalance.balance - finalBalance) > 0.01 && (
+                  <div className="mt-2 p-2 bg-yellow-100 rounded-md">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                      <div className="text-xs text-yellow-800">
+                        <p className="font-medium">Balance Discrepancy Detected</p>
+                        <p>The on-chain balance differs from the calculated balance. This could be due to:</p>
+                        <ul className="list-disc list-inside mt-1">
+                          <li>Unrecorded transactions</li>
+                          <li>Pending transactions</li>
+                          <li>External transfers</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="text-xs text-gray-500 mt-2">
+                  Last synced: {new Date(blockchainBalance.lastUpdated).toLocaleString()}
+                </div>
+              </div>
+            ) : blockchainSyncStatus === 'error' && blockchainBalance?.error ? (
+              <div className="space-y-2">
+                <div className="text-sm text-red-600">
+                  Error: {blockchainBalance.error}
+                </div>
+                {blockchainBalance.error.includes('address_not_synced') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      const wallet = account as DigitalWallet;
+                      try {
+                        const response = await fetch('/api/blockchain/sync', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            address: wallet.walletAddress,
+                            blockchain: wallet.blockchain,
+                            network: 'mainnet'
+                          })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                          alert('Address sync initiated! Please refresh in a few minutes to see the balance.');
+                        } else {
+                          alert('Sync failed: ' + result.error);
+                        }
+                      } catch (error) {
+                        alert('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                      }
+                    }}
+                    className="h-7 px-2 text-xs"
+                  >
+                    🔄 Sync Address
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600">
+                {(account as DigitalWallet).walletAddress ? 
+                  'Click refresh to fetch on-chain balance' : 
+                  'No wallet address configured'}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Additional Info */}
         <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">

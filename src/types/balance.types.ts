@@ -1,5 +1,6 @@
 import { BankAccount, DigitalWallet } from './payment.types';
 import { Company } from './company.types';
+import { BlockchainBalance } from './blockchain.types';
 
 export type FilterPeriod = 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom';
 export type AccountTypeFilter = 'all' | 'banks' | 'wallets';
@@ -39,6 +40,8 @@ export interface CompanyAccountBalance {
   outgoingAmount: number;
   currency: string;
   lastTransactionDate?: string;
+  blockchainBalance?: BlockchainBalance; // Real-time blockchain balance
+  blockchainSyncStatus?: 'pending' | 'syncing' | 'synced' | 'error';
 }
 
 // Alias for backward compatibility

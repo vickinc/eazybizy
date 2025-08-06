@@ -65,15 +65,14 @@ export class BanksWalletsBusinessService {
   ];
 
   static readonly CRYPTO_CURRENCIES = [
-    'USDT', 'USDC', 'EURC', 'PYSD', 'USDG', 'USDS', 'SOL', 'BTC', 'ETH', 
-    'SUI', 'HYPE', 'TRX', 'BNB', 'XRP', 'DOGE', 'ADA'
+    'BTC', 'ETH', 'SOL', 'BNB', 'TRX', 'USDT', 'USDC', 'BUSD'
   ];
 
   static readonly WALLET_TYPES = [
+    { value: 'crypto', label: 'Cryptocurrency' },
     { value: 'paypal', label: 'PayPal' },
     { value: 'stripe', label: 'Stripe' },
     { value: 'wise', label: 'Wise (TransferWise)' },
-    { value: 'crypto', label: 'Cryptocurrency' },
     { value: 'other', label: 'Other' }
   ];
 
@@ -95,10 +94,10 @@ export class BanksWalletsBusinessService {
   static getInitialNewDigitalWallet(): NewDigitalWallet {
     return {
       companyId: 0,
-      walletType: 'paypal',
+      walletType: 'crypto',
       walletName: '',
       walletAddress: '',
-      currency: 'USD',
+      currency: '',
       currencies: [],
       description: '',
       blockchain: '',

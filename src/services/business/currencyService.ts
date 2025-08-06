@@ -1,4 +1,5 @@
 import { SettingsStorageService } from '../storage/settingsStorageService';
+import { CurrencyRatesIntegrationService } from './currencyRatesIntegrationService';
 
 /**
  * Provides currency conversion, formatting utilities, and currency constants.
@@ -44,6 +45,23 @@ export class CurrencyService {
   }
 
   /**
+   * Converts an amount from a given currency to USD using database-stored rates.
+   * This is the new async version that uses the Currency Rates page data.
+   * @param amount The amount to convert.
+   * @param fromCurrency The currency code to convert from (e.g., "EUR").
+   * @returns Promise that resolves to the equivalent amount in USD.
+   */
+  static async convertToUSDAsync(amount: number, fromCurrency: string): Promise<number> {
+    try {
+      return await CurrencyRatesIntegrationService.convertToUSD(amount, fromCurrency);
+    } catch (error) {
+      console.error(`Error converting ${amount} ${fromCurrency} to USD:`, error);
+      return amount; // Return original amount on error
+    }
+  }
+
+  /**
+   * @deprecated Use convertToUSDAsync instead for database-backed rates
    * Converts an amount from a given currency to USD.
    * Uses cached exchange rates where the rate is "USD per 1 unit of foreign currency".
    * @param amount The amount to convert.
@@ -56,6 +74,7 @@ export class CurrencyService {
       if (fromCurrency === 'USD') return amount;
       const rates = this.getExchangeRates();
       const rate = rates[fromCurrency]; // USD per unit of fromCurrency
+
 
       if (typeof rate !== 'number') {
         console.warn(`Exchange rate not found for ${fromCurrency}. Returning original amount.`);
