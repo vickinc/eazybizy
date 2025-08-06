@@ -47,17 +47,49 @@ const BalanceStats = dynamic(
   () => import('@/components/features/BalanceStats').then(mod => ({ default: mod.BalanceStats })),
   {
     loading: () => (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-            <div className="flex items-center mb-2">
-              <Skeleton className="h-4 w-4 mr-2" />
-              <Skeleton className="h-4 w-20" />
+      <div>
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
+              <div className="flex items-center mb-2">
+                <Skeleton className="h-4 w-4 mr-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-8 w-20 mb-1" />
+              <Skeleton className="h-3 w-24" />
             </div>
-            <Skeleton className="h-8 w-20 mb-1" />
-            <Skeleton className="h-3 w-24" />
+          ))}
+        </div>
+        
+        {/* Pie Chart Skeleton */}
+        <div className="bg-white rounded-lg shadow border p-6 mb-6">
+          <div className="flex items-center mb-6">
+            <Skeleton className="h-5 w-5 mr-2" />
+            <Skeleton className="h-6 w-40" />
           </div>
-        ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="h-56 sm:h-72 md:h-80 lg:h-96 flex items-center justify-center">
+                <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-full bg-gray-200 animate-pulse"></div>
+              </div>
+            </div>
+            <div className="lg:col-span-1">
+              <Skeleton className="h-4 w-32 mb-3" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex items-center p-2">
+                    <Skeleton className="w-3 h-3 rounded-full mr-3" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-12 mb-1" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     ),
     ssr: true

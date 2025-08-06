@@ -13,6 +13,7 @@ import MousePointer2 from "lucide-react/dist/esm/icons/mouse-pointer-2";
 import { BalanceSummary } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 import { Skeleton } from '@/components/ui/loading-states';
+import CurrencyBreakdownPieChart from './CurrencyBreakdownPieChart';
 
 interface BalanceStatsProps {
   summary: BalanceSummary;
@@ -74,7 +75,7 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Card 
-              className={`transition-all duration-200 ${onSummaryClick ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] border-2 hover:border-blue-300' : 'cursor-help hover:shadow-md'}`}
+              className={`transition-all duration-200 ${onSummaryClick ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] border-2 hover:border-lime-300' : 'cursor-help hover:shadow-md'}`}
               onClick={onSummaryClick}
             >
               <CardHeader className="pb-2">
@@ -273,51 +274,17 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
         </Tooltip>
       </div>
 
-      {/* Currency Breakdown (if multiple currencies) */}
+      {/* Interactive Currency Breakdown Pie Chart (if multiple currencies) */}
       {Object.keys(summary.currencyBreakdown).length > 1 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Building className="h-5 w-5 mr-2" />
-              Currency Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(summary.currencyBreakdown)
-                .sort(([,a], [,b]) => Math.abs(b.netWorth) - Math.abs(a.netWorth))
-                .map(([currency, breakdown]) => (
-                  <Card key={currency} className="bg-gray-50">
-                    <CardContent className="p-4">
-                      <div className="text-center">
-                        <div className="font-semibold text-lg mb-2">{currency}</div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Assets:</span>
-                            <span className={getChangeColor(breakdown.assets)}>
-                              {formatCurrency(breakdown.assets, currency)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Liabilities:</span>
-                            <span className={breakdown.liabilities > 0 ? 'text-red-600' : 'text-gray-600'}>
-                              {formatCurrency(breakdown.liabilities, currency)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between font-medium border-t pt-1">
-                            <span>Net:</span>
-                            <span className={getChangeColor(breakdown.netWorth)}>
-                              {formatCurrency(breakdown.netWorth, currency)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
+        <CurrencyBreakdownPieChart
+          currencyBreakdown={summary.currencyBreakdown}
+          baseCurrency={summary.baseCurrency}
+          loading={loading}
+          onCurrencyClick={(currency) => {
+            console.log('Currency clicked:', currency);
+            // Future: Add filtering or navigation functionality
+          }}
+        />
       )}
     </TooltipProvider>
   );

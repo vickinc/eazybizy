@@ -78,7 +78,15 @@ export interface BalanceSummary {
     assets: number;
     liabilities: number;
     netWorth: number;
+    exchangeRateToUSD?: number; // Exchange rate to convert to USD for pie chart
   }>;
+}
+
+export interface CurrencyBreakdown {
+  assets: number;
+  liabilities: number;
+  netWorth: number;
+  exchangeRateToUSD?: number;
 }
 
 export interface GroupedBalances {

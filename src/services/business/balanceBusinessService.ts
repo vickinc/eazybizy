@@ -333,6 +333,10 @@ export class BalanceBusinessService {
       // Convert to USD for total calculations using database-backed rates
       const amountInUSD = await CurrencyService.convertToUSDAsync(amount, currency);
       
+      // Calculate exchange rate from conversion (USD per 1 unit of currency)
+      // Use absolute values to handle negative balances properly
+      const exchangeRate = currency === 'USD' ? 1 : 
+        (Math.abs(amount) > 0 ? Math.abs(amountInUSD) / Math.abs(amount) : 1);
 
       // Count account types
       if (this.isAccountBank(balance.account)) {
@@ -360,7 +364,8 @@ export class BalanceBusinessService {
         summary.currencyBreakdown[currency] = {
           assets: 0,
           liabilities: 0,
-          netWorth: 0
+          netWorth: 0,
+          exchangeRateToUSD: exchangeRate
         };
       }
 
