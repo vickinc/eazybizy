@@ -88,6 +88,7 @@ const defaultFilters: BalanceFilterState = {
     startDate: '',
     endDate: ''
   },
+  asOfDate: '',
   accountTypeFilter: 'all',
   viewFilter: 'all',
   groupBy: 'account',
@@ -116,12 +117,13 @@ export function useBalanceManagementDB(
       selectedPeriod: filters.selectedPeriod,
       startDate: filters.customDateRange.startDate || undefined,
       endDate: filters.customDateRange.endDate || undefined,
+      asOfDate: filters.asOfDate || undefined,
       includeBlockchainBalances: true // Enable blockchain balance fetching
     };
     return params;
   }, [selectedCompany, filters]);
 
-  // Fetch balances with React Query
+  // Fetch balances with React Query - optimized settings
   const {
     data: balancesResponse,
     isLoading,
@@ -131,8 +133,10 @@ export function useBalanceManagementDB(
   } = useQuery({
     queryKey: ['balances', queryParams],
     queryFn: () => balanceApiService.getBalances(queryParams),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 2
+    gcTime: 10 * 60 * 1000, // 10 minutes - increased from 5
+    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+    refetchOnMount: 'always', // Always fetch on mount but respect stale time
   });
 
   // Extract data from response

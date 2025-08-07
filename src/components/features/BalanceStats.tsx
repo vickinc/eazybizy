@@ -20,13 +20,19 @@ interface BalanceStatsProps {
   loading?: boolean;
   baseCurrency?: string;
   onSummaryClick?: () => void;
+  selectedPeriod?: string;
+  customDateRange?: { startDate: string; endDate: string };
+  asOfDate?: string;
 }
 
 export const BalanceStats: React.FC<BalanceStatsProps> = ({
   summary,
   loading = false,
   baseCurrency = 'USD',
-  onSummaryClick
+  onSummaryClick,
+  selectedPeriod = 'thisMonth',
+  customDateRange,
+  asOfDate
 }) => {
   const formatCurrency = (amount: number, currency = baseCurrency): string => {
     return BalanceBusinessService.formatCurrency(amount, currency);
@@ -42,6 +48,36 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
     if (amount > 0) return <TrendingUp className="h-4 w-4" />;
     if (amount < 0) return <TrendingDown className="h-4 w-4" />;
     return <PieChart className="h-4 w-4" />;
+  };
+
+  const getPeriodDisplayText = () => {
+    switch (selectedPeriod) {
+      case 'thisMonth':
+        return 'This Month';
+      case 'lastMonth':
+        return 'Last Month';
+      case 'thisYear':
+        return 'This Year';
+      case 'lastYear':
+        return 'Last Year';
+      case 'allTime':
+        return 'All Time';
+      case 'custom':
+        if (customDateRange?.startDate && customDateRange?.endDate) {
+          const startDate = new Date(customDateRange.startDate).toLocaleDateString();
+          const endDate = new Date(customDateRange.endDate).toLocaleDateString();
+          return `${startDate} - ${endDate}`;
+        }
+        return 'Custom Range';
+      case 'asOfDate':
+        if (asOfDate) {
+          const date = new Date(asOfDate).toLocaleDateString();
+          return `As of ${date}`;
+        }
+        return 'As of Date';
+      default:
+        return 'Current Period';
+    }
   };
 
   if (loading) {
@@ -98,6 +134,9 @@ export const BalanceStats: React.FC<BalanceStatsProps> = ({
                     Multi-currency (USD equivalent)
                   </div>
                 )}
+                <div className="text-xs text-gray-500 mt-1">
+                  {getPeriodDisplayText()}
+                </div>
                 {onSummaryClick && (
                   <div className="text-xs text-blue-600 mt-1 font-medium">
                     Click for details

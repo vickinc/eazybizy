@@ -17,77 +17,26 @@ import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
 // Lazy load heavy components to improve initial bundle size
-const BalanceFilterBar = dynamic(
-  () => import('@/components/features/BalanceFilterBar').then(mod => ({ default: mod.BalanceFilterBar })),
-  {
-    loading: () => (
-      <div className="mb-6 bg-white rounded-lg shadow border p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i}>
-              <Skeleton className="h-4 w-20 mb-2" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-20" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-16" />
-          </div>
-        </div>
-      </div>
-    ),
-    ssr: true
-  }
-);
-
 const BalanceStats = dynamic(
   () => import('@/components/features/BalanceStats').then(mod => ({ default: mod.BalanceStats })),
   {
     loading: () => (
       <div>
-        {/* Stats Cards Skeleton */}
+        {/* Stats Cards Skeleton - Simplified */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
           {[...Array(4)].map((_, index) => (
             <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-              <div className="flex items-center mb-2">
-                <Skeleton className="h-4 w-4 mr-2" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-              <Skeleton className="h-8 w-20 mb-1" />
-              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-8 w-24 mb-2" />
+              <Skeleton className="h-3 w-16" />
             </div>
           ))}
         </div>
         
-        {/* Pie Chart Skeleton */}
+        {/* Pie Chart Skeleton - Simplified */}
         <div className="bg-white rounded-lg shadow border p-6 mb-6">
-          <div className="flex items-center mb-6">
-            <Skeleton className="h-5 w-5 mr-2" />
-            <Skeleton className="h-6 w-40" />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <div className="h-56 sm:h-72 md:h-80 lg:h-96 flex items-center justify-center">
-                <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-full bg-gray-200 animate-pulse"></div>
-              </div>
-            </div>
-            <div className="lg:col-span-1">
-              <Skeleton className="h-4 w-32 mb-3" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="flex items-center p-2">
-                    <Skeleton className="w-3 h-3 rounded-full mr-3" />
-                    <div className="flex-1">
-                      <Skeleton className="h-4 w-12 mb-1" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <Skeleton className="h-6 w-40 mb-6" />
+          <div className="flex items-center justify-center">
+            <div className="w-48 h-48 rounded-full bg-gray-200 animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -105,28 +54,18 @@ const BalanceList = dynamic(
           <Skeleton className="h-6 w-32" />
         </div>
         <div className="divide-y divide-gray-200">
-          {[...Array(3)].map((_, index) => (
+          {[...Array(2)].map((_, index) => (
             <div key={index} className="p-4 sm:p-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-lg" />
-                  <div>
-                    <Skeleton className="h-5 w-40 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
+                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-5 w-32" />
                 </div>
-                <div className="text-right">
-                  <Skeleton className="h-5 w-24 mb-1" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
+                <Skeleton className="h-6 w-24" />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="text-center">
-                    <Skeleton className="h-4 w-20 mx-auto mb-2" />
-                    <Skeleton className="h-5 w-16 mx-auto" />
-                  </div>
-                ))}
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-20" />
               </div>
             </div>
           ))}
@@ -476,12 +415,8 @@ export default function BalancesClient() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
                 {[...Array(4)].map((_, index) => (
                   <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-                    <div className="flex items-center mb-2">
-                      <Skeleton className="h-4 w-4 mr-2" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                    <Skeleton className="h-8 w-20 mb-1" />
-                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-8 w-24 mb-2" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
                 ))}
               </div>
@@ -491,37 +426,13 @@ export default function BalancesClient() {
                   summary={summary}
                   loading={isLoading}
                   onSummaryClick={handleOpenSummaryDialog}
+                  selectedPeriod={filters.selectedPeriod}
+                  customDateRange={filters.customDateRange}
+                  asOfDate={filters.asOfDate}
                 />
               )}
             </Suspense>
 
-            {/* Filters */}
-            <Suspense fallback={
-              <div className="mb-6 bg-white rounded-lg shadow border p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i}>
-                      <Skeleton className="h-4 w-20 mb-2" />
-                      <Skeleton className="h-9 w-full" />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center">
-                  <Skeleton className="h-8 w-20" />
-                  <div className="flex space-x-2">
-                    <Skeleton className="h-8 w-16" />
-                    <Skeleton className="h-8 w-16" />
-                  </div>
-                </div>
-              </div>
-            }>
-              <BalanceFilterBar
-                filters={filters}
-                onUpdateFilters={updateFilters}
-                onResetFilters={resetFilters}
-                loading={isLoading}
-              />
-            </Suspense>
 
             {/* Results Summary */}
             {hasBalances && (
@@ -544,28 +455,18 @@ export default function BalancesClient() {
                   <Skeleton className="h-6 w-32" />
                 </div>
                 <div className="divide-y divide-gray-200">
-                  {[...Array(3)].map((_, index) => (
+                  {[...Array(2)].map((_, index) => (
                     <div key={index} className="p-4 sm:p-6">
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-4">
-                          <Skeleton className="h-12 w-12 rounded-lg" />
-                          <div>
-                            <Skeleton className="h-5 w-40 mb-2" />
-                            <Skeleton className="h-3 w-32" />
-                          </div>
+                          <Skeleton className="h-10 w-10 rounded-lg" />
+                          <Skeleton className="h-5 w-32" />
                         </div>
-                        <div className="text-right">
-                          <Skeleton className="h-5 w-24 mb-1" />
-                          <Skeleton className="h-3 w-16" />
-                        </div>
+                        <Skeleton className="h-6 w-24" />
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="text-center">
-                            <Skeleton className="h-4 w-20 mx-auto mb-2" />
-                            <Skeleton className="h-5 w-16 mx-auto" />
-                          </div>
-                        ))}
+                      <div className="flex gap-4">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20" />
                       </div>
                     </div>
                   ))}

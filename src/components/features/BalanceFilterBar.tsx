@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,10 +62,13 @@ export const BalanceFilterBar: React.FC<BalanceFilterBarProps> = ({
     });
   };
 
+  const handleAsOfDateChange = (value: string) => {
+    onUpdateFilters({ asOfDate: value });
+  };
+
   return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="space-y-4">
+    <div className="mb-6 p-4">
+      <div className="space-y-4">
           {/* Period Filter */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
@@ -86,6 +88,7 @@ export const BalanceFilterBar: React.FC<BalanceFilterBarProps> = ({
                   <SelectItem value="lastYear">Last Year</SelectItem>
                   <SelectItem value="allTime">All Time</SelectItem>
                   <SelectItem value="custom">Custom Range</SelectItem>
+                  <SelectItem value="asOfDate">As Of Date</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -181,6 +184,30 @@ export const BalanceFilterBar: React.FC<BalanceFilterBarProps> = ({
             </div>
           )}
 
+          {/* As Of Date */}
+          {filters.selectedPeriod === 'asOfDate' && (
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="space-y-2">
+                <Label htmlFor="as-of-date">As Of Date</Label>
+                <div className="relative max-w-md">
+                  <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="as-of-date"
+                    type="date"
+                    value={filters.asOfDate}
+                    onChange={(e) => handleAsOfDateChange(e.target.value)}
+                    className="pl-10"
+                    disabled={loading}
+                    max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                  />
+                </div>
+                <p className="text-xs text-gray-600">
+                  View account balances as they existed on the selected date
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Search and Options */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -237,7 +264,9 @@ export const BalanceFilterBar: React.FC<BalanceFilterBarProps> = ({
               
               {filters.selectedPeriod !== 'thisMonth' && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Period: {filters.selectedPeriod === 'custom' ? 'Custom Range' : filters.selectedPeriod}
+                  Period: {filters.selectedPeriod === 'custom' ? 'Custom Range' : 
+                           filters.selectedPeriod === 'asOfDate' ? `As of ${filters.asOfDate || 'Date'}` :
+                           filters.selectedPeriod}
                 </span>
               )}
               
@@ -272,8 +301,7 @@ export const BalanceFilterBar: React.FC<BalanceFilterBarProps> = ({
               )}
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

@@ -2,7 +2,7 @@ import { BankAccount, DigitalWallet } from './payment.types';
 import { Company } from './company.types';
 import { BlockchainBalance } from './blockchain.types';
 
-export type FilterPeriod = 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom';
+export type FilterPeriod = 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'allTime' | 'custom' | 'asOfDate';
 export type AccountTypeFilter = 'all' | 'banks' | 'wallets';
 export type BalanceViewFilter = 'all' | 'assets' | 'liabilities' | 'equity';
 export type BalanceGroupBy = 'none' | 'account' | 'currency' | 'type';
@@ -36,6 +36,7 @@ export interface CompanyAccountBalance {
   initialBalance: number;
   transactionBalance: number;
   finalBalance: number;
+  finalBalanceUSD?: number; // USD equivalent calculated server-side using consistent exchange rates
   incomingAmount: number;
   outgoingAmount: number;
   currency: string;
@@ -53,6 +54,7 @@ export interface BalanceFilterState {
     startDate: string;
     endDate: string;
   };
+  asOfDate: string;
   accountTypeFilter: AccountTypeFilter;
   viewFilter: BalanceViewFilter;
   groupBy: BalanceGroupBy;

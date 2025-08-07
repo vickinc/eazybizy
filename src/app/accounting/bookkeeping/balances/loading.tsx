@@ -23,46 +23,24 @@ export default function BalancesLoading() {
           <Skeleton className="h-10 w-32" />
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Simplified */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
           {[...Array(4)].map((_, index) => (
             <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-              <div className="flex items-center mb-2">
-                <Skeleton className="h-4 w-4 mr-2" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-              <Skeleton className="h-8 w-20 mb-1" />
-              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-8 w-24 mb-2" />
+              <Skeleton className="h-3 w-16" />
             </div>
           ))}
         </div>
 
-        {/* Filter Bar */}
+        {/* Filter Bar - Simplified */}
         <div className="mb-6 bg-white rounded-lg shadow border p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div>
-              <Skeleton className="h-4 w-20 mb-2" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-4 w-16 mb-2" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-4 w-18 mb-2" />
-              <Skeleton className="h-9 w-full" />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
           </div>
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-8 w-20" />
-            <div className="flex space-x-2">
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-8 w-16" />
-            </div>
+          <div className="flex justify-end">
+            <Skeleton className="h-8 w-24" />
           </div>
         </div>
 
@@ -71,41 +49,23 @@ export default function BalancesLoading() {
           <Skeleton className="h-4 w-32" />
         </div>
 
-        {/* Balance List */}
+        {/* Balance List - Simplified */}
         <div className="bg-white rounded-lg shadow border">
           <div className="p-4 border-b border-gray-200">
             <Skeleton className="h-6 w-32" />
           </div>
           <div className="divide-y divide-gray-200">
-            {[...Array(5)].map((_, index) => (
+            {[...Array(2)].map((_, index) => (
               <div key={index} className="p-4 sm:p-6">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-4">
-                    <Skeleton className="h-12 w-12 rounded-lg" />
-                    <div>
-                      <Skeleton className="h-5 w-40 mb-2" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="h-5 w-32" />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="text-right">
-                      <Skeleton className="h-5 w-24 mb-1" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
+                  <Skeleton className="h-6 w-24" />
                 </div>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="text-center">
-                      <Skeleton className="h-4 w-20 mx-auto mb-2" />
-                      <Skeleton className="h-5 w-16 mx-auto" />
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex justify-between items-center mt-4">
-                  <Skeleton className="h-8 w-32" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-4 w-20" />
                 </div>
               </div>

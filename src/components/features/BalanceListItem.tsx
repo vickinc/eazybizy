@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ interface BalanceListItemProps {
   compact?: boolean;
 }
 
-export const BalanceListItem: React.FC<BalanceListItemProps> = ({
+export const BalanceListItem: React.FC<BalanceListItemProps> = React.memo(({
   balance,
   onEditInitialBalance,
   onRefreshBlockchain,
@@ -106,8 +106,23 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
   const isCryptoWallet = !isBank && (account as DigitalWallet).walletType?.toLowerCase() === 'crypto';
   const hasBlockchainData = blockchainBalance && blockchainBalance.isLive;
 
-  // Debug log removed - blockchain integration is working!
+  // Check if this is a cryptocurrency (common crypto currencies)
+  const cryptoCurrencies = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'SOL', 'TRX', 'MATIC', 'AVAX', 'DOT', 'LINK', 'UNI', 'SATS'];
+  const isCryptoCurrency = cryptoCurrencies.includes(currency.toUpperCase()) || isCryptoWallet;
 
+  // For crypto, calculate USD equivalent
+  const [usdEquivalent, setUsdEquivalent] = useState<number | null>(null);
+  
+  useEffect(() => {
+    if (isCryptoCurrency && currency !== 'USD') {
+      // Fetch USD equivalent using the CurrencyService
+      import('@/services/business/currencyService').then(({ CurrencyService }) => {
+        CurrencyService.convertToUSDAsync(finalBalance, currency)
+          .then(setUsdEquivalent)
+          .catch(() => setUsdEquivalent(null));
+      });
+    }
+  }, [finalBalance, currency, isCryptoCurrency]);
 
   if (compact) {
     return (
@@ -139,6 +154,85 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
     );
   }
 
+  // Show compact view for cryptocurrency balances
+  if (isCryptoCurrency) {
+    return (
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            {/* Left side - Account info */}
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Wallet className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-base">
+                  {isBank 
+                    ? (account.accountName || account.bankName) 
+                    : account.walletName}
+                </h3>
+                <div className="flex items-center space-x-2 text-xs text-gray-600">
+                  <span>{company.tradingName}</span>
+                  {lastTransactionDate && (
+                    <>
+                      <span>•</span>
+                      <span>Last: {formatDate(lastTransactionDate)}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Crypto amount and USD equivalent */}
+            <div className="text-right">
+              <div className={`font-bold text-lg ${getBalanceColor(finalBalance)}`}>
+                {finalBalance.toFixed(8)} {currency}
+              </div>
+              {usdEquivalent !== null && currency !== 'USD' && (
+                <div className="text-sm text-gray-600">
+                  ≈ ${usdEquivalent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              )}
+              {/* Blockchain sync status for crypto wallets */}
+              {isCryptoWallet && (
+                <div className="flex items-center justify-end mt-1 space-x-1">
+                  {getBlockchainSyncIcon()}
+                  {onRefreshBlockchain && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRefreshBlockchain}
+                      disabled={isRefreshing}
+                      className="h-5 px-1 text-purple-600 hover:text-purple-800"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Optional: Show initial balance button if exists */}
+          {hasInitialBalance && (
+            <div className="mt-2 pt-2 border-t flex justify-between items-center">
+              <span className="text-xs text-gray-500">Initial: {formatCurrency(initialBalance)}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleEditClick}
+                className="h-5 px-2"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Regular full view for non-crypto accounts
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -404,4 +498,7 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+// Add display name for better debugging
+BalanceListItem.displayName = 'BalanceListItem';

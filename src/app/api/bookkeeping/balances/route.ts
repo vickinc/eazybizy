@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { authenticateRequest } from '@/lib/api-auth'
 import { CurrencyService } from '@/services/business/currencyService'
+import { CurrencyRatesIntegrationService } from '@/services/business/currencyRatesIntegrationService'
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService'
 // Note: Server-side route should use database queries directly instead of localStorage services
 
@@ -32,6 +33,12 @@ export async function GET(request: NextRequest) {
     const selectedPeriod = searchParams.get('selectedPeriod') || 'thisMonth'
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
+    const asOfDate = searchParams.get('asOfDate')
+    
+    // Debug log for as-of-date requests
+    if (selectedPeriod === 'asOfDate') {
+      console.log('📅 As-of-date API request:', { selectedPeriod, asOfDate })
+    }
     
     // Sorting parameters
     const sortField = searchParams.get('sortField') || 'finalBalance'
@@ -145,41 +152,151 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Calculate balances for each account
-    const accountBalances = await Promise.all(
-      allAccounts.map(async (account) => {
-        const accountType = account.__accountType
+    // Build date filter for the period (shared logic)
+    let dateFilter: any = {}
+    
+    if (selectedPeriod === 'asOfDate') {
+      // Point-in-time query: get all transactions up to (and including) the specified date
+      if (asOfDate) {
+        const asOfDateObj = new Date(asOfDate)
+        // Ensure we include the full day by setting time to end of day
+        asOfDateObj.setHours(23, 59, 59, 999)
+        dateFilter = { lte: asOfDateObj }
+      }
+    } else if (selectedPeriod !== 'allTime') {
+      const now = new Date()
+      let periodStartDate: Date
+      
+      switch (selectedPeriod) {
+        case 'thisMonth':
+          periodStartDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          dateFilter = { gte: periodStartDate }
+          break
+        case 'lastMonth':
+          periodStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          const periodEndDate = new Date(now.getFullYear(), now.getMonth(), 0)
+          dateFilter = { gte: periodStartDate, lte: periodEndDate }
+          break
+        case 'thisYear':
+          periodStartDate = new Date(now.getFullYear(), 0, 1)
+          dateFilter = { gte: periodStartDate }
+          break
+        case 'lastYear':
+          periodStartDate = new Date(now.getFullYear() - 1, 0, 1)
+          const endOfLastYear = new Date(now.getFullYear() - 1, 11, 31)
+          dateFilter = { gte: periodStartDate, lte: endOfLastYear }
+          break
+        case 'custom':
+          if (startDate && endDate) {
+            dateFilter = { 
+              gte: new Date(startDate), 
+              lte: new Date(endDate) 
+            }
+          }
+          break
+      }
+    }
 
-        // Find corresponding initial balance
-        const initialBalance = initialBalances.find(
-          ib => ib.accountId === account.id && ib.accountType === accountType
-        )
+    // Batch fetch all transaction data for all accounts
+    const accountIds = allAccounts.map(acc => {
+      // For multi-currency wallets, extract original wallet ID
+      if (acc.__accountType === 'wallet' && acc.id.includes('-')) {
+        return acc.id.split('-')[0]
+      }
+      return acc.id
+    })
 
-        // Calculate transaction balance for the period
-        const transactionData = await calculateTransactionBalanceDetailed(
-          account.id,
-          accountType,
-          account.companyId,
-          selectedPeriod,
-          { startDate: startDate || '', endDate: endDate || '' }
-        )
+    // Get all transaction aggregates in a single query
+    const transactionAggregates = await prisma.transaction.groupBy({
+      by: ['accountId', 'accountType'],
+      where: {
+        accountId: { in: accountIds },
+        ...(companyFilter !== 'all' && { companyId: parseInt(companyFilter) }),
+        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter })
+      },
+      _sum: {
+        netAmount: true,
+        incomingAmount: true,
+        outgoingAmount: true,
+      }
+    })
 
-        const initialAmount = initialBalance?.amount || 0
-        const finalBalance = initialAmount + transactionData.netAmount
+    // Get all transactions to find last dates - batch query
+    const allTransactions = await prisma.transaction.findMany({
+      where: {
+        accountId: { in: accountIds },
+        ...(companyFilter !== 'all' && { companyId: parseInt(companyFilter) })
+      },
+      orderBy: { date: 'desc' },
+      select: {
+        accountId: true,
+        accountType: true,
+        date: true
+      }
+    })
+    
+    // Group to find last transaction per account
+    const lastTransactionDates: Array<{accountId: string, accountType: string, lastDate: Date}> = []
+    const seenAccounts = new Set<string>()
+    
+    for (const transaction of allTransactions) {
+      const key = `${transaction.accountId}-${transaction.accountType}`
+      if (!seenAccounts.has(key)) {
+        seenAccounts.add(key)
+        lastTransactionDates.push({
+          accountId: transaction.accountId,
+          accountType: transaction.accountType,
+          lastDate: transaction.date
+        })
+      }
+    }
 
-        return {
-          account,
-          company: initialBalance?.company || account.company,
-          initialBalance: initialAmount,
-          transactionBalance: transactionData.netAmount,
-          finalBalance,
-          incomingAmount: transactionData.totalIncoming,
-          outgoingAmount: transactionData.totalOutgoing,
-          currency: account.currency,
-          lastTransactionDate: await getLastTransactionDate(account.id, accountType)
-        }
-      })
+    // Create lookup maps for efficient access
+    const transactionMap = new Map(
+      transactionAggregates.map(t => [`${t.accountId}-${t.accountType}`, t])
     )
+    const lastDateMap = new Map(
+      lastTransactionDates.map(d => [`${d.accountId}-${d.accountType}`, d.lastDate])
+    )
+
+    // Calculate balances for each account using batched data
+    const accountBalances = allAccounts.map((account) => {
+      const accountType = account.__accountType
+      
+      // For multi-currency wallets, use original wallet ID for lookups
+      const lookupId = accountType === 'wallet' && account.id.includes('-')
+        ? account.id.split('-')[0]
+        : account.id
+
+      // Find corresponding initial balance
+      const initialBalance = initialBalances.find(
+        ib => ib.accountId === account.id && ib.accountType === accountType
+      )
+
+      // Get transaction data from batch results
+      const transactionData = transactionMap.get(`${lookupId}-${accountType}`)
+      const netAmount = transactionData?._sum.netAmount || 0
+      const totalIncoming = transactionData?._sum.incomingAmount || 0
+      const totalOutgoing = transactionData?._sum.outgoingAmount || 0
+
+      const initialAmount = initialBalance?.amount || 0
+      const finalBalance = initialAmount + netAmount
+
+      // Get last transaction date from batch results
+      const lastTransactionDate = lastDateMap.get(`${lookupId}-${accountType}`)
+
+      return {
+        account,
+        company: initialBalance?.company || account.company,
+        initialBalance: initialAmount,
+        transactionBalance: netAmount,
+        finalBalance,
+        incomingAmount: totalIncoming,
+        outgoingAmount: totalOutgoing,
+        currency: account.currency,
+        lastTransactionDate: lastTransactionDate?.toISOString()
+      }
+    })
 
     // Apply filters
     let filteredBalances = accountBalances
@@ -291,7 +408,20 @@ export async function GET(request: NextRequest) {
     const uniqueBankIds = new Set<string>();
     const uniqueWalletIds = new Set<string>();
 
-    // Calculate USD converted totals
+    // Get unique currencies for bulk exchange rate fetching
+    const uniqueCurrencies = [...new Set(filteredBalances.map(b => b.currency))]
+    
+    // Batch fetch all exchange rates at once from the database
+    const exchangeRatesObj = await CurrencyRatesIntegrationService.getExchangeRatesForConversion()
+    
+    // Create a map for efficient lookups
+    const exchangeRates = new Map<string, number>()
+    uniqueCurrencies.forEach(currency => {
+      const rate = exchangeRatesObj[currency] || 1
+      exchangeRates.set(currency, rate)
+    })
+
+    // Calculate USD converted totals using cached rates and add USD amount to each balance
     let totalAssetsUSD = 0;
     let totalLiabilitiesUSD = 0;
 
@@ -312,22 +442,17 @@ export async function GET(request: NextRequest) {
         uniqueWalletIds.add(originalAccountId);
       }
 
-      // Convert balance to USD for totals using database-backed rates
-      try {
-        const balanceInUSD = await CurrencyService.convertToUSDAsync(balance.finalBalance, balance.currency);
-        if (balanceInUSD >= 0) {
-          totalAssetsUSD += balanceInUSD;
-        } else {
-          totalLiabilitiesUSD += Math.abs(balanceInUSD);
-        }
-      } catch (error) {
-        console.error('Error converting balance to USD in API route:', error);
-        // Fallback to original amount for totals
-        if (balance.finalBalance >= 0) {
-          totalAssetsUSD += balance.finalBalance;
-        } else {
-          totalLiabilitiesUSD += Math.abs(balance.finalBalance);
-        }
+      // Convert balance to USD using cached rates
+      const rate = exchangeRates.get(balance.currency) || 1;
+      const balanceInUSD = balance.finalBalance * rate;
+      
+      // Add USD equivalent to balance object for client use
+      (balance as any).finalBalanceUSD = balanceInUSD;
+      
+      if (balanceInUSD >= 0) {
+        totalAssetsUSD += balanceInUSD;
+      } else {
+        totalLiabilitiesUSD += Math.abs(balanceInUSD);
       }
     }
 
@@ -365,12 +490,29 @@ export async function GET(request: NextRequest) {
       summary.currencyBreakdown[currency].netWorth += balance.finalBalance
     })
 
+    // Debug summary for as-of-date requests
+    if (selectedPeriod === 'asOfDate') {
+      console.log('📊 As-of-date summary:', {
+        asOfDate,
+        totalAccounts: filteredBalances.length,
+        totalAssetsUSD: summary.totalAssetsUSD,
+        sampleBalances: filteredBalances.slice(0, 3).map(b => ({
+          account: b.account.__accountType === 'bank' 
+            ? (b.account.accountName || b.account.bankName)
+            : b.account.walletName,
+          currency: b.currency,
+          finalBalance: b.finalBalance
+        }))
+      })
+    }
+
     return NextResponse.json({
       data: filteredBalances,
       summary,
       filters: {
         selectedPeriod,
         customDateRange: { startDate: startDate || '', endDate: endDate || '' },
+        asOfDate: asOfDate || '',
         accountTypeFilter,
         viewFilter,
         groupBy,
@@ -469,7 +611,7 @@ async function calculateTransactionBalanceDetailed(
   accountType: 'bank' | 'wallet',
   companyId: number,
   period: string,
-  customRange: { startDate: string; endDate: string }
+  customRange: { startDate: string; endDate: string; asOfDate?: string }
 ): Promise<{ netAmount: number; totalIncoming: number; totalOutgoing: number }> {
   try {
     // For multi-currency wallets, extract the original wallet ID
@@ -480,7 +622,16 @@ async function calculateTransactionBalanceDetailed(
     // Build date filter for the period
     let dateFilter: any = {}
     
-    if (period !== 'allTime') {
+    if (period === 'asOfDate') {
+      // Point-in-time query: get all transactions up to (and including) the specified date
+      if (customRange.asOfDate) {
+        const asOfDateObj = new Date(customRange.asOfDate)
+        // Ensure we include the full day by setting time to end of day
+        asOfDateObj.setHours(23, 59, 59, 999)
+        console.log('🔍 As-of-date query:', customRange.asOfDate, '=>', asOfDateObj.toISOString())
+        dateFilter = { lte: asOfDateObj }
+      }
+    } else if (period !== 'allTime') {
       const now = new Date()
       let startDate: Date
       
@@ -530,6 +681,16 @@ async function calculateTransactionBalanceDetailed(
         outgoingAmount: true,
       },
     })
+
+    // Debug: Log transaction results for as-of-date
+    if (period === 'asOfDate') {
+      const transactionCount = await prisma.transaction.count({ where: transactionWhere })
+      console.log('🔍 As-of-date results:', {
+        account: `${originalAccountId} (${accountType})`,
+        matchingTransactions: transactionCount,
+        netAmount: transactionResult._sum.netAmount || 0
+      })
+    }
 
     // Use transaction data only to avoid double-counting
     // (Transaction records are created when invoices are paid and represent actual cash flow)

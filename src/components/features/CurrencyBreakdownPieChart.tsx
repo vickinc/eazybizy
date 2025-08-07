@@ -387,8 +387,8 @@ const CurrencyBreakdownPieChart: React.FC<CurrencyBreakdownPieChartProps> = ({
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color}
-                        stroke={selectedCurrency === entry.currency ? '#374151' : 'none'}
-                        strokeWidth={selectedCurrency === entry.currency ? 2 : 0}
+                        stroke={selectedCurrency === entry.currency ? '#65a30d' : 'none'}
+                        strokeWidth={selectedCurrency === entry.currency ? 3 : 0}
                         style={{
                           filter: activeIndex === index ? 'brightness(1.1)' : 'none',
                           cursor: 'pointer',

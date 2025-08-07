@@ -36,6 +36,7 @@ export interface BalanceQueryParams {
   selectedPeriod?: string
   startDate?: string
   endDate?: string
+  asOfDate?: string
   sortField?: string
   sortDirection?: 'asc' | 'desc'
   includeBlockchainBalances?: boolean
@@ -88,6 +89,7 @@ export class BalanceApiService {
     if (params.selectedPeriod) searchParams.set('selectedPeriod', params.selectedPeriod)
     if (params.startDate) searchParams.set('startDate', params.startDate)
     if (params.endDate) searchParams.set('endDate', params.endDate)
+    if (params.asOfDate) searchParams.set('asOfDate', params.asOfDate)
     
     // Add sorting
     if (params.sortField) searchParams.set('sortField', params.sortField)
