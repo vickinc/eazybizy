@@ -39,12 +39,12 @@ export default async function TransactionsPage() {
       accountId: 'all', // accountIdFilter
       accountType: 'all', // accountTypeFilter
       currency: 'all', // currencyFilter
-      dateRange: 'thisMonth', // dateRangeFilter
+      dateRange: 'all', // dateRangeFilter
       dateFrom: undefined, // customDateFrom
       dateTo: undefined, // customDateTo
       sortField: 'date', // sortField
       sortDirection: 'desc', // sortDirection
-      take: 20 // pageSize
+      take: 10000 // pageSize
     }
   ];
 
@@ -55,7 +55,7 @@ export default async function TransactionsPage() {
     if (useCursorPagination) {
       // Use cursor-based pagination for better scalability
       const transactionsData = await TransactionSSRService.getTransactionsForSSRCursor({
-        take: 6,
+        take: 10000,
         searchTerm: '',
         status: 'all',
         reconciliationStatus: 'all',
@@ -64,7 +64,7 @@ export default async function TransactionsPage() {
         accountType: 'all',
         currency: 'all',
         companyId: undefined, // All companies
-        dateRange: 'thisMonth',
+        dateRange: 'all',
         sortField: 'date',
         sortDirection: 'desc'
       });
@@ -90,7 +90,7 @@ export default async function TransactionsPage() {
       // Option 2: Use offset pagination (current implementation)
       const transactionsData = await TransactionSSRService.getTransactionsForSSR({
         skip: 0,
-        take: 6,
+        take: 10000,
         searchTerm: '',
         status: 'all',
         reconciliationStatus: 'all',
@@ -99,7 +99,7 @@ export default async function TransactionsPage() {
         accountType: 'all',
         currency: 'all',
         companyId: undefined, // All companies
-        dateRange: 'thisMonth',
+        dateRange: 'all',
         sortField: 'date',
         sortDirection: 'desc'
       });

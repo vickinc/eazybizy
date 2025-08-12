@@ -34,6 +34,7 @@ export interface BalanceManagementDBHook {
   
   // UI State
   isLoading: boolean;
+  isFetching: boolean;
   isError: boolean;
   error: Error | null;
   filters: BalanceFilterState;
@@ -83,12 +84,12 @@ export interface BalanceManagementDBHook {
 }
 
 const defaultFilters: BalanceFilterState = {
-  selectedPeriod: 'thisMonth',
+  selectedPeriod: 'thisMonth', // Match SSR prefetch default
   customDateRange: {
     startDate: '',
     endDate: ''
   },
-  asOfDate: '',
+  asOfDate: new Date().toISOString().split('T')[0], // Default to today
   accountTypeFilter: 'all',
   viewFilter: 'all',
   groupBy: 'account',
@@ -127,20 +128,69 @@ export function useBalanceManagementDB(
   const {
     data: balancesResponse,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch
   } = useQuery({
     queryKey: ['balances', queryParams],
-    queryFn: () => balanceApiService.getBalances(queryParams),
-    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 2
-    gcTime: 10 * 60 * 1000, // 10 minutes - increased from 5
-    refetchOnWindowFocus: false, // Disable automatic refetch on window focus
-    refetchOnMount: 'always', // Always fetch on mount but respect stale time
+    queryFn: () => {
+      console.log('🔍 Client: React Query making API call with params:', {
+        includeBlockchainBalances: queryParams.includeBlockchainBalances,
+        company: queryParams.company,
+        accountType: queryParams.accountType,
+        showZeroBalances: queryParams.showZeroBalances
+      });
+      return balanceApiService.getBalances(queryParams);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - longer stale time to respect SSR data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Critical: Don't refetch on mount - use SSR data first
+    refetchOnReconnect: false, // Don't refetch on reconnect
+    retry: 1, // Reduce retry attempts for faster feedback
+    refetchInterval: false, // Disable automatic refetching
+    networkMode: 'online', // Only fetch when online
+    enabled: true, // Enable client-side fetching for filter changes
   });
 
   // Extract data from response
-  const balances = useMemo(() => balancesResponse?.data || [], [balancesResponse]);
+  const balances = useMemo(() => {
+    const data = balancesResponse?.data || [];
+    
+    // Debug: Log Tron balances to see what client receives
+    const tronBalances = data.filter(b => 
+      b.account?.blockchain === 'tron' || 
+      b.currency === 'TRX' || 
+      (b.currency === 'USDT' && b.account?.walletAddress === 'TAFwhJwa9oHGPV1Li6FRBWETsynqMkQ8vF') ||
+      (b.currency === 'USDC' && b.account?.walletAddress === 'TAFwhJwa9oHGPV1Li6FRBWETsynqMkQ8vF')
+    );
+    
+    if (tronBalances.length > 0) {
+      console.log('🖥️ Client: Tron balances received:', tronBalances.map(b => ({
+        currency: b.currency,
+        finalBalance: b.finalBalance,
+        walletAddress: b.account?.walletAddress,
+        walletName: b.account?.walletName
+      })));
+      
+      // Debug: Check if we're getting zero values that should be non-zero
+      const zeroTronBalances = tronBalances.filter(b => b.finalBalance === 0 && (b.currency === 'TRX' || b.currency === 'USDT'));
+      if (zeroTronBalances.length > 0) {
+        console.error('❌ Client: Found zero Tron balances that should be enriched:', zeroTronBalances.map(b => ({
+          currency: b.currency,
+          finalBalance: b.finalBalance,
+          initialBalance: b.initialBalance,
+          transactionBalance: b.transactionBalance,
+          accountId: b.account?.id,
+          blockchainBalance: (b as any).blockchainBalance,
+          blockchainSyncStatus: (b as any).blockchainSyncStatus
+        })));
+      }
+    }
+    
+    return data;
+  }, [balancesResponse]);
   const summary = useMemo(() => balancesResponse?.summary || {
     totalAssets: 0,
     totalLiabilities: 0,
@@ -396,6 +446,7 @@ export function useBalanceManagementDB(
     
     // UI State
     isLoading,
+    isFetching,
     isError,
     error: error as Error | null,
     filters,

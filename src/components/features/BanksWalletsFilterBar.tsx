@@ -48,7 +48,7 @@ export const BanksWalletsFilterBar: React.FC<BanksWalletsFilterBarProps> = ({
   return (
     <>
       {/* Search and Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-lime-100">
         <CardContent className="p-4">
           <div className="space-y-4">
             {/* Search Filter */}
@@ -116,39 +116,43 @@ export const BanksWalletsFilterBar: React.FC<BanksWalletsFilterBarProps> = ({
               
               {/* Additional Filters */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Currency Filter */}
-                {availableCurrencies.length > 0 && (
-                  <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Currencies</SelectItem>
-                      {availableCurrencies.map(currency => (
-                        <SelectItem key={currency} value={currency}>
-                          {currency}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                {/* Currency Filter - Always render but disable when no options */}
+                <Select 
+                  value={currencyFilter} 
+                  onValueChange={setCurrencyFilter}
+                  disabled={availableCurrencies.length === 0}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Currencies</SelectItem>
+                    {availableCurrencies.map(currency => (
+                      <SelectItem key={currency} value={currency}>
+                        {currency}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 
-                {/* Type Filter */}
-                {getCurrentTypeOptions().length > 0 && (
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      {getCurrentTypeOptions().map(type => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                {/* Type Filter - Always render but disable when no options */}
+                <Select 
+                  value={typeFilter} 
+                  onValueChange={setTypeFilter}
+                  disabled={getCurrentTypeOptions().length === 0}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {getCurrentTypeOptions().map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

@@ -10,6 +10,7 @@ import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
 import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
 import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import { EnhancedBankAccount } from '@/services/business/banksWalletsBusinessService';
+import { BlockchainIcon } from '@/components/ui/blockchain-icon';
 
 interface BankAccountsListProps {
   filteredBankAccounts: EnhancedBankAccount[];
@@ -91,6 +92,13 @@ export const BankAccountsList: React.FC<BankAccountsListProps> = ({
                         >
                           {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </Button>
+                        
+                        {/* Add blockchain icon for crypto-related accounts */}
+                        {bank.blockchain && (
+                          <div className="p-1 bg-lime-100 rounded-lg">
+                            <BlockchainIcon blockchain={bank.blockchain} className="h-4 w-4" />
+                          </div>
+                        )}
                         
                         <Badge variant="outline" className="flex items-center gap-1 text-sm">
                           <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${

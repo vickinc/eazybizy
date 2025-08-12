@@ -13,23 +13,6 @@ import { Suspense, useCallback } from 'react';
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 // Lazy load heavy components to improve initial bundle size
-const BanksWalletsSummaryCards = dynamic(
-  () => import('@/components/features/BanksWalletsSummaryCards').then(mod => ({ default: mod.BanksWalletsSummaryCards })),
-  {
-    loading: () => (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
-        {[...Array(4)].map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1" />
-            <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
-          </div>
-        ))}
-      </div>
-    ),
-    ssr: true
-  }
-);
 
 const BanksWalletsFilterBar = dynamic(
   () => import('@/components/features/BanksWalletsFilterBar').then(mod => ({ default: mod.BanksWalletsFilterBar })),
@@ -192,13 +175,6 @@ export default function BanksWalletsClient() {
     return <LoadingScreen />;
   }
 
-  // Computed derived data for UI
-  const summary = {
-    totalBanks: bankAccounts.length,
-    activeBanks: bankAccounts.filter(b => b.isActive).length,
-    totalWallets: digitalWallets.length,
-    activeWallets: digitalWallets.filter(w => w.isActive).length
-  };
 
   const banksNoDataMessage = globalSelectedCompany === 'all'
     ? 'No bank accounts found across any company'
@@ -314,20 +290,6 @@ export default function BanksWalletsClient() {
               )}
             </div>
 
-            {/* Summary Cards */}
-            <Suspense fallback={
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 sm:mb-8">
-                {[...Array(4)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow border p-4 sm:p-6">
-                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2" />
-                    <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1" />
-                    <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
-                  </div>
-                ))}
-              </div>
-            }>
-              <BanksWalletsSummaryCards summary={summary} />
-            </Suspense>
 
             {/* Filter Bar with Search */}
             <Suspense fallback={

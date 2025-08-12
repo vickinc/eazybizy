@@ -10,6 +10,7 @@ import ChevronUp from "lucide-react/dist/esm/icons/chevron-up";
 import Maximize2 from "lucide-react/dist/esm/icons/maximize-2";
 import Minimize2 from "lucide-react/dist/esm/icons/minimize-2";
 import { EnhancedDigitalWallet } from '@/services/business/banksWalletsBusinessService';
+import { BlockchainIcon } from '@/components/ui/blockchain-icon';
 
 interface DigitalWalletsListProps {
   filteredDigitalWallets: EnhancedDigitalWallet[];
@@ -119,6 +120,13 @@ export const DigitalWalletsList: React.FC<DigitalWalletsListProps> = ({
                           {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </Button>
                         
+                        {/* Add blockchain icon for crypto wallets */}
+                        {wallet.walletType.toLowerCase() === 'crypto' && wallet.blockchain && (
+                          <div className="p-1 bg-lime-100 rounded-lg">
+                            <BlockchainIcon blockchain={wallet.blockchain} className="h-4 w-4" />
+                          </div>
+                        )}
+                        
                         <Badge variant="outline" className="flex items-center gap-1 text-sm">
                           <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                             wallet.company.logo && (wallet.company.logo.startsWith('data:') || wallet.company.logo.includes('http') || wallet.company.logo.startsWith('/'))
@@ -139,7 +147,7 @@ export const DigitalWalletsList: React.FC<DigitalWalletsListProps> = ({
                         </Badge>
                         
                         <h3 className="font-semibold text-gray-900 text-base">{wallet.walletName}</h3>
-                        <Badge variant="outline" className="text-sm">{wallet.walletType}</Badge>
+                        <Badge variant="outline" className="text-sm">{wallet.walletType.toUpperCase()}</Badge>
                         
                         {/* Display multiple currencies for crypto wallets */}
                         {renderCurrencyBadges(wallet)}

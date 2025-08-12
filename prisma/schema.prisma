@@ -620,7 +620,7 @@ model InitialBalance {
   updatedAt   DateTime @updatedAt
   company     Company  @relation(fields: [companyId], references: [id])
 
-  @@unique([accountId, accountType])
+  @@unique([accountId, accountType, currency])
   @@index([companyId])
   @@index([accountType])
   @@index([currency])

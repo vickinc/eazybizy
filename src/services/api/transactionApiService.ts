@@ -3,6 +3,8 @@
  * Handles all HTTP API calls for transaction management
  */
 
+import { PeriodPreset } from '@/services/utils/periodFilterService';
+
 export interface TransactionQueryParams {
   skip?: number
   take?: number
@@ -14,12 +16,13 @@ export interface TransactionQueryParams {
   accountType?: 'all' | 'bank' | 'wallet'
   currency?: string
   companyId?: number | 'all'
-  dateRange?: 'all' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'custom'
+  dateRange?: PeriodPreset
   dateFrom?: string
   dateTo?: string
   sortField?: 'date' | 'paidBy' | 'paidTo' | 'netAmount' | 'currency' | 'category' | 'status' | 'createdAt' | 'updatedAt'
   sortDirection?: 'asc' | 'desc'
   cursor?: string
+  includeBlockchainTransactions?: boolean
 }
 
 export interface TransactionFormData {
@@ -545,6 +548,95 @@ export class TransactionApiService {
       return await response.json()
     } catch (error) {
       console.error('Failed to import transactions:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Import blockchain transactions for a specific period
+   */
+  static async importBlockchainTransactions(
+    walletId: string, 
+    params: {
+      startDate?: string;
+      endDate?: string;
+      currencies?: string[];
+      overwriteDuplicates?: boolean;
+      createInitialBalances?: boolean;
+    }
+  ): Promise<{
+    success: boolean;
+    totalTransactions: number;
+    importedTransactions: number;
+    duplicateTransactions: number;
+    failedTransactions: number;
+    errors: string[];
+  }> {
+    try {
+      const response = await fetch('/api/blockchain/transactions/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          walletId,
+          ...params,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.result || data
+    } catch (error) {
+      console.error('Failed to import blockchain transactions:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get blockchain transaction import status
+   */
+  static async getBlockchainImportStatus(walletId: string): Promise<{
+    statuses: Array<{
+      id: string;
+      walletId: string;
+      status: 'running' | 'completed' | 'failed';
+      progress: {
+        totalCurrencies: number;
+        completedCurrencies: number;
+        totalTransactions: number;
+        processedTransactions: number;
+      };
+      createdAt: string;
+      completedAt?: string;
+      error?: string;
+    }>;
+  }> {
+    try {
+      const url = new URL('/api/blockchain/transactions/import', window.location.origin)
+      url.searchParams.append('walletId', walletId)
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Failed to get blockchain import status:', error)
       throw error
     }
   }

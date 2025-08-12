@@ -16,9 +16,11 @@ import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import Clock from "lucide-react/dist/esm/icons/clock";
+import Download from "lucide-react/dist/esm/icons/download";
 import { AccountBalance } from '@/types/balance.types';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 import { DigitalWallet } from '@/types/payment.types';
+import { BlockchainImportDialog } from './BlockchainImportDialog';
 
 interface BalanceListItemProps {
   balance: AccountBalance;
@@ -48,6 +50,7 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = React.memo(({
   } = balance;
   
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   
   const isBank = BalanceBusinessService.isAccountBank(account);
   const isPositive = finalBalance >= 0;
@@ -197,6 +200,15 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = React.memo(({
               {isCryptoWallet && (
                 <div className="flex items-center justify-end mt-1 space-x-1">
                   {getBlockchainSyncIcon()}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsImportDialogOpen(true)}
+                    className="h-5 px-1 text-purple-600 hover:text-purple-800"
+                    title="Import blockchain transactions"
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
                   {onRefreshBlockchain && (
                     <Button
                       size="sm"
@@ -369,18 +381,30 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = React.memo(({
                 <h4 className="text-sm font-medium text-purple-900">Blockchain Balance</h4>
                 {getBlockchainSyncIcon()}
               </div>
-              {onRefreshBlockchain && (
+              <div className="flex items-center space-x-2">
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={handleRefreshBlockchain}
-                  disabled={isRefreshing}
+                  onClick={() => setIsImportDialogOpen(true)}
                   className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-100"
+                  title="Import blockchain transactions"
                 >
-                  <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  Refresh
+                  <Download className="h-3 w-3 mr-1" />
+                  Import
                 </Button>
-              )}
+                {onRefreshBlockchain && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleRefreshBlockchain}
+                    disabled={isRefreshing}
+                    className="h-7 px-2 text-purple-700 hover:text-purple-900 hover:bg-purple-100"
+                  >
+                    <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                )}
+              </div>
             </div>
             
             {hasBlockchainData ? (
@@ -496,6 +520,15 @@ export const BalanceListItem: React.FC<BalanceListItemProps> = React.memo(({
           )}
         </div>
       </CardContent>
+      
+      {/* Blockchain Import Dialog */}
+      {isCryptoWallet && (
+        <BlockchainImportDialog
+          isOpen={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+          accountBalance={balance}
+        />
+      )}
     </Card>
   );
 });

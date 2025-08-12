@@ -19,7 +19,7 @@ interface TransactionQueryParams {
   accountType?: 'all' | 'bank' | 'wallet'
   currency?: string
   companyId?: string
-  dateRange?: 'all' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'custom'
+  dateRange?: 'all' | 'today' | 'yesterday' | 'last7days' | 'last30days' | 'thisMonth' | 'lastMonth' | 'last3months' | 'last6months' | 'thisYear' | 'lastYear' | 'custom'
   dateFrom?: string
   dateTo?: string
   sortField?: 'date' | 'paidBy' | 'paidTo' | 'netAmount' | 'currency' | 'category' | 'status' | 'createdAt' | 'updatedAt'
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     };
 
     const skip = parseInt(params.skip || '0');
-    const take = Math.min(parseInt(params.take || '20'), 100); // Limit to 100 items per request
+    const take = Math.min(parseInt(params.take || '20'), 50000); // Increased limit to support large result sets
 
     // Build optimized where clause
     const where: Prisma.TransactionWhereInput = {
@@ -107,26 +107,58 @@ export async function GET(request: NextRequest) {
       where.companyId = parseInt(params.companyId);
     }
 
-    // Date range filtering
+    // Enhanced date range filtering
     if (params.dateRange && params.dateRange !== 'all') {
       const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
       let startDate: Date;
       let endDate: Date = now;
 
       switch (params.dateRange) {
+        case 'today':
+          startDate = startOfToday;
+          endDate = endOfToday;
+          break;
+        case 'yesterday':
+          const yesterday = new Date(startOfToday);
+          yesterday.setDate(yesterday.getDate() - 1);
+          startDate = yesterday;
+          endDate = new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1);
+          break;
+        case 'last7days':
+          startDate = new Date(startOfToday);
+          startDate.setDate(startDate.getDate() - 7);
+          endDate = endOfToday;
+          break;
+        case 'last30days':
+          startDate = new Date(startOfToday);
+          startDate.setDate(startDate.getDate() - 30);
+          endDate = endOfToday;
+          break;
         case 'thisMonth':
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
           break;
         case 'lastMonth':
           startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+          break;
+        case 'last3months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          endDate = endOfToday;
+          break;
+        case 'last6months':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+          endDate = endOfToday;
           break;
         case 'thisYear':
           startDate = new Date(now.getFullYear(), 0, 1);
+          endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
           break;
         case 'lastYear':
           startDate = new Date(now.getFullYear() - 1, 0, 1);
-          endDate = new Date(now.getFullYear() - 1, 11, 31);
+          endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
           break;
         case 'custom':
           if (params.dateFrom && params.dateTo) {
@@ -145,7 +177,7 @@ export async function GET(request: NextRequest) {
         lte: endDate
       };
     } else if (params.dateFrom && params.dateTo) {
-      // Custom date range
+      // Custom date range from direct date parameters
       where.date = {
         gte: new Date(params.dateFrom),
         lte: new Date(params.dateTo)

@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Download from "lucide-react/dist/esm/icons/download";
 import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw";
 import Landmark from "lucide-react/dist/esm/icons/landmark";
 import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import { useCompanyFilter } from "@/contexts/CompanyFilterContext";
 import { useBalanceManagementDB } from "@/hooks/useBalanceManagementDB";
 import { ManualBalanceDialog } from "@/components/features/ManualBalanceDialog";
@@ -101,6 +105,7 @@ export default function BalancesClient() {
     groupedBalances,
     summary,
     isLoading,
+    isFetching,
     isError,
     error,
     filters,
@@ -121,6 +126,81 @@ export default function BalancesClient() {
 
   // Use delayed loading to prevent flash for cached data
   const showLoader = useDelayedLoading(isLoading);
+
+  // Date picker state management
+  const dateChangeTimeoutRef = useRef<NodeJS.Timeout>();
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDate, setPendingDate] = useState<string>('');
+  const [datePickerActive, setDatePickerActive] = useState<boolean>(false);
+
+  const handleDateChange = useCallback((newDate: string) => {
+    setPendingDate(newDate);
+    
+    // Clear existing timeout
+    if (dateChangeTimeoutRef.current) {
+      clearTimeout(dateChangeTimeoutRef.current);
+    }
+    
+    // Longer delay when date picker might be open (user is navigating)
+    const delay = datePickerActive ? 1500 : 500;
+    
+    // Set new timeout to update filters after user stops changing the date
+    dateChangeTimeoutRef.current = setTimeout(() => {
+      updateFilters({ 
+        asOfDate: newDate,
+        selectedPeriod: 'asOfDate' 
+      });
+      setPendingDate('');
+    }, delay);
+  }, [updateFilters, datePickerActive]);
+
+  const handleDateInputFocus = useCallback(() => {
+    setDatePickerActive(true);
+  }, []);
+
+  const handleDateInputBlur = useCallback(() => {
+    // When user clicks away or finishes with date picker, apply immediately
+    if (pendingDate) {
+      if (dateChangeTimeoutRef.current) {
+        clearTimeout(dateChangeTimeoutRef.current);
+      }
+      updateFilters({ 
+        asOfDate: pendingDate,
+        selectedPeriod: 'asOfDate' 
+      });
+      setPendingDate('');
+    }
+    
+    // Mark date picker as inactive
+    setTimeout(() => {
+      setDatePickerActive(false);
+    }, 200);
+  }, [pendingDate, updateFilters]);
+
+  const handleDateInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Apply date immediately when user presses Enter
+    if (e.key === 'Enter' && pendingDate) {
+      if (dateChangeTimeoutRef.current) {
+        clearTimeout(dateChangeTimeoutRef.current);
+      }
+      updateFilters({ 
+        asOfDate: pendingDate,
+        selectedPeriod: 'asOfDate' 
+      });
+      setPendingDate('');
+      setDatePickerActive(false);
+      dateInputRef.current?.blur();
+    }
+  }, [pendingDate, updateFilters]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (dateChangeTimeoutRef.current) {
+        clearTimeout(dateChangeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Memoized retry handler to prevent unnecessary re-renders
   const handleRetry = useCallback(() => {
@@ -319,14 +399,18 @@ export default function BalancesClient() {
                   <p className="text-sm sm:text-base text-gray-600">
                     {!isHydrated 
                       ? 'View and manage account balances'
-                      : globalSelectedCompany === 'all' 
-                        ? 'View and manage account balances across all companies' 
-                        : (() => {
-                            const company = companies.find(c => c.id === globalSelectedCompany);
-                            return company 
-                              ? `Account balances for ${company.tradingName}` 
-                              : 'View and manage account balances';
-                          })()
+                      : (() => {
+                          const baseText = globalSelectedCompany === 'all' 
+                            ? 'View and manage account balances across all companies' 
+                            : (() => {
+                                const company = companies.find(c => c.id === globalSelectedCompany);
+                                return company 
+                                  ? `Account balances for ${company.tradingName}` 
+                                  : 'View and manage account balances';
+                              })();
+                          
+                          return baseText;
+                        })()
                     }
                   </p>
                 </div>
@@ -355,6 +439,118 @@ export default function BalancesClient() {
                     Export
                   </Button>
                 )}
+              </div>
+            </div>
+
+            {/* Compact Date Filter Section */}
+            <div className="mb-6 bg-lime-200 rounded-lg border border-lime-300 p-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                {/* Date Selection */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-gray-700" />
+                    <Label className="text-sm font-medium text-gray-800">Balance as of:</Label>
+                  </div>
+                  
+                  <div className="relative">
+                    <Input
+                      ref={dateInputRef}
+                      type="date"
+                      value={pendingDate || filters.asOfDate || new Date().toISOString().split('T')[0]}
+                      onChange={(e) => handleDateChange(e.target.value)}
+                      onFocus={handleDateInputFocus}
+                      onBlur={handleDateInputBlur}
+                      onKeyDown={handleDateInputKeyDown}
+                      className="w-[160px] bg-lime-50 border-lime-400 focus:border-lime-500 focus:ring-lime-500"
+                      disabled={isFetching}
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                    {(isFetching || pendingDate) && (
+                      <div className="absolute inset-0 bg-lime-50/80 rounded flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      // Clear any pending date changes
+                      if (dateChangeTimeoutRef.current) {
+                        clearTimeout(dateChangeTimeoutRef.current);
+                      }
+                      setPendingDate('');
+                      
+                      // Immediately set to today
+                      updateFilters({ 
+                        asOfDate: new Date().toISOString().split('T')[0],
+                        selectedPeriod: 'asOfDate' 
+                      });
+                    }}
+                    disabled={isFetching}
+                    className="bg-gray-700 hover:bg-gray-800 text-white border-gray-700 hover:border-gray-800 px-4 font-medium shadow-sm"
+                  >
+                    Today
+                  </Button>
+                  
+                  {/* Historical View Indicator */}
+                  {filters.asOfDate && filters.asOfDate !== new Date().toISOString().split('T')[0] && (
+                    <div className="flex items-center gap-2 text-blue-800 bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
+                      <span className="text-sm font-medium">Historical View</span>
+                    </div>
+                  )}
+                  
+                  {/* Loading indicator for data updates */}
+                  {isFetching && (
+                    <div className="flex items-center gap-2 text-gray-600 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                      <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">Updating...</span>
+                    </div>
+                  )}
+                  
+                  {/* Pending date change indicator */}
+                  {pendingDate && !isFetching && (
+                    <div className="flex items-center gap-2 text-orange-700 bg-orange-100 px-3 py-1 rounded-full border border-orange-200">
+                      <div className="w-3 h-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">Waiting...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Filters */}
+                <div className="flex gap-2">
+                  <Select 
+                    value={filters.accountTypeFilter} 
+                    onValueChange={(value: any) => updateFilters({ accountTypeFilter: value })}
+                    disabled={isFetching}
+                  >
+                    <SelectTrigger className="w-[130px] bg-lime-50 border-lime-400 hover:bg-lime-100 focus:border-lime-500 focus:ring-lime-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Accounts</SelectItem>
+                      <SelectItem value="banks">Banks</SelectItem>
+                      <SelectItem value="wallets">Wallets</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select 
+                    value={filters.groupBy} 
+                    onValueChange={(value: any) => updateFilters({ groupBy: value })}
+                    disabled={isFetching}
+                  >
+                    <SelectTrigger className="w-[130px] bg-lime-50 border-lime-400 hover:bg-lime-100 focus:border-lime-500 focus:ring-lime-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Group</SelectItem>
+                      <SelectItem value="account">By Account</SelectItem>
+                      <SelectItem value="currency">By Currency</SelectItem>
+                      <SelectItem value="type">By Type</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

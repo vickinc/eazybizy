@@ -19,6 +19,8 @@ import Globe from "lucide-react/dist/esm/icons/globe";
 import Wallet from "lucide-react/dist/esm/icons/wallet";
 import Info from "lucide-react/dist/esm/icons/info";
 import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import { BlockchainIcon } from '@/components/ui/blockchain-icon';
+import { CryptocurrencyIcon } from '@/components/ui/cryptocurrency-icon';
 
 interface BanksWalletsDialogsProps {
   // Company options for dropdowns
@@ -431,9 +433,14 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       <SelectContent>
                         {BlockchainValidationService.getSupportedBlockchains().map(blockchain => (
                           <SelectItem key={blockchain.value} value={blockchain.value}>
-                            <div className="flex flex-col gap-1">
-                              <span className="font-medium">{blockchain.label}</span>
-                              <span className="text-xs text-gray-500">{blockchain.description}</span>
+                            <div className="flex items-center gap-3">
+                              <div className="p-1 bg-lime-100 rounded-lg">
+                                <BlockchainIcon blockchain={blockchain.value} className="h-4 w-4" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium">{blockchain.label}</span>
+                                <span className="text-xs text-gray-500">{blockchain.description}</span>
+                              </div>
                             </div>
                           </SelectItem>
                         ))}
@@ -483,7 +490,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                       <div className="space-y-2 mt-1">
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
                           {BlockchainValidationService.getSupportedCurrencies(newDigitalWallet.blockchain).map(currency => (
-                          <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
+                          <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-lime-100 p-2 rounded transition-colors">
                             <input
                               type="checkbox"
                               checked={newDigitalWallet.currencies.includes(currency)}
@@ -505,6 +512,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                               }}
                               className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                             />
+                            <CryptocurrencyIcon currency={currency} className="h-4 w-4" />
                             <span className="text-sm font-medium">{currency}</span>
                           </label>
                           ))}
@@ -933,9 +941,14 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                         <SelectContent>
                           {BlockchainValidationService.getSupportedBlockchains().map(blockchain => (
                             <SelectItem key={blockchain.value} value={blockchain.value}>
-                              <div className="flex flex-col gap-1">
-                                <span className="font-medium">{blockchain.label}</span>
-                                <span className="text-xs text-gray-500">{blockchain.description}</span>
+                              <div className="flex items-center gap-3">
+                                <div className="p-1 bg-lime-100 rounded-lg">
+                                  <BlockchainIcon blockchain={blockchain.value} className="h-4 w-4" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium">{blockchain.label}</span>
+                                  <span className="text-xs text-gray-500">{blockchain.description}</span>
+                                </div>
                               </div>
                             </SelectItem>
                           ))}
@@ -985,7 +998,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                         <div className="space-y-2 mt-1">
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-lime-200 rounded-md p-3 bg-lime-50">
                             {BlockchainValidationService.getSupportedCurrencies(editingWallet.blockchain).map(currency => (
-                            <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-white p-2 rounded transition-colors">
+                            <label key={currency} className="flex items-center space-x-2 cursor-pointer hover:bg-lime-100 p-2 rounded transition-colors">
                               <input
                                 type="checkbox"
                                 checked={(() => {
@@ -1017,6 +1030,7 @@ export const BanksWalletsDialogs: React.FC<BanksWalletsDialogsProps> = ({
                                 }}
                                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                               />
+                              <CryptocurrencyIcon currency={currency} className="h-4 w-4" />
                               <span className="text-sm font-medium">{currency}</span>
                             </label>
                             ))}

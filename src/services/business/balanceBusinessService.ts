@@ -64,7 +64,7 @@ export class BalanceBusinessService {
   }
 
   // Get all account balances with filtering
-  static getAccountBalances(filters: BalanceFilterState, selectedCompany?: number | 'all'): AccountBalance[] {
+  static async getAccountBalances(filters: BalanceFilterState, selectedCompany?: number | 'all'): Promise<AccountBalance[]> {
     const allAccounts = BanksWalletsBusinessService.getAllAccounts();
     const companies = companiesCache.getCompanies();
     const initialBalances = balanceStorageService.getAllInitialBalances();
@@ -75,24 +75,74 @@ export class BalanceBusinessService {
       return account.companyId === selectedCompany;
     });
 
-    const accountBalances: AccountBalance[] = companyFilteredAccounts.map(account => {
+    // Process accounts with async blockchain fetching support
+    const accountBalancePromises = companyFilteredAccounts.map(async account => {
       const company = companies.find(c => c.id === account.companyId);
       if (!company) return null;
 
-      // Get initial balance for this account
-      const initialBalance = initialBalances.find(
-        ib => ib.accountId === account.id && 
-             ib.accountType === (this.isAccountBank(account) ? 'bank' : 'wallet')
+      // Get initial balance for this account - for multi-currency wallets, use original wallet ID
+      const accountType = this.isAccountBank(account) ? 'bank' : 'wallet';
+      const initialBalanceLookupId = accountType === 'wallet' && account.id.includes('-')
+        ? account.id.split('-')[0]
+        : account.id;
+      
+      // For crypto wallets, initial balance should be 0 when viewing all-time period
+      let initialBalance = initialBalances.find(
+        ib => ib.accountId === initialBalanceLookupId && ib.accountType === accountType && ib.currency === account.currency
       );
+      
+      // Override initial balance to 0 for crypto wallets when viewing all-time data
+      if (accountType === 'wallet' && filters.selectedPeriod === 'allTime') {
+        initialBalance = undefined; // This will make initialAmount = 0 below
+      }
 
       // Calculate transaction balance for the period
-      const transactionData = this.calculateTransactionBalanceDetailed(
+      let transactionData = this.calculateTransactionBalanceDetailed(
         account.id,
         this.isAccountBank(account) ? 'bank' : 'wallet',
         account.companyId,
         filters.selectedPeriod,
-        filters.customDateRange
+        { 
+          ...filters.customDateRange, 
+          asOfDate: filters.asOfDate 
+        }
       );
+
+      // For crypto wallets with no transaction history viewing historical dates,
+      // fetch blockchain data automatically
+      if (!this.isAccountBank(account) && 
+          transactionData.netAmount === 0 && 
+          transactionData.totalIncoming === 0 && 
+          transactionData.totalOutgoing === 0 &&
+          filters.selectedPeriod === 'asOfDate' && 
+          filters.asOfDate) {
+        
+        const wallet = account as any; // DigitalWallet type
+        if (wallet.walletType?.toLowerCase() === 'crypto' && wallet.walletAddress && wallet.blockchain) {
+          console.log('🔍 Crypto wallet with no transactions - fetching blockchain history:', {
+            walletId: account.id,
+            walletName: wallet.walletName,
+            currency: account.currency,
+            asOfDate: filters.asOfDate
+          });
+
+          try {
+            const blockchainData = await this.getBlockchainHistoricalBalance(
+              wallet.walletAddress,
+              wallet.blockchain,
+              account.currency,
+              new Date(filters.asOfDate)
+            );
+            
+            if (blockchainData) {
+              transactionData = blockchainData;
+              console.log('✅ Using blockchain historical data:', blockchainData);
+            }
+          } catch (error) {
+            console.error('❌ Failed to fetch blockchain historical data:', error);
+          }
+        }
+      }
 
       const initialAmount = initialBalance?.amount || 0;
       const finalBalance = initialAmount + transactionData.netAmount;
@@ -108,7 +158,10 @@ export class BalanceBusinessService {
         currency: account.currency,
         lastTransactionDate: this.getLastTransactionDate(account.id, this.isAccountBank(account) ? 'bank' : 'wallet')
       };
-    }).filter(Boolean) as AccountBalance[];
+    });
+
+    // Wait for all async operations to complete
+    const accountBalances = (await Promise.all(accountBalancePromises)).filter(Boolean) as AccountBalance[];
 
     // Apply additional filters
     return this.applyFilters(accountBalances, filters);
@@ -120,7 +173,7 @@ export class BalanceBusinessService {
     accountType: 'bank' | 'wallet',
     companyId: number,
     period: FilterPeriod,
-    customRange: { startDate: string; endDate: string }
+    customRange: { startDate: string; endDate: string; asOfDate?: string }
   ): { netAmount: number; totalIncoming: number; totalOutgoing: number } {
     const transactions = TransactionsStorageService.getTransactions();
     
@@ -155,13 +208,24 @@ export class BalanceBusinessService {
 
       // Period filter
       if (period !== 'allTime') {
-        const periodTransactions = TransactionsBusinessService.filterTransactionsByPeriod(
-          [transaction], 
-          period, 
-          period === 'custom' ? { start: customRange.startDate, end: customRange.endDate } : undefined
-        );
-        if (periodTransactions.length === 0) {
-          return false;
+        if (period === 'asOfDate' && customRange.asOfDate) {
+          // For historical dates, include all transactions up to the specified date
+          const asOfDateObj = new Date(customRange.asOfDate);
+          asOfDateObj.setHours(23, 59, 59, 999); // Include the full day
+          const transactionDate = new Date(transaction.date);
+          
+          if (transactionDate > asOfDateObj) {
+            return false;
+          }
+        } else {
+          const periodTransactions = TransactionsBusinessService.filterTransactionsByPeriod(
+            [transaction], 
+            period, 
+            period === 'custom' ? { start: customRange.startDate, end: customRange.endDate } : undefined
+          );
+          if (periodTransactions.length === 0) {
+            return false;
+          }
         }
       }
 
@@ -390,19 +454,159 @@ export class BalanceBusinessService {
   }
 
   /**
+   * HYBRID APPROACH: Calculate historical balance using current balance + transaction adjustments
+   * This prevents the massive/incorrect calculations by using reliable current blockchain balance
+   */
+  private static async getBlockchainHistoricalBalance(
+    walletAddress: string,
+    blockchain: string,
+    currency: string,
+    asOfDate: Date
+  ): Promise<{ netAmount: number; totalIncoming: number; totalOutgoing: number } | null> {
+    try {
+      console.log('🚀 Hybrid blockchain historical balance calculation:', {
+        walletAddress: walletAddress.substring(0, 10) + '...',
+        blockchain,
+        currency,
+        asOfDate: asOfDate.toISOString()
+      });
+
+      // Step 1: Validate historical date
+      const dateValidation = TronGridService.validateHistoricalDate(asOfDate);
+      if (!dateValidation.valid) {
+        console.error('❌ Invalid historical date:', dateValidation.error);
+        return { netAmount: 0, totalIncoming: 0, totalOutgoing: 0 };
+      }
+
+      // Step 2: Get current blockchain balance as baseline
+      let currentBalance = 0;
+      const blockchainLower = blockchain.toLowerCase();
+      
+      switch (blockchainLower) {
+        case 'tron':
+          currentBalance = await TronGridService.getCurrentBalance(walletAddress, currency, blockchain);
+          break;
+        case 'ethereum':
+        case 'binance-smart-chain':
+          console.warn(`Historical balance fetching not yet implemented for ${blockchain}`);
+          return null;
+        default:
+          console.warn(`Unsupported blockchain for historical balance: ${blockchain}`);
+          return null;
+      }
+
+      console.log(`💰 Current ${currency} balance:`, currentBalance);
+
+      // Step 3: Get transactions AFTER the historical date
+      const normalizedHistoricalDate = TronGridService.normalizeToUTC(asOfDate);
+      let futureTransactions = [];
+
+      switch (blockchainLower) {
+        case 'tron':
+          if (currency.toUpperCase() === 'TRX') {
+            futureTransactions = await TronGridService.getTransactionHistory(walletAddress, {
+              limit: 2000,
+              startDate: normalizedHistoricalDate
+            });
+          } else {
+            // TRC-20 tokens
+            futureTransactions = await TronGridService.getTRC20TransactionHistory(walletAddress, currency, {
+              limit: 2000,
+              startDate: normalizedHistoricalDate
+            });
+          }
+          break;
+      }
+
+      // Step 4: Filter to only future transactions (after historical date)
+      const postHistoricalTransactions = futureTransactions.filter(tx => 
+        tx.timestamp > normalizedHistoricalDate.getTime()
+      );
+
+      console.log(`📊 Processing ${postHistoricalTransactions.length} transactions after historical date`);
+
+      // Step 5: Calculate net change from future transactions
+      let futureNetChange = 0;
+      let futureIncoming = 0;
+      let futureOutgoing = 0;
+
+      for (const tx of postHistoricalTransactions) {
+        if (tx.status !== 'success') continue;
+        
+        const amount = tx.amount || 0;
+        
+        if (tx.type === 'incoming') {
+          futureIncoming += amount;
+          futureNetChange += amount;
+        } else if (tx.type === 'outgoing') {
+          futureOutgoing += amount;
+          futureNetChange -= amount;
+        }
+      }
+
+      // Step 6: Calculate historical balance
+      const calculatedHistoricalBalance = currentBalance - futureNetChange;
+
+      console.log('📊 Transaction adjustments:', {
+        futureNetChange,
+        futureIncoming,
+        futureOutgoing,
+        futureTransactionCount: postHistoricalTransactions.length
+      });
+
+      // Step 7: Validate calculated balance
+      const validation = TronGridService.validateBalanceRealistic(calculatedHistoricalBalance, currency, currentBalance);
+      
+      let finalHistoricalBalance = calculatedHistoricalBalance;
+      if (!validation.valid) {
+        console.warn('⚠️ Balance validation failed:', validation.error);
+        finalHistoricalBalance = validation.adjustedAmount || 0;
+      }
+
+      console.log('✅ Historical balance calculation complete:', {
+        currency,
+        currentBalance,
+        futureNetChange,
+        calculatedHistoricalBalance,
+        finalHistoricalBalance,
+        wasAdjusted: finalHistoricalBalance !== calculatedHistoricalBalance
+      });
+
+      // Return as historical amounts (reverse the future changes for display)
+      return {
+        netAmount: finalHistoricalBalance,
+        totalIncoming: futureOutgoing, // Reversed: future outgoing becomes historical incoming  
+        totalOutgoing: futureIncoming  // Reversed: future incoming becomes historical outgoing
+      };
+
+    } catch (error) {
+      console.error('❌ Error in hybrid blockchain historical balance calculation:', error);
+      return { netAmount: 0, totalIncoming: 0, totalOutgoing: 0 };
+    }
+  }
+
+  /**
    * Enrich account balances with blockchain data for crypto wallets
    * @param balances Array of account balances to enrich
    * @param fetchBlockchain Whether to fetch blockchain data (default: false for performance)
+   * @param asOfDate Optional date for historical balance view (if provided, only use blockchain data for current date)
    * @returns Promise of enriched balances
    */
   static async enrichWithBlockchainBalances(
     balances: AccountBalance[], 
-    fetchBlockchain: boolean = false
+    fetchBlockchain: boolean = false,
+    asOfDate?: string
   ): Promise<AccountBalance[]> {
+    // Check if we're viewing a historical date
+    const today = new Date().toISOString().split('T')[0];
+    const isViewingCurrentDate = !asOfDate || asOfDate === today;
+    
     // Debug logging for development (can be removed in production)
     console.log('🚀 enrichWithBlockchainBalances called:', {
       balanceCount: balances.length,
       fetchBlockchain,
+      asOfDate,
+      isViewingCurrentDate,
       alchemyConfigured: AlchemyAPIService.isConfigured(),
       alchemyApiKey: process.env.ALCHEMY_API_KEY ? 'SET' : 'NOT_SET',
       alchemyApiKeyLength: process.env.ALCHEMY_API_KEY?.length || 0,
@@ -410,8 +614,8 @@ export class BalanceBusinessService {
       cryptoAPIsApiKey: process.env.CRYPTO_APIS_KEY ? 'SET' : 'NOT_SET',
       cryptoAPIsApiKeyLength: process.env.CRYPTO_APIS_KEY?.length || 0,
       tronGridConfigured: TronGridService.isConfigured(),
-      tronGridApiKey: process.env.TRON_API_KEY ? 'SET' : 'NOT_SET (optional)',
-      tronGridApiKeyLength: process.env.TRON_API_KEY?.length || 0
+      tronGridApiKey: process.env.TRONGRID_API_KEY ? 'SET' : 'NOT_SET',
+      tronGridApiKeyLength: process.env.TRONGRID_API_KEY?.length || 0
     });
 
     // Debug: Show all balance currencies and blockchains being processed
@@ -427,6 +631,12 @@ export class BalanceBusinessService {
     
     if (!fetchBlockchain) {
       console.log('❌ Blockchain enrichment skipped: fetchBlockchain=false');
+      return balances;
+    }
+
+    // For historical dates (not current date), skip blockchain enrichment to preserve historical accuracy
+    if (!isViewingCurrentDate) {
+      console.log('📅 Blockchain enrichment skipped for historical date:', asOfDate, '(preserving transaction-based historical balances)');
       return balances;
     }
 
@@ -634,6 +844,14 @@ export class BalanceBusinessService {
       blockchainBalances.forEach(bb => {
         const key = `${bb.address.toLowerCase()}-${bb.unit.toUpperCase()}`;
         balanceMap.set(key, bb);
+        console.log('🗂️ Storing blockchain balance in map:', {
+          key,
+          balance: bb.balance,
+          unit: bb.unit,
+          address: bb.address,
+          blockchain: bb.blockchain,
+          isLive: bb.isLive
+        });
       });
 
       // Enrich original balances with blockchain data
@@ -650,6 +868,14 @@ export class BalanceBusinessService {
         // Create lookup key using address + currency (token symbol)
         const lookupKey = `${wallet.walletAddress.toLowerCase()}-${balance.currency.toUpperCase()}`;
         const blockchainBalance = balanceMap.get(lookupKey);
+        
+        console.log('🔍 Looking up blockchain balance:', {
+          walletAddress: wallet.walletAddress,
+          currency: balance.currency,
+          lookupKey,
+          found: !!blockchainBalance,
+          availableKeys: Array.from(balanceMap.keys())
+        });
         
         if (blockchainBalance) {
           console.log('🎯 Applying blockchain balance:', {

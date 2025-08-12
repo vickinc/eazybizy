@@ -155,17 +155,24 @@ export class BalanceSSRService {
       includeBlockchainBalances = false
     } = params
 
-    // Generate cache key for this specific query
-    const cacheKey = `balances:${company}:${accountType}:${search}:${showZeroBalances}:${viewFilter}:${groupBy}:${selectedPeriod}:${startDate}:${endDate}:${sortField}:${sortDirection}:${includeBlockchainBalances}`
+    // Generate cache key for this specific query - EXCLUDE blockchain enrichment from cache key
+    // This ensures blockchain balances are always fresh and not cached with stale data
+    const baseCacheKey = `balances:${company}:${accountType}:${search}:${showZeroBalances}:${viewFilter}:${groupBy}:${selectedPeriod}:${startDate}:${endDate}:${sortField}:${sortDirection}`
     
-    // Check cache first (30 second TTL for SSR)
-    const cachedResult = ssrCache.get<BalanceListResponse>(cacheKey)
-    if (cachedResult) {
-      return {
-        ...cachedResult,
-        cached: true,
-        responseTime: Date.now() - startTime
+    // Only use cache for non-blockchain requests to prevent stale blockchain data
+    let cachedResult: BalanceListResponse | null = null;
+    if (!includeBlockchainBalances) {
+      cachedResult = ssrCache.get<BalanceListResponse>(baseCacheKey);
+      if (cachedResult) {
+        console.log('🔄 SSR: Returning cached non-blockchain balances');
+        return {
+          ...cachedResult,
+          cached: true,
+          responseTime: Date.now() - startTime
+        }
       }
+    } else {
+      console.log('⚡ SSR: Skipping cache for blockchain enrichment request - ensuring fresh data');
     }
 
     try {
@@ -281,7 +288,7 @@ export class BalanceSSRService {
           
           // Find corresponding initial balance
           const initialBalance = initialBalances.find(
-            ib => ib.accountId === account.id && ib.accountType === accountType
+            ib => ib.accountId === account.id && ib.accountType === accountType && ib.currency === account.currency
           )
 
           // Calculate transaction balance for the period
@@ -327,14 +334,58 @@ export class BalanceSSRService {
       filteredBalances = this.sortBalances(filteredBalances, sortField, sortDirection)
 
       // Optionally enrich with blockchain data (if requested and API is configured)
+      console.log('🔍 SSR: Checking blockchain enrichment:', {
+        includeBlockchainBalances,
+        balanceCount: filteredBalances.length,
+        tronBalances: filteredBalances.filter(b => 
+          b.account?.blockchain === 'tron' || b.currency === 'TRX' || b.currency === 'USDT' || b.currency === 'USDC'
+        ).map(b => ({
+          currency: b.currency,
+          finalBalance: b.finalBalance,
+          walletAddress: b.account?.walletAddress
+        }))
+      });
+
       if (includeBlockchainBalances) {
         try {
+          console.log('🚀 SSR: Starting blockchain enrichment...');
+          
+          const beforeEnrichment = filteredBalances.filter(b => 
+            b.account?.blockchain === 'tron' || b.currency === 'TRX' || b.currency === 'USDT' || b.currency === 'USDC'
+          ).map(b => ({
+            currency: b.currency,
+            finalBalance: b.finalBalance
+          }));
+          
           filteredBalances = await BalanceBusinessService.enrichWithBlockchainBalances(
             filteredBalances as any[], // Cast to AccountBalance[] for compatibility
             true
           ) as BalanceListItem[] // Cast back to BalanceListItem[]
+          
+          const afterEnrichment = filteredBalances.filter(b => 
+            b.account?.blockchain === 'tron' || b.currency === 'TRX' || b.currency === 'USDT' || b.currency === 'USDC'
+          ).map(b => ({
+            currency: b.currency,
+            finalBalance: b.finalBalance,
+            accountId: typeof b.account === 'object' ? b.account.id : 'unknown',
+            walletAddress: typeof b.account === 'object' ? b.account.walletAddress : 'unknown'
+          }));
+          
+          console.log('✅ SSR: Blockchain enrichment completed:', {
+            beforeEnrichment,
+            afterEnrichment
+          });
+          
+          // Debug: Check if any balance was actually modified
+          const changedBalances = afterEnrichment.filter((after, index) => {
+            const before = beforeEnrichment[index];
+            return before && after.finalBalance !== before.finalBalance;
+          });
+          
+          console.log('🔄 SSR: Balances that changed during enrichment:', changedBalances);
+          
         } catch (error) {
-          console.error('Error enriching balances with blockchain data in SSR:', error)
+          console.error('❌ Error enriching balances with blockchain data in SSR:', error)
           // Continue without blockchain data if enrichment fails
         }
       }
@@ -343,6 +394,18 @@ export class BalanceSSRService {
       const summary = await this.calculateSummary(filteredBalances)
 
       const responseTime = Date.now() - startTime
+
+      // Debug: Log final Tron balances before sending to client
+      const finalTronBalances = filteredBalances.filter(b => 
+        b.account?.blockchain === 'tron' || b.currency === 'TRX' || b.currency === 'USDT' || b.currency === 'USDC'
+      ).map(b => ({
+        currency: b.currency,
+        finalBalance: b.finalBalance,
+        accountId: typeof b.account === 'object' ? b.account.id : 'unknown',
+        walletAddress: typeof b.account === 'object' ? b.account.walletAddress : 'unknown'
+      }));
+      
+      console.log('📡 SSR: Final Tron balances being sent to client:', finalTronBalances);
 
       const result: BalanceListResponse = {
         data: filteredBalances,
@@ -360,8 +423,13 @@ export class BalanceSSRService {
         cached: false,
       }
 
-      // Cache the result for 30 seconds (good for SSR performance without stale data)
-      ssrCache.set(cacheKey, result, 30000)
+      // Cache the result only for non-blockchain requests to prevent stale blockchain data
+      if (!includeBlockchainBalances) {
+        console.log('💾 SSR: Caching non-blockchain balances for 30 seconds');
+        ssrCache.set(baseCacheKey, result, 30000);
+      } else {
+        console.log('🚫 SSR: Not caching blockchain-enriched balances to ensure freshness');
+      }
 
       return result
 

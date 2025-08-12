@@ -1,12 +1,64 @@
 import { 
-  BlockchainBalance, 
-  findBlockchainNetwork,
-  isSupportedBlockchain,
-  findTokenContract,
-  isNativeToken,
-  isERC20Token
+  BlockchainBalance
 } from '@/types/blockchain.types';
 import { DigitalWallet } from '@/types/payment.types';
+
+// Helper functions for token type detection
+function isNativeToken(tokenSymbol: string, blockchain: string): boolean {
+  const nativeTokens: Record<string, string> = {
+    'ethereum': 'ETH',
+    'binance-smart-chain': 'BNB',
+    'bsc': 'BNB',
+    'polygon': 'MATIC',
+    'avalanche': 'AVAX',
+    'arbitrum': 'ETH',
+    'optimism': 'ETH'
+  };
+  
+  const blockchainLower = blockchain.toLowerCase();
+  const nativeToken = nativeTokens[blockchainLower];
+  return nativeToken ? tokenSymbol.toUpperCase() === nativeToken : false;
+}
+
+function isERC20Token(tokenSymbol: string, blockchain: string): boolean {
+  const blockchainLower = blockchain.toLowerCase();
+  
+  // If it's a native token, it's not ERC20
+  if (isNativeToken(tokenSymbol, blockchain)) {
+    return false;
+  }
+  
+  // ERC20 tokens are on Ethereum-compatible chains
+  const erc20Chains = ['ethereum', 'binance-smart-chain', 'bsc', 'polygon', 'avalanche', 'arbitrum', 'optimism'];
+  
+  // Common ERC20 tokens
+  const erc20Tokens = ['USDT', 'USDC', 'DAI', 'LINK', 'UNI', 'AAVE', 'COMP', 'MKR', 'SNX', 'YFI'];
+  
+  return erc20Chains.includes(blockchainLower) && erc20Tokens.includes(tokenSymbol.toUpperCase());
+}
+
+function findTokenContract(tokenSymbol: string, blockchain: string, network: string): string | undefined {
+  // Known token contracts for common tokens
+  const tokenContracts: Record<string, Record<string, string>> = {
+    'ethereum': {
+      'USDT': '0xdac17f958d2ee523a2206206994597c13d831ec7',
+      'USDC': '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      'DAI': '0x6b175474e89094c44da98b954eedeac495271d0f',
+      'LINK': '0x514910771af9ca656af840dff83e8264ecf986ca',
+      'UNI': '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984'
+    },
+    'binance-smart-chain': {
+      'USDT': '0x55d398326f99059ff775485246999027b3197955',
+      'USDC': '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
+      'DAI': '0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3',
+      'BUSD': '0xe9e7cea3dedca5984780bafc599bd69add087d56'
+    }
+  };
+  
+  const blockchainLower = blockchain.toLowerCase();
+  const contracts = tokenContracts[blockchainLower] || {};
+  return contracts[tokenSymbol.toUpperCase()];
+}
 
 interface CacheEntry {
   data: BlockchainBalance;
@@ -784,6 +836,316 @@ export class AlchemyAPIService {
     return true;
   }
   
+  /**
+   * Fetch transaction history for an Ethereum address
+   * Supports both native ETH and ERC-20 token transactions
+   */
+  static async getTransactionHistory(
+    address: string,
+    options: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      currency?: string;
+      blockchain?: string;
+    } = {}
+  ): Promise<import('@/types/blockchain.types').BlockchainTransaction[]> {
+    if (!this.isConfigured()) {
+      throw new Error('Alchemy API key is not configured');
+    }
+
+    const blockchain = options.blockchain || 'ethereum';
+    const limit = options.limit || 100;
+    const currency = options.currency?.toUpperCase() || 'ETH';
+
+    // Support Ethereum and Solana transaction history
+    const blockchainLower = blockchain.toLowerCase();
+    if (blockchainLower !== 'ethereum' && blockchainLower !== 'solana') {
+      console.warn(`Transaction history for ${blockchain} not yet implemented via Alchemy`);
+      return [];
+    }
+
+    try {
+      if (blockchainLower === 'ethereum') {
+        return this.getEthereumTransactionHistory(address, options);
+      } else if (blockchainLower === 'solana') {
+        return this.getSolanaTransactionHistory(address, options);
+      }
+
+      return [];
+
+    } catch (error) {
+      console.error('Error fetching transaction history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch Ethereum transaction history using Alchemy's asset transfers API
+   */
+  private static async getEthereumTransactionHistory(
+    address: string,
+    options: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      currency?: string;
+    } = {}
+  ): Promise<import('@/types/blockchain.types').BlockchainTransaction[]> {
+    const { limit = 100, currency = 'ETH' } = options;
+    const currencyUpper = currency.toUpperCase();
+
+    // Use Alchemy's getAssetTransfers method for comprehensive transaction data
+    const requestBody = {
+      jsonrpc: '2.0',
+      method: 'alchemy_getAssetTransfers',
+      params: [{
+        fromAddress: address,
+        toAddress: address,
+        category: currencyUpper === 'ETH' ? ['external', 'internal'] : ['erc20'],
+        maxCount: `0x${limit.toString(16)}`,
+        order: 'desc'
+      }],
+      id: 1
+    };
+
+    const response = await fetch(this.getRPCUrl('ethereum', 'mainnet'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(`Alchemy API error: ${data.error.message}`);
+    }
+
+    const transfers = data.result?.transfers || [];
+    const transactions: import('@/types/blockchain.types').BlockchainTransaction[] = [];
+
+    for (const transfer of transfers) {
+      // Filter by currency if specified and not ETH
+      if (currencyUpper !== 'ETH' && transfer.asset !== currencyUpper) {
+        continue;
+      }
+
+      // Convert Alchemy transfer format to our blockchain transaction format
+      const transaction: import('@/types/blockchain.types').BlockchainTransaction = {
+        hash: transfer.hash,
+        blockNumber: parseInt(transfer.blockNum, 16),
+        timestamp: new Date(transfer.metadata?.blockTimestamp || Date.now()),
+        from: transfer.from,
+        to: transfer.to,
+        amount: parseFloat(transfer.value || '0'),
+        currency: transfer.asset || 'ETH',
+        type: transfer.from.toLowerCase() === address.toLowerCase() ? 'outgoing' : 'incoming',
+        status: 'success',
+        blockchain: 'ethereum',
+        network: 'mainnet',
+        gasUsed: transfer.metadata?.gasUsed ? parseInt(transfer.metadata.gasUsed, 16) : 0,
+        gasFee: 0, // Would need separate call to get gas fee
+        contractAddress: transfer.rawContract?.address,
+        tokenType: currencyUpper === 'ETH' ? 'native' : 'erc20'
+      };
+
+      // Apply date filtering on the client side
+      if (options.startDate && transaction.timestamp < options.startDate) {
+        continue;
+      }
+      if (options.endDate && transaction.timestamp > options.endDate) {
+        continue;
+      }
+
+      transactions.push(transaction);
+    }
+
+    console.log(`✅ Fetched ${transactions.length} ETH transactions for address ${address}`);
+    return transactions;
+  }
+
+  /**
+   * Fetch Solana transaction history using Alchemy's Solana API
+   */
+  private static async getSolanaTransactionHistory(
+    address: string,
+    options: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+      currency?: string;
+    } = {}
+  ): Promise<import('@/types/blockchain.types').BlockchainTransaction[]> {
+    const { limit = 100, currency = 'SOL' } = options;
+
+    // Use Solana getSignaturesForAddress method to get transaction signatures
+    const requestBody = {
+      jsonrpc: '2.0',
+      method: 'getSignaturesForAddress',
+      params: [
+        address,
+        {
+          limit: limit,
+          commitment: 'finalized'
+        }
+      ],
+      id: 1
+    };
+
+    const response = await fetch(this.getRPCUrl('solana', 'mainnet'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(`Solana API error: ${data.error.message}`);
+    }
+
+    const signatures = data.result || [];
+    const transactions: import('@/types/blockchain.types').BlockchainTransaction[] = [];
+
+    // For each signature, get the full transaction details
+    for (const sigInfo of signatures.slice(0, Math.min(limit, 20))) { // Limit detailed fetches
+      try {
+        const txRequestBody = {
+          jsonrpc: '2.0',
+          method: 'getTransaction',
+          params: [
+            sigInfo.signature,
+            {
+              encoding: 'jsonParsed',
+              commitment: 'finalized',
+              maxSupportedTransactionVersion: 0
+            }
+          ],
+          id: 1
+        };
+
+        const txResponse = await fetch(this.getRPCUrl('solana', 'mainnet'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(txRequestBody),
+        });
+
+        if (!txResponse.ok) continue;
+
+        const txData = await txResponse.json();
+        
+        if (txData.error || !txData.result) continue;
+
+        const tx = txData.result;
+        const meta = tx.meta;
+        const message = tx.transaction?.message;
+
+        if (!message || !meta) continue;
+
+        // Parse Solana transaction details
+        const timestamp = tx.blockTime ? new Date(tx.blockTime * 1000) : new Date();
+        const fee = meta.fee || 0;
+        const feeSol = fee / 1_000_000_000; // Convert lamports to SOL
+
+        // Determine transaction type and amount based on balance changes
+        const preBalances = meta.preBalances || [];
+        const postBalances = meta.postBalances || [];
+        const accountKeys = message.accountKeys || [];
+        
+        let amount = 0;
+        let type: 'incoming' | 'outgoing' = 'outgoing';
+        let fromAddress = '';
+        let toAddress = '';
+
+        // Find the account index for our address
+        const accountIndex = accountKeys.findIndex((key: any) => 
+          (typeof key === 'string' ? key : key.pubkey) === address
+        );
+
+        if (accountIndex >= 0 && preBalances[accountIndex] !== undefined && postBalances[accountIndex] !== undefined) {
+          const balanceChange = postBalances[accountIndex] - preBalances[accountIndex];
+          amount = Math.abs(balanceChange) / 1_000_000_000; // Convert lamports to SOL
+          type = balanceChange > 0 ? 'incoming' : 'outgoing';
+          
+          // Set from/to addresses (simplified)
+          if (type === 'incoming') {
+            toAddress = address;
+            fromAddress = accountKeys[0] ? (typeof accountKeys[0] === 'string' ? accountKeys[0] : accountKeys[0].pubkey) : '';
+          } else {
+            fromAddress = address;
+            toAddress = accountKeys[1] ? (typeof accountKeys[1] === 'string' ? accountKeys[1] : accountKeys[1].pubkey) : '';
+          }
+        }
+
+        // Apply date filtering
+        if (options.startDate && timestamp < options.startDate) {
+          continue;
+        }
+        if (options.endDate && timestamp > options.endDate) {
+          continue;
+        }
+
+        const transaction: import('@/types/blockchain.types').BlockchainTransaction = {
+          hash: sigInfo.signature,
+          blockNumber: tx.slot || 0,
+          timestamp: timestamp,
+          from: fromAddress,
+          to: toAddress,
+          amount: amount,
+          currency: 'SOL',
+          type: type,
+          status: meta.err ? 'failed' : 'success',
+          blockchain: 'solana',
+          network: 'mainnet',
+          gasUsed: 0, // Solana doesn't use gas
+          gasFee: feeSol,
+          tokenType: 'native'
+        };
+
+        transactions.push(transaction);
+      } catch (error) {
+        console.error('Error parsing Solana transaction:', sigInfo.signature, error);
+        continue;
+      }
+    }
+
+    console.log(`✅ Fetched ${transactions.length} SOL transactions for address ${address}`);
+    return transactions;
+  }
+
+  /**
+   * Fetch ERC-20 token transaction history for an address
+   */
+  static async getERC20TransactionHistory(
+    address: string,
+    tokenSymbol: string,
+    options: {
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+    } = {}
+  ): Promise<import('@/types/blockchain.types').BlockchainTransaction[]> {
+    return this.getTransactionHistory(address, {
+      ...options,
+      currency: tokenSymbol,
+      blockchain: 'ethereum'
+    });
+  }
+
   /**
    * Clear the cache (useful for force refresh)
    */

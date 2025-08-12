@@ -6,12 +6,50 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const companyId = searchParams.get('companyId')
+    const walletType = searchParams.get('walletType')
+    const blockchain = searchParams.get('blockchain')
+    const isActive = searchParams.get('isActive')
     
-    // Build where clause based on companyId
-    const where: unknown = { isActive: true }
+    console.log('🔍 Digital wallets API called with params:', {
+      companyId,
+      walletType,
+      blockchain,
+      isActive,
+      url: request.url
+    });
+    
+    // Build where clause with multiple filters
+    const where: any = {}
+    
+    // Company filter
     if (companyId && companyId !== 'all') {
       where.companyId = parseInt(companyId)
     }
+    
+    // Wallet type filter (e.g., 'crypto') - handle case insensitivity
+    if (walletType) {
+      where.walletType = {
+        equals: walletType,
+        mode: 'insensitive'
+      }
+    }
+    
+    // Blockchain filter (e.g., 'tron', 'ethereum') - handle case insensitivity
+    if (blockchain) {
+      where.blockchain = {
+        equals: blockchain,
+        mode: 'insensitive'
+      }
+    }
+    
+    // Active status filter - default to true unless explicitly set
+    if (isActive !== null) {
+      where.isActive = isActive === 'true'
+    } else {
+      where.isActive = true
+    }
+    
+    console.log('🔍 Database query where clause:', where);
     
     const digitalWallets = await prisma.digitalWallet.findMany({
       where,
@@ -29,6 +67,18 @@ export async function GET(request: NextRequest) {
         createdAt: 'desc'
       }
     })
+    
+    console.log('✅ Found digital wallets:', {
+      count: digitalWallets.length,
+      wallets: digitalWallets.map(w => ({
+        id: w.id,
+        walletName: w.walletName,
+        walletType: w.walletType,
+        blockchain: w.blockchain,
+        isActive: w.isActive,
+        company: w.company.tradingName
+      }))
+    });
     
     return NextResponse.json({
       data: digitalWallets,

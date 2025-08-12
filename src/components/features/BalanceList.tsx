@@ -13,10 +13,145 @@ import Package from "lucide-react/dist/esm/icons/package";
 import Eye from "lucide-react/dist/esm/icons/eye";
 import EyeOff from "lucide-react/dist/esm/icons/eye-off";
 import Edit2 from "lucide-react/dist/esm/icons/edit-2";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import { AccountBalance, GroupedBalances, BalanceGroupBy } from '@/types/balance.types';
 import { BalanceListItem } from './BalanceListItem';
 import { BalanceBusinessService } from '@/services/business/balanceBusinessService';
 import { Skeleton } from '@/components/ui/loading-states';
+import { BlockchainIcon } from '@/components/ui/blockchain-icon';
+
+// Helper function to get blockchain explorer URL
+const getBlockchainExplorerUrl = (address: string, blockchain?: string): string => {
+  const chain = blockchain?.toLowerCase() || '';
+  
+  switch (chain) {
+    case 'ethereum':
+    case 'eth':
+      return `https://etherscan.io/address/${address}`;
+    case 'binance-smart-chain':
+    case 'bsc':
+    case 'bnb':
+      return `https://bscscan.com/address/${address}`;
+    case 'polygon':
+    case 'matic':
+      return `https://polygonscan.com/address/${address}`;
+    case 'avalanche':
+    case 'avax':
+      return `https://snowtrace.io/address/${address}`;
+    case 'arbitrum':
+      return `https://arbiscan.io/address/${address}`;
+    case 'optimism':
+      return `https://optimistic.etherscan.io/address/${address}`;
+    case 'tron':
+    case 'trx':
+      return `https://tronscan.org/#/address/${address}`;
+    case 'solana':
+    case 'sol':
+      return `https://solscan.io/account/${address}`;
+    case 'bitcoin':
+    case 'btc':
+      return `https://blockchair.com/bitcoin/address/${address}`;
+    case 'litecoin':
+    case 'ltc':
+      return `https://blockchair.com/litecoin/address/${address}`;
+    case 'ripple':
+    case 'xrp':
+      return `https://xrpscan.com/account/${address}`;
+    case 'cardano':
+    case 'ada':
+      return `https://cardanoscan.io/address/${address}`;
+    case 'polkadot':
+    case 'dot':
+      return `https://polkadot.subscan.io/account/${address}`;
+    case 'cosmos':
+    case 'atom':
+      return `https://www.mintscan.io/cosmos/account/${address}`;
+    case 'near':
+      return `https://nearblocks.io/address/${address}`;
+    case 'fantom':
+    case 'ftm':
+      return `https://ftmscan.com/address/${address}`;
+    case 'celo':
+      return `https://celoscan.io/address/${address}`;
+    case 'cronos':
+    case 'cro':
+      return `https://cronoscan.com/address/${address}`;
+    case 'klaytn':
+    case 'klay':
+      return `https://scope.klaytn.com/account/${address}`;
+    case 'base':
+      return `https://basescan.org/address/${address}`;
+    default:
+      // Default to Etherscan if blockchain is unknown
+      return `https://etherscan.io/address/${address}`;
+  }
+};
+
+// Helper function to get blockchain explorer name
+const getBlockchainExplorerName = (blockchain?: string): string => {
+  const chain = blockchain?.toLowerCase() || '';
+  
+  switch (chain) {
+    case 'ethereum':
+    case 'eth':
+      return 'Etherscan';
+    case 'binance-smart-chain':
+    case 'bsc':
+    case 'bnb':
+      return 'BscScan';
+    case 'polygon':
+    case 'matic':
+      return 'PolygonScan';
+    case 'avalanche':
+    case 'avax':
+      return 'SnowTrace';
+    case 'arbitrum':
+      return 'Arbiscan';
+    case 'optimism':
+      return 'Optimistic Etherscan';
+    case 'tron':
+    case 'trx':
+      return 'TronScan';
+    case 'solana':
+    case 'sol':
+      return 'Solscan';
+    case 'bitcoin':
+    case 'btc':
+      return 'Blockchair';
+    case 'litecoin':
+    case 'ltc':
+      return 'Blockchair';
+    case 'ripple':
+    case 'xrp':
+      return 'XRPScan';
+    case 'cardano':
+    case 'ada':
+      return 'CardanoScan';
+    case 'polkadot':
+    case 'dot':
+      return 'Subscan';
+    case 'cosmos':
+    case 'atom':
+      return 'Mintscan';
+    case 'near':
+      return 'NearBlocks';
+    case 'fantom':
+    case 'ftm':
+      return 'FTMScan';
+    case 'celo':
+      return 'CeloScan';
+    case 'cronos':
+    case 'cro':
+      return 'CronoScan';
+    case 'klaytn':
+    case 'klay':
+      return 'KlaytnScope';
+    case 'base':
+      return 'BaseScan';
+    default:
+      return 'Blockchain Explorer';
+  }
+};
 
 interface BalanceListProps {
   balances: AccountBalance[];
@@ -77,20 +212,63 @@ const CryptoBalancesContent: React.FC<CryptoBalancesContentProps> = ({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-lime-100 rounded-lg">
-                    <Wallet className="h-4 w-4 text-lime-600" />
+                    <BlockchainIcon blockchain={firstBalance.account.blockchain} className="h-4 w-4" />
                   </div>
                   <div>
                     <div className="font-medium text-base">{walletName}</div>
                     <div className="text-xs text-gray-600">
                       {firstBalance.company.tradingName} • {walletBalances.length} currencies
                     </div>
+                    {/* Wallet address and blockchain */}
+                    {firstBalance.account.walletAddress && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        <div className="flex items-center space-x-2">
+                          <a
+                            href={getBlockchainExplorerUrl(firstBalance.account.walletAddress, firstBalance.account.blockchain)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center space-x-1 font-mono bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors cursor-pointer"
+                            title={`View on ${getBlockchainExplorerName(firstBalance.account.blockchain)}`}
+                          >
+                            <span>{firstBalance.account.walletAddress.substring(0, 6)}...{firstBalance.account.walletAddress.substring(firstBalance.account.walletAddress.length - 4)}</span>
+                            <ExternalLink className="h-3 w-3 text-gray-500" />
+                          </a>
+                          {firstBalance.account.blockchain && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                              {firstBalance.account.blockchain.charAt(0).toUpperCase() + firstBalance.account.blockchain.slice(1)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Currency balances */}
               <div className="space-y-2">
-                {walletBalances.map((balance: any) => (
+                {walletBalances
+                  .sort((a: any, b: any) => {
+                    // Native tokens should come first
+                    const nativeTokens = ['ETH', 'BNB', 'TRX', 'SOL', 'MATIC', 'AVAX', 'FTM'];
+                    const aIsNative = nativeTokens.includes(a.currency.toUpperCase());
+                    const bIsNative = nativeTokens.includes(b.currency.toUpperCase());
+                    
+                    if (aIsNative && !bIsNative) return -1;
+                    if (!aIsNative && bIsNative) return 1;
+                    
+                    // Then sort stablecoins
+                    const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI'];
+                    const aIsStable = stablecoins.includes(a.currency.toUpperCase());
+                    const bIsStable = stablecoins.includes(b.currency.toUpperCase());
+                    
+                    if (aIsStable && !bIsStable) return -1;
+                    if (!aIsStable && bIsStable) return 1;
+                    
+                    // Finally sort alphabetically
+                    return a.currency.localeCompare(b.currency);
+                  })
+                  .map((balance: any) => (
                   <div key={balance.currency} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 rounded-full bg-lime-300"></div>
@@ -279,6 +457,8 @@ export const BalanceList: React.FC<BalanceListProps> = ({
     Object.keys(groupedBalances).forEach(groupName => {
       initialExpanded[groupName] = false;
     });
+    // Also initialize the cryptocurrency group
+    initialExpanded['Cryptocurrency Balances'] = false;
     setExpandedGroups(initialExpanded);
   }, [groupedBalances]);
 
@@ -295,6 +475,8 @@ export const BalanceList: React.FC<BalanceListProps> = ({
     Object.keys(groupedBalances).forEach(groupName => {
       newState[groupName] = !allExpanded;
     });
+    // Also toggle the cryptocurrency group if it exists
+    newState['Cryptocurrency Balances'] = !allExpanded;
     setExpandedGroups(newState);
   };
 

@@ -41,7 +41,8 @@ export default async function BalancesPage() {
       startDate: '', // No custom range
       endDate: '', // No custom range
       sortField: 'finalBalance', // Sort by balance
-      sortDirection: 'desc' // Highest first
+      sortDirection: 'desc', // Highest first
+      includeBlockchainBalances: true // CRITICAL: Match client-side query key
     }
   ];
 
@@ -58,7 +59,8 @@ export default async function BalancesPage() {
       startDate: '',
       endDate: '',
       sortField: 'finalBalance',
-      sortDirection: 'desc'
+      sortDirection: 'desc',
+      includeBlockchainBalances: true // Enable blockchain balance enrichment in SSR
     });
 
     // Transform data to match client expectations

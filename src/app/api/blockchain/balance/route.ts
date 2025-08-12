@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BlockchainAPIService } from '@/services/integrations/blockchainAPIService';
 import { AlchemyAPIService } from '@/services/integrations/alchemyAPIService';
+import { TronGridService } from '@/services/integrations/tronGridService';
+import { EtherscanAPIService } from '@/services/integrations/etherscanAPIService';
 import { BlockchainBalance } from '@/types/blockchain.types';
 
 // Temporary function to provide realistic demo balances for non-Ethereum chains
@@ -71,15 +73,42 @@ export async function POST(request: NextRequest) {
     if (forceRefresh) {
       BlockchainAPIService.clearCache();
       AlchemyAPIService.clearCache();
+      TronGridService.clearCache();
+      EtherscanAPIService.clearCache();
     }
 
     let balance: BlockchainBalance;
 
-    // Check if blockchain is supported by Alchemy
-    const alchemySupportedChains = ['ethereum', 'solana', 'bitcoin', 'binance-smart-chain'];
     const blockchainLower = blockchain.toLowerCase();
     
-    if (alchemySupportedChains.includes(blockchainLower)) {
+    // Use Etherscan for ETH and BSC chains
+    if (blockchainLower === 'ethereum' || blockchainLower === 'bsc' || blockchainLower === 'binance-smart-chain') {
+      // Check if Etherscan is configured
+      if (!EtherscanAPIService.isConfigured(blockchainLower)) {
+        return NextResponse.json(
+          { error: `Etherscan API is not configured for ${blockchain}. Please add ETHERSCAN_API_KEY to environment variables.` },
+          { status: 503 }
+        );
+      }
+
+      const nativeTokens = {
+        ethereum: 'ETH',
+        bsc: 'BNB',
+        'binance-smart-chain': 'BNB'
+      };
+      
+      const nativeToken = nativeTokens[blockchainLower];
+      
+      if (!tokenSymbol || tokenSymbol.toUpperCase() === nativeToken) {
+        // Native token balance (ETH/BNB)
+        balance = await EtherscanAPIService.getNativeBalance(address, blockchainLower, network);
+      } else {
+        // ERC-20/BEP-20 token balance
+        balance = await EtherscanAPIService.getTokenBalance(address, tokenSymbol, blockchainLower, network);
+      }
+    }
+    // Use Alchemy only for Solana (Bitcoin is not supported by Alchemy)
+    else if (blockchainLower === 'solana') {
       // Check if Alchemy is configured
       if (!AlchemyAPIService.isConfigured()) {
         return NextResponse.json(
@@ -88,22 +117,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Use Alchemy for all supported blockchains
-      if (blockchainLower === 'ethereum') {
-        if (tokenSymbol === 'ETH' || !tokenSymbol) {
-          balance = await AlchemyAPIService.getNativeBalance(address, blockchain, network);
-        } else {
-          balance = await AlchemyAPIService.getTokenBalance(address, tokenSymbol, blockchain, network);
-        }
-      } else {
-        // For non-Ethereum chains, fetch native balance
-        balance = await AlchemyAPIService.getNativeBalance(address, blockchain, network);
+      // Use Alchemy for Solana
+      balance = await AlchemyAPIService.getNativeBalance(address, blockchain, network);
+    }
+    // Use CryptoAPIs for Bitcoin (Alchemy doesn't support Bitcoin)
+    else if (blockchainLower === 'bitcoin') {
+      // Check if CryptoAPIs is configured
+      if (!BlockchainAPIService.isConfigured()) {
+        return NextResponse.json(
+          { error: 'CryptoAPIs is not configured for Bitcoin. Please add CRYPTO_APIS_KEY to environment variables.' },
+          { status: 503 }
+        );
       }
+
+      // Use CryptoAPIs for Bitcoin
+      balance = await BlockchainAPIService.getNativeBalance(address, blockchain, network);
     } else {
-      // For unsupported blockchains (like Tron), use hardcoded values or fallback service
+      // For blockchains not supported by Alchemy
       if (blockchainLower === 'tron') {
-        // Tron is not supported by Alchemy, use hardcoded values
-        balance = await getHardcodedBalance(address, blockchain, tokenSymbol);
+        // Use TronGrid for Tron balances
+        if (!TronGridService.isConfigured()) {
+          return NextResponse.json(
+            { error: 'TronGrid API is not configured for Tron balances.' },
+            { status: 503 }
+          );
+        }
+
+        if (tokenSymbol && ['USDT', 'USDC'].includes(tokenSymbol.toUpperCase())) {
+          // TRC-20 token balance
+          balance = await TronGridService.getTokenBalance(address, tokenSymbol, blockchain, network);
+        } else {
+          // Native TRX balance (or default when no token specified)
+          balance = await TronGridService.getNativeBalance(address, blockchain, network);
+        }
       } else {
         // Check if CryptoAPIs is configured for other chains
         if (!BlockchainAPIService.isConfigured()) {
@@ -209,12 +255,21 @@ export async function GET() {
 
   const stats = BlockchainAPIService.getCacheStats();
   const alchemyStats = AlchemyAPIService.getCacheStats();
+  const tronGridStats = TronGridService.getCacheStats();
+  const etherscanStats = EtherscanAPIService.getCacheStats();
   
   return NextResponse.json({
     success: true,
     blockchainApiStats: stats,
     alchemyApiStats: alchemyStats,
+    tronGridStats: tronGridStats,
+    etherscanStats: etherscanStats,
     blockchainApiConfigured: BlockchainAPIService.isConfigured(),
-    alchemyApiConfigured: AlchemyAPIService.isConfigured()
+    alchemyApiConfigured: AlchemyAPIService.isConfigured(),
+    tronGridConfigured: TronGridService.isConfigured(),
+    etherscanConfigured: {
+      ethereum: EtherscanAPIService.isConfigured('ethereum'),
+      bsc: EtherscanAPIService.isConfigured('bsc')
+    }
   });
 }
