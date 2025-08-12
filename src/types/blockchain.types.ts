@@ -19,7 +19,7 @@ export interface BlockchainTransaction {
   to: string;
   amount: number;
   currency: string;
-  type: 'incoming' | 'outgoing' | 'internal';
+  type: 'incoming' | 'outgoing' | 'internal' | 'fee';
   status: 'success' | 'failed' | 'pending';
   gasUsed?: number;
   gasFee?: number;

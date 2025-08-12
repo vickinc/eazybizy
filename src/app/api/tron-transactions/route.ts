@@ -61,14 +61,177 @@ export async function GET(request: NextRequest) {
 
     if (!currency || currency.toUpperCase() === 'TRX') {
       // Fetch native TRX transactions
-      transactions = await TronGridService.getTransactionHistory(address, options);
+      const nativeTrxTransactions = await TronGridService.getTransactionHistory(address, options);
+      
+      // Check if user wants to include fee transactions
+      const includeFees = searchParams.get('includeFees') !== 'false'; // Default to true to show TRC-20 fees
       
       // Filter to only native TRX transactions (not TRC-20)
-      transactions = transactions.filter(tx => 
-        tx.tokenType === 'native' && tx.currency === 'TRX'
-      );
+      let filteredNativeTransactions = nativeTrxTransactions.filter(tx => {
+        const isNativeTrx = tx.tokenType === 'native' && tx.currency === 'TRX';
+        
+        if (!isNativeTrx) return false;
+        
+        // If includeFees is false, exclude fee-only transactions
+        if (!includeFees && tx.type === 'fee') {
+          return false;
+        }
+        
+        return true;
+      });
       
-      console.log(`✅ Fetched ${transactions.length} native TRX transactions from TronGrid`);
+      // Additionally, if includeFees is true, fetch TRC-20 transactions to get their fees
+      let trc20FeeTransactions: any[] = [];
+      if (includeFees) {
+        try {
+          console.log(`🔍 Fetching TRC-20 transactions to extract TRX fees...`);
+          
+          // Fetch all TRC-20 transactions to get fees (not just USDT)
+          const trc20Contracts = [
+            'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT
+            'TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8', // USDC
+          ];
+          
+          for (const contractAddress of trc20Contracts) {
+            try {
+              const trc20Url = `https://api.trongrid.io/v1/accounts/${address}/transactions/trc20`;
+              const trc20Params = new URLSearchParams({
+                contract_address: contractAddress,
+                limit: Math.min(parseInt(limit), 100).toString() // Reduced per contract to avoid too many requests
+              });
+          
+              if (startDate) {
+                trc20Params.append('min_timestamp', new Date(startDate).getTime().toString());
+              }
+              if (endDate) {
+                trc20Params.append('max_timestamp', new Date(endDate).getTime().toString());
+              }
+              
+              const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+              };
+              
+              if (apiKey) {
+                headers['TRON-PRO-API-KEY'] = apiKey;
+              }
+              
+              const trc20Response = await fetch(`${trc20Url}?${trc20Params.toString()}`, {
+                method: 'GET',
+                headers
+              });
+              
+              if (trc20Response.ok) {
+                const trc20Data = await trc20Response.json();
+                const trc20Transactions = trc20Data.data || [];
+                
+                // Get token symbol from contract address
+                const tokenSymbol = contractAddress === 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' ? 'USDT' : 
+                                  contractAddress === 'TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8' ? 'USDC' : 'TRC20';
+                
+                console.log(`📊 Found ${trc20Transactions.length} ${tokenSymbol} transactions to extract fees from`);
+                
+                // Extract TRX fees from TRC-20 transactions
+                for (const tx of trc20Transactions) {
+                  const isOutgoing = tx.from?.toLowerCase() === address.toLowerCase();
+                  
+                  // Only create fee transactions for outgoing TRC-20 transactions
+                  if (isOutgoing) {
+                    try {
+                      // Get transaction info for fee information (not basic transaction details)
+                      const txInfoUrl = `https://api.trongrid.io/wallet/gettransactioninfobyid`;
+                      const txInfoResponse = await fetch(txInfoUrl, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ value: tx.transaction_id })
+                      });
+                      
+                      if (txInfoResponse.ok) {
+                        const txInfo = await txInfoResponse.json();
+                        
+                        if (txInfo && txInfo.fee) {
+                          // Extract fee from transaction info - fees are in receipt object and top-level fee
+                          const totalFee = (txInfo.fee || 0) / 1_000_000; // Total fee in TRX
+                          const receipt = txInfo.receipt || {};
+                          const energyFee = (receipt.energy_fee || 0) / 1_000_000;
+                          
+                          if (totalFee > 0) {
+                            // Check if we already have a fee transaction for this hash to avoid duplicates
+                            const existingFee = trc20FeeTransactions.find(f => f.relatedTransaction === tx.transaction_id);
+                            if (!existingFee) {
+                              const feeTransaction = {
+                                hash: `${tx.transaction_id}-fee`,
+                                from: tx.from,
+                                to: 'Network Fee',
+                                amount: totalFee,
+                                currency: 'TRX',
+                                timestamp: tx.block_timestamp || Date.now(),
+                                status: 'success',
+                                type: 'fee' as const,
+                                fee: totalFee,
+                                blockchain: 'tron',
+                                tokenType: 'native',
+                                contractAddress: undefined,
+                                relatedTransaction: tx.transaction_id,
+                                description: `Fee for ${tokenSymbol} transfer`
+                              };
+                              
+                              trc20FeeTransactions.push(feeTransaction);
+                              console.log(`💰 Extracted ${totalFee} TRX fee from ${tokenSymbol} transaction ${tx.transaction_id.substring(0, 10)}...`);
+                            }
+                          }
+                        }
+                      }
+                    } catch (feeError) {
+                      console.warn(`⚠️ Could not fetch fee details for ${tokenSymbol} transaction ${tx.transaction_id}:`, feeError);
+                    }
+                  }
+                }
+              }
+            } catch (contractError) {
+              console.warn(`⚠️ Error fetching TRC-20 transactions for contract ${contractAddress}:`, contractError);
+            }
+          }
+        } catch (trc20Error) {
+          console.warn('⚠️ Could not fetch TRC-20 transactions for fee extraction:', trc20Error);
+        }
+      }
+      
+      // Combine native TRX transactions with TRC-20 fee transactions
+      transactions = [...filteredNativeTransactions, ...trc20FeeTransactions];
+      
+      // Sort by timestamp (most recent first)
+      transactions.sort((a, b) => b.timestamp - a.timestamp);
+      
+      const feeCount = transactions.filter(tx => tx.type === 'fee').length;
+      const transferCount = transactions.length - feeCount;
+      
+      console.log(`✅ Fetched ${transactions.length} TRX transactions total (${transferCount} transfers, ${feeCount} fees from TRC-20 transactions, includeFees: ${includeFees})`);
+      
+      // Debug: Show breakdown of transaction types and amounts
+      if (process.env.NODE_ENV === 'development') {
+        const incomingSum = transactions.filter(tx => tx.type === 'incoming').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+        const outgoingSum = transactions.filter(tx => tx.type === 'outgoing').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+        const feeSum = transactions.filter(tx => tx.type === 'fee').reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+        
+        console.log(`🔍 TRX Transaction Summary:`, {
+          total: transactions.length,
+          incoming: { count: transactions.filter(tx => tx.type === 'incoming').length, sum: incomingSum },
+          outgoing: { count: transactions.filter(tx => tx.type === 'outgoing').length, sum: outgoingSum },
+          fees: { count: transactions.filter(tx => tx.type === 'fee').length, sum: feeSum },
+          netBalance: incomingSum - outgoingSum - feeSum
+        });
+        
+        // Sample some fee transactions for debugging
+        const sampleFees = transactions.filter(tx => tx.type === 'fee').slice(0, 3);
+        if (sampleFees.length > 0) {
+          console.log(`🧾 Sample fee transactions:`, sampleFees.map(tx => ({
+            hash: tx.hash.substring(0, 10) + '...',
+            amount: tx.amount,
+            currency: tx.currency,
+            description: tx.description
+          })));
+        }
+      }
     } else if (currency) {
       // Fetch specific TRC-20 token transactions using direct API call
       const currencyUpper = currency.toUpperCase();
@@ -123,14 +286,49 @@ export async function GET(request: NextRequest) {
           
           console.log(`📊 Received ${rawTransactions.length} raw transactions from TronGrid`);
           
-          // Parse transactions directly
-          transactions = rawTransactions.map((tx: any) => {
+          // Parse TRC-20 transactions and get their fee information
+          const parsedTransactions = [];
+          
+          for (const tx of rawTransactions) {
             const isIncoming = tx.to?.toLowerCase() === address.toLowerCase();
             const tokenInfo = tx.token_info || {};
             const decimals = tokenInfo.decimals || 6;
             const amount = parseFloat(tx.value || '0') / Math.pow(10, decimals);
             
-            return {
+            // Get full transaction details to extract fee information
+            let feeAmount = 0;
+            try {
+              const txDetailUrl = `https://api.trongrid.io/v1/transactions/${tx.transaction_id}`;
+              const txDetailHeaders: HeadersInit = {
+                'Content-Type': 'application/json',
+              };
+              if (apiKey) {
+                txDetailHeaders['TRON-PRO-API-KEY'] = apiKey;
+              }
+              
+              const txDetailResponse = await fetch(txDetailUrl, {
+                method: 'GET',
+                headers: txDetailHeaders
+              });
+              
+              if (txDetailResponse.ok) {
+                const txDetailData = await txDetailResponse.json();
+                const txDetail = txDetailData.data?.[0];
+                
+                if (txDetail) {
+                  // Calculate total fees (energy + network fees)
+                  const energyFee = (txDetail.energy_fee || 0) / 1_000_000;
+                  const netFee = (txDetail.net_fee || 0) / 1_000_000;
+                  feeAmount = energyFee + netFee;
+                  
+                  console.log(`💰 TRC-20 transaction ${tx.transaction_id.substring(0, 10)}... fee: ${feeAmount} TRX`);
+                }
+              }
+            } catch (feeError) {
+              console.warn(`⚠️ Could not fetch fee details for transaction ${tx.transaction_id}:`, feeError);
+            }
+            
+            const tokenTransaction = {
               hash: tx.transaction_id,
               from: tx.from,
               to: tx.to,
@@ -139,12 +337,39 @@ export async function GET(request: NextRequest) {
               timestamp: tx.block_timestamp || Date.now(),
               status: 'success',
               type: isIncoming ? 'incoming' : 'outgoing',
-              fee: 0,
+              fee: feeAmount,
               blockchain: 'tron',
               tokenType: 'trc20',
               contractAddress: tokenInfo.address
             };
-          });
+            
+            parsedTransactions.push(tokenTransaction);
+            
+            // If this is an outgoing TRC-20 transaction with a fee, also create a fee transaction
+            if (!isIncoming && feeAmount > 0) {
+              const feeTransaction = {
+                hash: `${tx.transaction_id}-fee`,
+                from: tx.from,
+                to: 'Network Fee',
+                amount: feeAmount,
+                currency: 'TRX',
+                timestamp: tx.block_timestamp || Date.now(),
+                status: 'success',
+                type: 'fee' as const,
+                fee: feeAmount,
+                blockchain: 'tron',
+                tokenType: 'native',
+                contractAddress: undefined,
+                // Link to original transaction
+                relatedTransaction: tx.transaction_id,
+                description: `Fee for ${tokenInfo.symbol || currencyUpper} transfer`
+              };
+              
+              parsedTransactions.push(feeTransaction);
+            }
+          }
+          
+          transactions = parsedTransactions;
           
           console.log(`✅ Parsed ${transactions.length} ${currencyUpper} transactions`);
           

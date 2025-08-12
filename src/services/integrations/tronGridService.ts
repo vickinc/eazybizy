@@ -956,43 +956,82 @@ export class TronGridService {
       
       // Handle different contract types
       if (contractType === 'TransferContract') {
-        // Native TRX transfer
         const fromAddress = this.addressToHexFormat(contractParams.owner_address || '');
         const toAddress = this.addressToHexFormat(contractParams.to_address || '');
         const amount = (contractParams.amount || 0) / 1_000_000; // Convert from SUN to TRX
         
-        console.log(`🔧 TRX Transfer Direction Check:`, {
+        // Calculate total fees (energy + network fees)
+        const energyFee = (tx.energy_fee || 0) / 1_000_000;
+        const netFee = (tx.net_fee || 0) / 1_000_000;
+        const totalFee = energyFee + netFee;
+        
+        // Detect fee-only transactions: amount is 0 or very small but fees are present
+        const isFeeOnlyTransaction = amount === 0 && totalFee > 0;
+        
+        console.log(`🔧 TRX Transaction Analysis:`, {
           wallet: normalizedWallet,
           from: fromAddress,
           to: toAddress,
+          amount,
+          totalFee,
+          energyFee,
+          netFee,
+          isFeeOnlyTransaction,
           isOutgoing: fromAddress === normalizedWallet,
           isIncoming: toAddress === normalizedWallet
         });
         
-        const type = fromAddress === normalizedWallet ? 'outgoing' : 'incoming';
-        
-        return {
-          hash,
-          blockNumber,
-          timestamp,
-          from: fromAddress,
-          to: toAddress,
-          amount: Math.abs(amount),
-          currency: 'TRX',
-          type,
-          status: status as 'success' | 'failed',
-          gasUsed: tx.net_usage,
-          gasFee: (tx.energy_fee || 0) / 1_000_000,
-          tokenType: 'native',
-          blockchain: 'tron',
-          network: 'mainnet'
-        };
+        if (isFeeOnlyTransaction) {
+          // This is a fee payment for a token transfer, not an actual TRX transfer
+          // Create a fee transaction record
+          return {
+            hash,
+            blockNumber,
+            timestamp,
+            from: fromAddress,
+            to: toAddress,
+            amount: totalFee, // Show the total fee amount
+            currency: 'TRX',
+            type: 'fee' as const, // Use the new fee type
+            status: status as 'success' | 'failed',
+            gasUsed: tx.net_usage,
+            gasFee: totalFee,
+            tokenType: 'native',
+            blockchain: 'tron',
+            network: 'mainnet'
+          };
+        } else {
+          // This is an actual native TRX transfer
+          const type = fromAddress === normalizedWallet ? 'outgoing' : 'incoming';
+          
+          return {
+            hash,
+            blockNumber,
+            timestamp,
+            from: fromAddress,
+            to: toAddress,
+            amount: Math.abs(amount),
+            currency: 'TRX',
+            type,
+            status: status as 'success' | 'failed',
+            gasUsed: tx.net_usage,
+            gasFee: totalFee,
+            tokenType: 'native',
+            blockchain: 'tron',
+            network: 'mainnet'
+          };
+        }
         
       } else if (contractType === 'TriggerSmartContract') {
         // Smart contract interaction (could be TRC-20)
         const ownerAddress = contractParams.owner_address?.toLowerCase() || '';
         const contractAddress = contractParams.contract_address || '';
         const data = contractParams.data || '';
+        
+        // Calculate total fees (energy + network fees)
+        const energyFee = (tx.energy_fee || 0) / 1_000_000;
+        const netFee = (tx.net_fee || 0) / 1_000_000;
+        const totalFee = energyFee + netFee;
         
         // Try to parse TRC-20 transfer
         const trc20Transfer = this.parseTRC20TransferFromData(data, ownerAddress, walletAddress, contractAddress);
@@ -1008,7 +1047,7 @@ export class TronGridService {
             type: trc20Transfer.type,
             status: status as 'success' | 'failed',
             gasUsed: tx.net_usage,
-            gasFee: (tx.energy_fee || 0) / 1_000_000,
+            gasFee: totalFee, // Use total fee instead of just energy_fee
             contractAddress,
             tokenType: 'trc20',
             blockchain: 'tron',
@@ -1031,7 +1070,7 @@ export class TronGridService {
             type: 'outgoing', // Default to outgoing for contract interactions
             status: status as 'success' | 'failed',
             gasUsed: tx.net_usage,
-            gasFee: (tx.energy_fee || 0) / 1_000_000,
+            gasFee: totalFee, // Use total fee instead of just energy_fee
             contractAddress,
             tokenType: 'trc20',
             blockchain: 'tron',

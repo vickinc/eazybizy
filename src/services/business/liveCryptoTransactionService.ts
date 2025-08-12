@@ -132,7 +132,8 @@ export class LiveCryptoTransactionService {
               currency: currency.toUpperCase(),
               startDate: options.dateRange.startDate.toISOString(),
               endDate: options.dateRange.endDate.toISOString(),
-              limit: (options.limit || 1000).toString()
+              limit: (options.limit || 1000).toString(),
+              includeFees: 'true' // Explicitly include TRC-20 transaction fees for TRX wallets
             });
 
             const response = await fetch(`/api/tron-transactions?${params}`, {
@@ -296,6 +297,7 @@ export class LiveCryptoTransactionService {
     wallet: CryptoWallet
   ): Promise<TransactionItem> {
     const isIncoming = blockchainTx.type === 'incoming';
+    const isFeeTransaction = blockchainTx.type === 'fee';
     const amount = Math.abs(blockchainTx.amount);
     
     // Debug: Log transaction conversion details
@@ -306,13 +308,14 @@ export class LiveCryptoTransactionService {
       '=== DIRECTION LOGIC ===': '==================',
       blockchainType: blockchainTx.type,
       isIncoming,
+      isFeeTransaction,
       rawAmount: blockchainTx.amount,
       absAmount: amount,
       '=== RESULT AMOUNTS ===': '==================',
-      netAmount: isIncoming ? amount : -amount,
-      incomingAmount: isIncoming ? amount : 0,
-      outgoingAmount: isIncoming ? 0 : amount,
-      finalSign: isIncoming ? 'POSITIVE' : 'NEGATIVE'
+      netAmount: isFeeTransaction ? -amount : (isIncoming ? amount : -amount),
+      incomingAmount: isFeeTransaction ? 0 : (isIncoming ? amount : 0),
+      outgoingAmount: isFeeTransaction ? amount : (isIncoming ? 0 : amount),
+      finalSign: isFeeTransaction ? 'NEGATIVE (FEE)' : (isIncoming ? 'POSITIVE' : 'NEGATIVE')
     });
     
     // Convert to USD for base currency amount
@@ -336,27 +339,47 @@ export class LiveCryptoTransactionService {
     transactionIdCounter++;
     const uniqueId = `live-${transactionIdCounter}-${blockchainTx.hash}-${blockchainTx.currency}-${blockchainTx.type}-${wallet.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
+    // Handle different transaction types
+    let paidBy: string;
+    let paidTo: string;
+    let description: string;
+    let category: string;
+    
+    if (isFeeTransaction) {
+      // Fee transactions: always outgoing from the wallet
+      paidBy = wallet.walletName || this.formatAddress(wallet.walletAddress);
+      paidTo = 'Network Fee';
+      description = `Transaction fee for ${blockchainTx.blockchain.toUpperCase()} network operation`;
+      category = 'Fees & Charges';
+    } else {
+      // Regular incoming/outgoing transactions
+      paidBy = isIncoming ? 
+        this.formatAddress(blockchainTx.from) : 
+        wallet.walletName || this.formatAddress(wallet.walletAddress);
+      paidTo = isIncoming ? 
+        wallet.walletName || this.formatAddress(wallet.walletAddress) : 
+        this.formatAddress(blockchainTx.to);
+      description = `${blockchainTx.tokenType?.toUpperCase() || 'Blockchain'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`;
+      category = 'Cryptocurrency';
+    }
+    
     return {
       id: uniqueId,
       date: new Date(blockchainTx.timestamp).toISOString(),
-      paidBy: isIncoming ? 
-        this.formatAddress(blockchainTx.from) : 
-        wallet.walletName || this.formatAddress(wallet.walletAddress),
-      paidTo: isIncoming ? 
-        wallet.walletName || this.formatAddress(wallet.walletAddress) : 
-        this.formatAddress(blockchainTx.to),
-      netAmount: isIncoming ? amount : -amount,
-      incomingAmount: isIncoming ? amount : 0,
-      outgoingAmount: isIncoming ? 0 : amount,
+      paidBy,
+      paidTo,
+      netAmount: isFeeTransaction ? -amount : (isIncoming ? amount : -amount),
+      incomingAmount: isFeeTransaction ? 0 : (isIncoming ? amount : 0),
+      outgoingAmount: isFeeTransaction ? amount : (isIncoming ? 0 : amount),
       currency: blockchainTx.currency,
       baseCurrency: 'USD',
-      baseCurrencyAmount: isIncoming ? baseCurrencyAmount : -baseCurrencyAmount,
+      baseCurrencyAmount: isFeeTransaction ? -baseCurrencyAmount : (isIncoming ? baseCurrencyAmount : -baseCurrencyAmount),
       exchangeRate,
       accountId: wallet.originalId, // Use original wallet ID for multi-currency wallets
       accountType: 'wallet' as const,
       reference: blockchainTx.hash,
-      category: 'Cryptocurrency',
-      description: `${blockchainTx.tokenType?.toUpperCase() || 'Blockchain'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`,
+      category,
+      description,
       status: blockchainTx.status === 'success' ? 'CLEARED' as const : 'PENDING' as const,
       reconciliationStatus: 'UNRECONCILED' as const,
       approvalStatus: 'APPROVED' as const,
@@ -369,10 +392,10 @@ export class LiveCryptoTransactionService {
       linkedEntry: {
         id: blockchainTx.hash,
         type: 'BLOCKCHAIN_LIVE',
-        category: 'Cryptocurrency',
+        category: isFeeTransaction ? 'Fee' : 'Cryptocurrency',
         amount: blockchainTx.amount,
         currency: blockchainTx.currency,
-        description: `Live ${blockchainTx.blockchain} transaction`,
+        description: isFeeTransaction ? `${blockchainTx.blockchain.toUpperCase()} network fee` : `Live ${blockchainTx.blockchain} transaction`,
         blockchain: blockchainTx.blockchain // Store blockchain info for explorer URLs
       }
     };
