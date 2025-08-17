@@ -27,6 +27,12 @@ export interface BlockchainTransaction {
   tokenType?: 'native' | 'erc20' | 'bep20' | 'trc20' | 'spl' | 'contract';
   blockchain: string;
   network: string;
+  description?: string;
+  isInternal?: boolean;
+  internalId?: string;
+  relatedTransaction?: string;
+  fee?: number;
+  needsGasFeeLookup?: boolean; // Flag for token transfers that need enhanced gas fee data
 }
 
 export interface TransactionImportResult {
