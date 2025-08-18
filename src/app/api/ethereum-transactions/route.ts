@@ -26,10 +26,19 @@ function detectPhishingTransaction(tx: any): boolean {
 }
 
 function detectPhishingAddressPattern(address: string): boolean {
+  // Legitimate addresses that should never be flagged (known USDT recipients)
+  const legitimateAddresses = [
+    '0xbac46c5513c0653360a673ed0cf05b9fb5ab3c27', // Legitimate USDT transaction recipient
+  ];
+  
+  if (legitimateAddresses.some(addr => address.toLowerCase() === addr.toLowerCase())) {
+    return false; // This is a legitimate address, not phishing
+  }
+  
   // Common phishing address patterns from the analysis
   const phishingPatterns = [
     /.*ae5a88$/i,     // Ends with ae5a88
-    /.*3c27$/i,       // Ends with 3c27
+    /.*3c27$/i,       // Ends with 3c27 (but exclude legitimate addresses above)
     /.*b3c27$/i,      // Ends with b3c27
     /.*f3c27$/i,      // Ends with f3c27
     // Add more patterns as they're discovered
@@ -57,6 +66,10 @@ function detectKnownSpamPatterns(tx: any): boolean {
 
 export async function GET(request: NextRequest) {
   try {
+    // ULTRA DEBUG: Track specific transaction through entire pipeline
+    const TARGET_HASH = '0x267decf93545c0776de17f438df4edb4aafdb727aad5be41dfba856943562db9';
+    console.log(`🎯 ULTRA DEBUG: Tracking ${TARGET_HASH.substring(0, 12)}... through entire pipeline`);
+    
     const searchParams = request.nextUrl.searchParams;
     const address = searchParams.get('address');
     const currency = searchParams.get('currency');
@@ -92,10 +105,13 @@ export async function GET(request: NextRequest) {
 
     // Parse dates if provided - for comprehensive historical import, 
     // we want to fetch ALL transactions unless specific dates are requested
+    const actualLimit = Math.max(limit, 10000);
     const options: any = {
-      limit: Math.max(limit, 10000) // Ensure we fetch enough for comprehensive history
+      limit: actualLimit // Ensure we fetch enough for comprehensive history
       // Don't pass currency here - we'll filter it ourselves after getting all transactions
     };
+    
+    console.log(`🔧 Using transaction limit: ${actualLimit} (requested: ${limit})`);
 
     // Only apply date filtering if explicitly requested
     // This ensures comprehensive historical import by default
@@ -124,14 +140,340 @@ export async function GET(request: NextRequest) {
       apiKeyLength: process.env.ETHERSCAN_API_KEY?.length || 0
     });
 
-    // Fetch Ethereum transactions
-    let transactions = await EtherscanAPIService.getTransactionHistory(
-      address,
-      'ethereum',
-      options
-    );
+    // For specific token currencies like USDT/USDC, fetch directly from token endpoint to ensure historical coverage
+    let transactions: any[] = [];
     
-    // ENHANCEMENT: Add comprehensive USDT transaction processing to capture missing late 2022 fees
+    if (currency && currency.toUpperCase() !== 'ETH') {
+      console.log(`🎯 Fetching token transactions directly for ${currency.toUpperCase()}`);
+      
+      // Direct token endpoint call to ensure we get ALL historical transactions
+      const tokenContracts: Record<string, string> = {
+        'USDT': '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      };
+      
+      const contractAddress = tokenContracts[currency.toUpperCase()];
+      if (contractAddress) {
+        // Direct Etherscan API call to bypass service layer issues
+        console.log(`🎯 Making direct Etherscan API call for complete ${currency.toUpperCase()} history`);
+        
+        const etherscanApiKey = process.env.ETHERSCAN_API_KEY;
+        console.log(`🔑 Etherscan API Key: ${etherscanApiKey ? `Configured (${etherscanApiKey.length} chars)` : '❌ NOT CONFIGURED'}`);
+      
+        
+        if (!etherscanApiKey) {
+          console.error('❌ Cannot fetch USDT transactions without Etherscan API key');
+          // Fall back to service method
+          transactions = await EtherscanAPIService.getTransactionHistory(address, 'ethereum', { 
+            currency: currency.toUpperCase(),
+            limit: 10000 
+          });
+          console.log(`📊 Fallback service returned ${transactions.length} transactions`);
+        } else {
+        // Fetch all transactions using pagination
+        const allRawTransactions: any[] = [];
+        
+        // Then fetch all other transactions
+        const startBlock = 0;
+        const endBlock = 99999999; // Latest block
+        let page = 1;
+        let hasMore = true;
+        
+        while (hasMore && page <= 50) { // Increased to 50 pages to ensure we get all transactions
+          // Using desc sort to get newest first, ensuring recent transactions aren't missed
+          const url = `https://api.etherscan.io/api?module=account&action=tokentx&contractaddress=${contractAddress}&address=${address}&startblock=${startBlock}&endblock=${endBlock}&page=${page}&offset=10000&sort=desc&apikey=${etherscanApiKey}`;
+          
+          try {
+            console.log(`🔍 Direct API page ${page} (with block range ${startBlock}-${endBlock})`);
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.status === '1' && data.result && data.result.length > 0) {
+              console.log(`✅ Direct Etherscan API page ${page}: ${data.result.length} raw transactions`);
+              
+              // ULTRA DEBUG: Check if target transaction is in this page
+              const targetInPage = data.result.find(tx => tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+              if (targetInPage) {
+                console.log(`🎯 FOUND TARGET in page ${page}! Details:`, {
+                  hash: targetInPage.hash,
+                  from: targetInPage.from,
+                  to: targetInPage.to,
+                  value: targetInPage.value,
+                  tokenSymbol: targetInPage.tokenSymbol,
+                  amount: parseFloat(targetInPage.value) / Math.pow(10, parseInt(targetInPage.tokenDecimal)),
+                  blockNumber: targetInPage.blockNumber,
+                  timeStamp: targetInPage.timeStamp
+                });
+              } else {
+                console.log(`   Target NOT in page ${page}`);
+              }
+              
+              allRawTransactions.push(...data.result);
+              
+              // Check if we found the missing December 2022 transaction
+              const missingTx = data.result.find(tx => 
+                tx.hash.toLowerCase() === '0x267decf93545c0776de17f438df4edb4aafdb727aad5be41dfba856943562db9'
+              );
+              if (missingTx) {
+                const amount = parseFloat(missingTx.value) / 1000000;
+                const date = new Date(parseInt(missingTx.timeStamp) * 1000);
+                console.log(`   🎯 FOUND missing Dec 2022 transaction on page ${page}!`);
+                console.log(`      Amount: ${amount.toFixed(6)} USDT`);
+                console.log(`      Date: ${date.toISOString()}`);
+              }
+              
+              // Continue until we get all transactions or reach limit
+              if (data.result.length < 10000) {
+                hasMore = false;
+                console.log(`📄 Last page reached (${data.result.length} < 10000 results)`);
+              } else if (page >= 50) {
+                hasMore = false;
+                console.log(`📄 Reached page limit (${page}) - stopping pagination`);
+              } else {
+                console.log(`   ➡️  Continuing to page ${page + 1} (got ${data.result.length} results)`);
+              }
+            } else {
+              hasMore = false;
+              console.log(`📄 No more results on page ${page}: ${data.message || 'empty result'}`);
+            }
+            
+            page++;
+            
+            // Rate limiting
+            if (hasMore) {
+              await new Promise(r => setTimeout(r, 200));
+            }
+          } catch (pageError) {
+            console.error(`❌ Error on page ${page}:`, pageError);
+            hasMore = false;
+          }
+        }
+        
+        if (allRawTransactions.length > 0) {
+          console.log(`✅ Total from direct API: ${allRawTransactions.length} raw ${currency.toUpperCase()} transactions`);
+          
+          // DEBUG: Show all raw USDC transactions for debugging
+          if (currency.toUpperCase() === 'USDC') {
+            console.log(`🔍 DEBUG: All ${allRawTransactions.length} raw USDC transactions from API:`);
+            allRawTransactions.forEach((tx, index) => {
+              const amount = parseFloat(tx.value) / Math.pow(10, parseInt(tx.tokenDecimal) || 6);
+              const date = new Date(parseInt(tx.timeStamp) * 1000);
+              console.log(`   ${index + 1}. ${tx.hash.substring(0, 12)}... | ${amount.toFixed(4)} ${tx.tokenSymbol} | ${date.toISOString().split('T')[0]} | Contract: ${tx.contractAddress}`);
+            });
+          }
+          
+          // ULTRA DEBUG: Check if target is in final raw collection
+          const targetInRaw = allRawTransactions.find(tx => tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+          console.log(`🎯 Target in raw collection: ${targetInRaw ? '✅ YES' : '❌ NO'}`);
+          if (targetInRaw) {
+            console.log(`   Raw target details:`, {
+              hash: targetInRaw.hash,
+              value: targetInRaw.value,
+              tokenSymbol: targetInRaw.tokenSymbol,
+              from: targetInRaw.from,
+              to: targetInRaw.to
+            });
+          }
+          
+          // Debug: Check for specific missing transaction
+          const missingTxHash = '0x267decf93545c0776de17f438df4edb4aafdb727aad5be41dfba856943562db9';
+          const foundMissingTx = allRawTransactions.find(tx => tx.hash.toLowerCase() === missingTxHash.toLowerCase());
+          console.log(`🔍 Missing tx check: ${foundMissingTx ? '✅ FOUND' : '❌ NOT FOUND'} ${missingTxHash.substring(0, 10)}...`);
+          if (foundMissingTx) {
+            console.log(`   Value: ${foundMissingTx.value}, Date: ${new Date(parseInt(foundMissingTx.timeStamp) * 1000).toISOString()}`);
+          }
+            
+          // Convert raw Etherscan format to our format
+          console.log(`🔄 Converting ${allRawTransactions.length} raw transactions...`);
+          
+          // Check if missing transaction is in raw data before conversion
+          const missingTxInRaw = allRawTransactions.find(tx => tx.hash.toLowerCase() === missingTxHash.toLowerCase());
+          console.log(`🔍 Missing tx in raw data: ${missingTxInRaw ? '✅ FOUND' : '❌ NOT FOUND'}`);
+          
+          // Debug: Look for all December 2022 transactions
+          const dec2022Txs = allRawTransactions.filter(tx => {
+            const date = new Date(parseInt(tx.timeStamp) * 1000);
+            return date.getFullYear() === 2022 && date.getMonth() === 11; // December is month 11
+          });
+          console.log(`🔍 December 2022 raw transactions found: ${dec2022Txs.length}`);
+          dec2022Txs.forEach((tx, index) => {
+            const amount = parseFloat(tx.value) / 1000000;
+            const date = new Date(parseInt(tx.timeStamp) * 1000);
+            const isTarget = tx.hash.toLowerCase() === missingTxHash.toLowerCase();
+            console.log(`   ${index + 1}. ${tx.hash.substring(0, 12)}... | ${amount.toFixed(6)} USDT | ${date.toISOString().split('T')[0]} ${isTarget ? '🎯 TARGET!' : ''}`);
+          });
+          
+          // ULTRA DEBUG: Track target through conversion
+          const targetBeforeConversion = allRawTransactions.find(tx => tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+          console.log(`🎯 Target before conversion: ${targetBeforeConversion ? '✅ YES' : '❌ NO'}`);
+          
+          transactions = allRawTransactions.map((tx: any) => {
+              const timestamp = parseInt(tx.timeStamp) * 1000;
+              const isIncoming = tx.to.toLowerCase() === address.toLowerCase();
+              
+              // ULTRA DEBUG: Track target during conversion
+              if (tx.hash.toLowerCase() === TARGET_HASH.toLowerCase()) {
+                console.log(`🎯 CONVERTING target transaction:`, {
+                  hash: tx.hash,
+                  value: tx.value,
+                  tokenDecimal: tx.tokenDecimal,
+                  convertedAmount: parseFloat(tx.value) / Math.pow(10, parseInt(tx.tokenDecimal)),
+                  isIncoming,
+                  from: tx.from,
+                  to: tx.to,
+                  isError: tx.isError
+                });
+              }
+              const decimals = parseInt(tx.tokenDecimal) || 6;
+              const amount = parseFloat(tx.value) / Math.pow(10, decimals);
+              const gasUsed = tx.gasUsed ? parseInt(tx.gasUsed) : 0;
+              const gasPriceWei = tx.gasPrice || '0';
+              const gasPrice = parseFloat(gasPriceWei) / Math.pow(10, 18);
+              const gasFee = gasUsed * gasPrice;
+              
+              // CRITICAL FIX: Check actual transaction status from Etherscan
+              // Note: tokentx API doesn't include isError field, but failed token transactions
+              // are typically not returned in the results. Normal tx API uses isError field.
+              // isError: "0" = success, "1" = failed, undefined = assume success (tokentx API)
+              const txStatus = tx.isError === undefined ? 'success' : 
+                             (tx.isError === '0' ? 'success' : 'failed');
+
+              return {
+                hash: tx.hash,
+                blockNumber: parseInt(tx.blockNumber),
+                timestamp,
+                from: tx.from,
+                to: tx.to,
+                amount: amount, // Keep amount positive, let type indicate direction
+                currency: tx.tokenSymbol || currency.toUpperCase(),
+                type: isIncoming ? 'incoming' : 'outgoing',
+                status: txStatus, // Use actual transaction status from Etherscan
+                gasUsed,
+                gasFee,
+                contractAddress: tx.contractAddress,
+                tokenType: 'erc20',
+                blockchain: 'ethereum',
+                network: 'mainnet',
+                needsGasFeeLookup: false
+              };
+            });
+            
+            console.log(`✅ Converted ${transactions.length} transactions to internal format`);
+            
+            // DEBUG: Show USDC transactions after conversion
+            if (currency.toUpperCase() === 'USDC') {
+              console.log(`🔍 DEBUG: USDC transactions after conversion (${transactions.length}):`);
+              transactions.forEach((tx, index) => {
+                const date = new Date(tx.timestamp);
+                console.log(`   ${index + 1}. ${tx.hash.substring(0, 12)}... | ${tx.amount.toFixed(4)} ${tx.currency} | ${date.toISOString().split('T')[0]} | Status: ${tx.status}`);
+              });
+            }
+            
+            // ULTRA DEBUG: Check if target survived conversion
+            const targetAfterConversion = transactions.find(tx => tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+            console.log(`🎯 Target after conversion: ${targetAfterConversion ? '✅ YES' : '❌ NO'}`);
+            if (targetAfterConversion) {
+              console.log(`   Target converted details:`, {
+                hash: targetAfterConversion.hash,
+                amount: targetAfterConversion.amount,
+                type: targetAfterConversion.type,
+                from: targetAfterConversion.from,
+                to: targetAfterConversion.to,
+                timestamp: new Date(targetAfterConversion.timestamp).toISOString()
+              });
+            }
+            
+            // Smart deduplication: Keep multiple entries for multi-send transactions (same hash, different amounts)
+            const uniqueTransactions = new Map();
+            transactions.forEach(tx => {
+              // Create a unique key that combines hash + amount + type to preserve multi-send transfers
+              const uniqueKey = `${tx.hash}-${tx.amount}-${tx.type}-${tx.from || ''}-${tx.to || ''}`;
+              if (!uniqueTransactions.has(uniqueKey)) {
+                uniqueTransactions.set(uniqueKey, tx);
+              } else {
+                console.log(`🔄 Duplicate transaction found (same hash, amount, and addresses): ${tx.hash.substring(0, 10)}... | ${tx.amount} ${tx.currency}`);
+              }
+            });
+            transactions = Array.from(uniqueTransactions.values());
+            console.log(`📊 After smart deduplication: ${transactions.length} unique transactions (preserving multi-send)`);
+            
+            // ULTRA DEBUG: Check if target survived deduplication
+            const targetAfterDedup = transactions.find(tx => tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+            console.log(`🎯 Target after deduplication: ${targetAfterDedup ? '✅ YES' : '❌ NO'}`);
+            
+            // Also check for internal transactions for USDT
+            // Some USDT transactions might be internal transactions from smart contracts
+            console.log(`🔍 Checking for internal USDT transactions...`);
+            const internalUrl = `https://api.etherscan.io/api?module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${etherscanApiKey}`;
+            
+            try {
+              const internalResponse = await fetch(internalUrl);
+              const internalData = await internalResponse.json();
+              
+              if (internalData.status === '1' && internalData.result) {
+                console.log(`📊 Found ${internalData.result.length} internal transactions`);
+                
+                // Check if our missing transaction is among internal transactions
+                const missingInternal = internalData.result.find((tx: any) => 
+                  tx.hash.toLowerCase() === missingTxHash.toLowerCase()
+                );
+                
+                if (missingInternal) {
+                  console.log(`🎯 FOUND missing transaction in INTERNAL transactions!`);
+                  console.log(`   Block: ${missingInternal.blockNumber}`);
+                  console.log(`   From: ${missingInternal.from}`);
+                  console.log(`   To: ${missingInternal.to}`);
+                  console.log(`   Value: ${missingInternal.value}`);
+                  
+                  // Convert and add the internal transaction if it's USDT-related
+                  // Note: Internal transactions are ETH transfers, but might be related to USDT operations
+                }
+              }
+            } catch (err) {
+              console.warn(`⚠️ Failed to fetch internal transactions: ${err}`);
+            }
+            
+            // Check if missing transaction survived conversion
+            const missingTxAfterConversion = transactions.find(tx => tx.hash.toLowerCase() === missingTxHash.toLowerCase());
+            console.log(`🔍 Missing tx after conversion: ${missingTxAfterConversion ? '✅ FOUND' : '❌ NOT FOUND'}`);
+            if (missingTxAfterConversion) {
+              console.log(`   Converted: ${missingTxAfterConversion.amount} ${missingTxAfterConversion.currency}, ${missingTxAfterConversion.type}`);
+            }
+            
+            // Debug: Check December 2022 transactions after conversion
+            const dec2022AfterConversion = transactions.filter(tx => {
+              const date = new Date(tx.timestamp);
+              return date.getFullYear() === 2022 && date.getMonth() === 11;
+            });
+            console.log(`🔍 December 2022 transactions after conversion: ${dec2022AfterConversion.length}`);
+            if (dec2022AfterConversion.length !== dec2022Txs.length) {
+              console.warn(`⚠️  Lost ${dec2022Txs.length - dec2022AfterConversion.length} December 2022 transactions during conversion!`);
+            }
+            
+        } else {
+          console.error(`❌ No transactions returned from direct API`);
+          transactions = [];
+        }
+        } // Close the etherscanApiKey check
+      } else {
+        console.log(`⚠️ Unknown token: ${currency}, falling back to general transaction history`);
+        transactions = await EtherscanAPIService.getTransactionHistory(address, 'ethereum', options);
+      }
+    } else {
+      // For ETH or no specific currency, use the general transaction history
+      transactions = await EtherscanAPIService.getTransactionHistory(address, 'ethereum', options);
+    }
+    
+    console.log(`🔍 Initial transaction fetch complete:`, {
+      total: transactions.length,
+      usdtTransactions: transactions.filter(tx => tx.currency === 'USDT').length,
+      usdtIncoming: transactions.filter(tx => tx.currency === 'USDT' && tx.type === 'incoming').length,
+      usdtOutgoing: transactions.filter(tx => tx.currency === 'USDT' && tx.type === 'outgoing').length,
+      contractAddresses: [...new Set(transactions.filter(tx => tx.currency === 'USDT').map(tx => tx.contractAddress))]
+    });
+    
+    // TEMPORARILY DISABLED: Enhanced USDT processing to debug transaction counts
+    if (false) { // Disabled
     console.log(`🔶 Fetching enhanced USDT transactions for comprehensive fee coverage...`);
     try {
       const enhancedUsdtTransactions = await EtherscanAPIService.getUSDTTransactionsWithFees(
@@ -202,6 +544,7 @@ export async function GET(request: NextRequest) {
     } catch (usdtError) {
       console.warn('⚠️ Enhanced USDT processing failed:', usdtError.message);
     }
+    } // End of disabled block
     
     // Debug: Check for internal transactions immediately after fetching
     let initialInternalCount = transactions.filter(tx => tx.isInternal === true).length;
@@ -258,6 +601,21 @@ export async function GET(request: NextRequest) {
     const beforeStatusFilter = transactions.length;
     const currentTime = Date.now();
     
+    // ULTRA DEBUG: Check if target is present before filtering
+    const targetBeforeFiltering = transactions.find(tx => tx.hash && tx.hash.toLowerCase() === TARGET_HASH.toLowerCase());
+    console.log(`🎯 Target before filtering: ${targetBeforeFiltering ? '✅ YES' : '❌ NO'}`);
+    if (targetBeforeFiltering) {
+      console.log(`   Target before filtering:`, {
+        hash: targetBeforeFiltering.hash,
+        amount: targetBeforeFiltering.amount,
+        type: targetBeforeFiltering.type,
+        currency: targetBeforeFiltering.currency,
+        status: targetBeforeFiltering.status,
+        timestamp: new Date(targetBeforeFiltering.timestamp).toISOString(),
+        isDecember2022: new Date(targetBeforeFiltering.timestamp).getFullYear() === 2022 && new Date(targetBeforeFiltering.timestamp).getMonth() === 11
+      });
+    }
+    
     // Known token contract addresses that generate zero-value ETH transactions
     const knownTokenContracts = [
       '0xdac17f958d2ee523a2206206994597c13d831ec7', // USDT
@@ -271,6 +629,9 @@ export async function GET(request: NextRequest) {
     ].map(addr => addr.toLowerCase());
     
     transactions = transactions.filter(tx => {
+      // ULTRA DEBUG: Track target through filters
+      const isTarget = tx.hash && tx.hash.toLowerCase() === TARGET_HASH.toLowerCase();
+      
       const isSuccessful = tx.status === 'success';
       
       // Filter out transactions with future dates (fake/test data)
@@ -288,6 +649,23 @@ export async function GET(request: NextRequest) {
       
       // Additional spam patterns specific to known phishing campaigns
       const isKnownSpamPattern = detectKnownSpamPatterns(tx);
+      
+      // ULTRA DEBUG: If this is target, log all filter results
+      if (isTarget) {
+        console.log(`🎯 FILTERING TARGET TRANSACTION:`, {
+          hash: tx.hash.substring(0, 12) + '...',
+          isSuccessful,
+          isFutureTransaction,
+          isPhishingTransaction,
+          isZeroValueTokenSpam,
+          isKnownSpamPattern,
+          amount: tx.amount,
+          currency: tx.currency,
+          type: tx.type,
+          gasUsed: tx.gasUsed,
+          timestamp: new Date(tx.timestamp).toISOString()
+        });
+      }
       
       // Filter out transactions with generic scam patterns
       const isGenericScamTransaction = 
@@ -330,6 +708,20 @@ export async function GET(request: NextRequest) {
     
     const zeroValueFiltered = beforeStatusFilter - transactions.length;
     console.log(`🔍 Enhanced filtering complete: ${beforeStatusFilter} -> ${transactions.length} transactions (removed ${zeroValueFiltered} spam/zero-value txs)`);
+    
+    // DEBUG: Show USDC transactions after status filtering
+    if (currency && currency.toUpperCase() === 'USDC') {
+      const usdcAfterFiltering = transactions.filter(tx => tx.currency === 'USDC');
+      console.log(`🔍 DEBUG: USDC transactions after status filtering (${usdcAfterFiltering.length}):`);
+      usdcAfterFiltering.forEach((tx, index) => {
+        const date = new Date(tx.timestamp);
+        console.log(`   ${index + 1}. ${tx.hash.substring(0, 12)}... | ${tx.amount.toFixed(4)} USDC | ${date.toISOString().split('T')[0]} | Status: ${tx.status}`);
+      });
+      
+      if (usdcAfterFiltering.length < 28) {
+        console.log(`⚠️  USDC FILTERING ISSUE: Started with 28 raw, now have ${usdcAfterFiltering.length} after status filtering`);
+      }
+    }
     
     // Check if our target transactions are still there after status filtering
     console.log('🎯 After status filtering:');
@@ -779,13 +1171,68 @@ export async function GET(request: NextRequest) {
           console.log(`  ${found ? '✅' : '❌'} ${hash.substring(0, 12)}... ${found ? `(Amount: ${found.amount}, Type: ${found.type}, isInternal: ${found.isInternal})` : 'MISSING'}`);
         });
       }
+    } else {
+      // Currency filtering for non-ETH tokens (USDT, USDC, etc.)
+      const requestedCurrency = currency.toUpperCase();
+      const beforeCurrencyFilter = transactions.length;
+      
+      console.log(`🔍 Filtering for specific currency: ${requestedCurrency}`);
+      console.log(`   Before filter: ${beforeCurrencyFilter} transactions`);
+      console.log(`   Available currencies:`, [...new Set(transactions.map(tx => tx.currency))]);
+      
+      // Known legitimate token contract addresses
+      const legitimateContracts: Record<string, string> = {
+        'USDT': '0xdac17f958d2ee523a2206206994597c13d831ec7', // Tether USD
+        'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USD Coin
+        'DAI': '0x6b175474e89094c44da98b954eedeac495271d0f',  // DAI Stablecoin
+        'WBTC': '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // Wrapped Bitcoin
+        'WETH': '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // Wrapped Ether
+      };
+      
+      // Filter transactions to only include the requested currency with legitimate contract
+      transactions = transactions.filter(tx => {
+        const matchesCurrency = tx.currency.toUpperCase() === requestedCurrency;
+        
+        // For known tokens, also verify the contract address
+        if (matchesCurrency && legitimateContracts[requestedCurrency]) {
+          const legitimateContract = legitimateContracts[requestedCurrency].toLowerCase();
+          const hasLegitimateContract = !tx.contractAddress || 
+                                       tx.contractAddress.toLowerCase() === legitimateContract;
+          
+          if (!hasLegitimateContract) {
+            console.log(`   🚫 Filtering out FAKE ${requestedCurrency} from contract ${tx.contractAddress} (amount: ${tx.amount})`);
+            return false;
+          }
+        }
+        
+        if (process.env.NODE_ENV === 'development' && !matchesCurrency) {
+          // Debug: Show which transactions are being filtered out
+          console.log(`   🚫 Filtering out ${tx.currency} transaction: ${tx.hash.substring(0, 10)}...`);
+        }
+        
+        return matchesCurrency;
+      });
+      
+      console.log(`🔍 ${requestedCurrency} currency filtering: ${beforeCurrencyFilter} -> ${transactions.length} transactions`);
+      
+      // Show statistics about filtered transactions
+      const contractCounts = transactions.reduce((acc, tx) => {
+        const contract = tx.contractAddress || 'native';
+        acc[contract] = (acc[contract] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      console.log(`   Contract addresses in filtered transactions:`, contractCounts);
     }
 
     // Final debug check
     const finalInternalCount = transactions.filter(tx => tx.isInternal === true).length;
     console.log(`🔍 FINAL internal transactions count: ${finalInternalCount}`);
     
-    if (finalInternalCount === 0 && initialInternalCount > 0) {
+    // Only restore internal transactions for ETH queries, not for token queries
+    const shouldRestoreInternal = !currency || currency.toUpperCase() === 'ETH';
+    
+    if (finalInternalCount === 0 && initialInternalCount > 0 && shouldRestoreInternal) {
       console.error(`❌ CRITICAL: Lost ${initialInternalCount} internal transactions during processing!`);
       console.log(`🔧 RESTORING safeguarded internal transactions...`);
       
@@ -799,6 +1246,8 @@ export async function GET(request: NextRequest) {
       console.log(`✅ Restored ${restoredCount} internal transactions`);
     } else if (finalInternalCount > 0) {
       console.log(`✅ Internal transactions preserved: ${finalInternalCount}`);
+    } else if (!shouldRestoreInternal && initialInternalCount > 0) {
+      console.log(`ℹ️ Skipped restoring ${initialInternalCount} internal ETH transactions for ${currency} query`);
     }
     
     const response = NextResponse.json({
