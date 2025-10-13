@@ -812,7 +812,7 @@ export class AlchemyAPIService {
     const isERC20 = blockchain && currency ? isERC20Token(currency, blockchain) : false;
     
     // Supported blockchains by Alchemy (Bitcoin is NOT supported)
-    const supportedBlockchains = ['ethereum', 'solana', 'binance-smart-chain'];
+    const supportedBlockchains = ['ethereum', 'solana', 'binance-smart-chain', 'base'];
     
     console.log('🔍 AlchemyAPIService.canFetchBalance:', {
       currency: wallet.currency,

@@ -2,11 +2,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
-import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
-import Database from "lucide-react/dist/esm/icons/database";
+import { ChevronLeft, ChevronRight, Database, Check } from "lucide-react";
 import { BlockchainSelectionStep } from './wizard/BlockchainSelectionStep';
 import { CurrencySelectionStep } from './wizard/CurrencySelectionStep';
 import { PeriodSelectionStep } from './wizard/PeriodSelectionStep';
@@ -20,13 +17,13 @@ export const BLOCKCHAIN_CURRENCIES = {
     currencies: ['TRX', 'USDT', 'USDC']
   },
   'ethereum': {
-    name: 'Ethereum', 
+    name: 'Ethereum',
     icon: '🔷',
-    currencies: ['ETH', 'USDT', 'USDC', 'DAI', 'WETH']
+    currencies: ['ETH', 'USDC', 'USDT']
   },
   'bitcoin': {
     name: 'Bitcoin',
-    icon: '🟠', 
+    icon: '🟠',
     currencies: ['BTC']
   },
   'binance-smart-chain': {
@@ -38,6 +35,11 @@ export const BLOCKCHAIN_CURRENCIES = {
     name: 'Solana',
     icon: '🟣',
     currencies: ['SOL', 'USDT', 'USDC']
+  },
+  'base': {
+    name: 'Base',
+    icon: '🔵',
+    currencies: ['ETH', 'USDT', 'USDC']
   }
 } as const;
 
@@ -177,85 +179,104 @@ export const TransactionFilterWizard: React.FC<TransactionFilterWizardProps> = (
   };
 
   return (
-    <Card className={`bg-white shadow-sm border border-gray-200 ${className}`}>
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Database className="h-5 w-5 text-blue-600" />
+    <Card className={`bg-lime-50 shadow-sm border border-gray-200 ${className}`}>
+      <div className="p-4 sm:p-5">
+        {/* Compact Header with inline progress */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-1.5 bg-lime-100 rounded">
+              <Database className="h-4 w-4 text-lime-700" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Transaction Filters</h3>
-              <p className="text-sm text-gray-500">Step-by-step blockchain transaction filtering</p>
+              <h3 className="text-base font-semibold text-gray-900">Transaction Filters</h3>
+              <p className="text-xs text-gray-500">Configure blockchain filters</p>
             </div>
           </div>
           
-          {/* Progress Indicator */}
+          {/* Compact progress steps */}
           <div className="flex items-center space-x-2">
             {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
+              <button
+                key={step}
+                onClick={() => step < currentStep ? goToStep(step as WizardStep) : null}
+                disabled={step > currentStep || (step === currentStep && currentStep === 4)}
+                className={`relative group bg-transparent border-0 p-0 ${step < currentStep ? 'cursor-pointer' : 'cursor-default'}`}
+              >
                 <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  className={`px-2.5 py-1 rounded-md flex items-center justify-center text-xs font-medium transition-all ${
                     step === currentStep 
-                      ? 'bg-blue-600 text-white' 
+                      ? 'bg-lime-600 text-white ring-2 ring-lime-400' 
                       : step < currentStep
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
+                        ? 'bg-lime-500 text-white hover:bg-lime-600'
+                        : 'bg-lime-200 text-lime-700'
                   }`}
                 >
-                  {step}
+                  {step < currentStep ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    step
+                  )}
                 </div>
-                {step < 4 && (
-                  <ChevronRight className={`h-4 w-4 mx-1 ${
-                    step < currentStep ? 'text-green-600' : 'text-gray-300'
-                  }`} />
+                {/* Step label on hover */}
+                {step < currentStep && (
+                  <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-xs text-gray-600 whitespace-nowrap">
+                      {step === 1 ? 'Chain' : step === 2 ? 'Tokens' : step === 3 ? 'Period' : 'Summary'}
+                    </span>
+                  </div>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="min-h-[300px]">
+        {/* Step Content - reduced min height */}
+        <div className="min-h-[200px] mb-4">
           {renderStepContent()}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-200">
-          <div className="flex items-center space-x-3">
+        {/* Compact Navigation */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={resetWizard} 
+              className="text-gray-500 hover:text-gray-700 px-2 py-1.5"
+            >
+              Reset
+            </Button>
+            
+            {/* Compact step indicator */}
+            <span className="text-xs text-gray-500">
+              {currentStep}/4
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
             {currentStep > 1 && currentStep < 4 && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={goToPreviousStep}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 px-3 py-1.5"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 w-3.5" />
                 <span>Back</span>
               </Button>
             )}
             
             {currentStep < 4 && (
               <Button
+                size="sm"
                 onClick={goToNextStep}
                 disabled={!canProceedToNext}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 px-3 py-1.5"
               >
                 <span>Next</span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5" />
               </Button>
             )}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={resetWizard} className="text-gray-600">
-              Reset
-            </Button>
-            
-            {/* Step indicators as text */}
-            <Badge variant="outline" className="text-xs">
-              Step {currentStep} of 4
-            </Badge>
           </div>
         </div>
       </div>

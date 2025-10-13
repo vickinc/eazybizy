@@ -28,12 +28,13 @@ export class BalanceBusinessService {
   static isNativeTokenForBlockchain(tokenSymbol: string, blockchain: string): boolean {
     const nativeTokens: Record<string, string> = {
       'ethereum': 'ETH',
-      'solana': 'SOL', 
+      'solana': 'SOL',
       'bitcoin': 'BTC',
       'binance-smart-chain': 'BNB',
-      'tron': 'TRX'
+      'tron': 'TRX',
+      'base': 'ETH'
     };
-    
+
     return nativeTokens[blockchain.toLowerCase()] === tokenSymbol.toUpperCase();
   }
 
@@ -705,7 +706,7 @@ export class BalanceBusinessService {
           let blockchainBalance: BlockchainBalance | null = null;
           
           // Check which API service can handle this blockchain
-          const alchemySupportedChains = ['ethereum', 'solana', 'binance-smart-chain'];
+          const alchemySupportedChains = ['ethereum', 'solana', 'binance-smart-chain', 'base'];
           const cryptoApisSupportedChains = ['bitcoin']; // Note: CryptoAPIs doesn't support Tron
           const tronGridSupportedChains = ['tron'];
           const blockchainLower = walletRequest.blockchain.toLowerCase();

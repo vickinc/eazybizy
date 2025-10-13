@@ -70,11 +70,10 @@ export const BlockchainIcon: React.FC<BlockchainIconProps> = ({ blockchain, clas
       );
       
     case 'base':
-      // Use inline SVG for Base since we don't have the PNG yet
+      // Base blockchain logo - blue rounded rectangle
       return (
         <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" fill="#0052FF"/>
-          <path d="M12 6L7 12L12 18L17 12L12 6Z" fill="white"/>
+          <rect x="4" y="5" width="16" height="14" rx="2" fill="#0000FF"/>
         </svg>
       );
       

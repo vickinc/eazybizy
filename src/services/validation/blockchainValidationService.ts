@@ -53,6 +53,14 @@ export class BlockchainValidationService {
       addressPattern: /^T[A-Za-z1-9]{33}$/,
       description: 'Tron (TRC-20) addresses',
       supportedCurrencies: ['TRX', 'USDT', 'USDC']
+    },
+    {
+      value: 'base',
+      label: 'Base',
+      alchemyName: 'base',
+      addressPattern: /^0x[a-fA-F0-9]{40}$/,
+      description: 'Base (Ethereum Layer 2) addresses',
+      supportedCurrencies: ['ETH', 'USDT', 'USDC']
     }
   ];
 
@@ -99,6 +107,7 @@ export class BlockchainValidationService {
         return this.validateBitcoinAddress(trimmedAddress, blockchainConfig);
       case 'ethereum':
       case 'binance-smart-chain':
+      case 'base':
         return this.validateEthereumLikeAddress(trimmedAddress, blockchainConfig);
       case 'solana':
         return this.validateSolanaAddress(trimmedAddress, blockchainConfig);
@@ -259,6 +268,8 @@ export class BlockchainValidationService {
       case 'ethereum':
         return 'e.g., 0x742d35Cc6634C0532925a3b8D8FD0dd4A3d0C3F8';
       case 'binance-smart-chain':
+        return 'e.g., 0x742d35Cc6634C0532925a3b8D8FD0dd4A3d0C3F8';
+      case 'base':
         return 'e.g., 0x742d35Cc6634C0532925a3b8D8FD0dd4A3d0C3F8';
       case 'solana':
         return 'e.g., 7dHbWXmci3dT8UFYWyTGAXRtGM8ZKt4bT4KzF2LtSLqD';
