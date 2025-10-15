@@ -65,7 +65,13 @@ export class EthereumTransactionService {
     }
   ): Promise<TransactionItem> {
     const isIncoming = blockchainTx.type === 'incoming';
-    const amount = Math.abs(blockchainTx.amount);
+    
+    // For native ETH transactions with 0 value (contract interactions), 
+    // include gas fee in the total amount for outgoing transactions
+    let amount = Math.abs(blockchainTx.amount);
+    if (!isIncoming && blockchainTx.tokenType === 'native' && amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      amount = blockchainTx.gasFee; // Use gas fee as the amount for zero-value native transactions
+    }
     
     // Convert to USD for base currency amount
     let baseCurrencyAmount = 0;
@@ -106,7 +112,7 @@ export class EthereumTransactionService {
       accountType: 'wallet' as const,
       reference: blockchainTx.hash,
       category: 'Cryptocurrency',
-      description: `Ethereum ${blockchainTx.tokenType?.toUpperCase() || 'ETH'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`,
+      description: this.generateDescription(blockchainTx, isIncoming),
       status: blockchainTx.status === 'success' ? 'CLEARED' as const : 'PENDING' as const,
       reconciliationStatus: 'UNRECONCILED' as const,
       approvalStatus: 'APPROVED' as const,
@@ -126,6 +132,26 @@ export class EthereumTransactionService {
         blockchain: 'ethereum'
       }
     };
+  }
+
+  /**
+   * Generate transaction description based on type and amount
+   */
+  private static generateDescription(
+    blockchainTx: BlockchainTransaction, 
+    isIncoming: boolean
+  ): string {
+    const tokenType = blockchainTx.tokenType?.toUpperCase() || 'ETH';
+    
+    // Special handling for zero-value native transactions (contract interactions)
+    if (!isIncoming && blockchainTx.tokenType === 'native' && 
+        blockchainTx.amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      return `Ethereum Contract interaction (gas fee) with ${this.formatAddress(blockchainTx.to)}`;
+    }
+    
+    return `Ethereum ${tokenType} ${isIncoming ? 'received from' : 'sent to'} ${
+      isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)
+    }`;
   }
 
   /**

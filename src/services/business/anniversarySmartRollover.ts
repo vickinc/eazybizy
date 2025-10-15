@@ -272,7 +272,7 @@ export class AnniversarySmartRollover {
    */
   private static shouldSkipRolloverCheck(companyId?: number): boolean {
     const now = new Date();
-    const cacheValidHours = 12; // Only check twice per day maximum
+    const cacheValidHours = 24; // Only check once per day maximum (increased from 12 to reduce load)
 
     if (companyId) {
       const lastCheck = this.lastRolloverCheck[companyId];

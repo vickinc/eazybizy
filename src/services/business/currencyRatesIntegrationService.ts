@@ -86,16 +86,10 @@ export class CurrencyRatesIntegrationService {
     
     if (typeof rate === 'number' && rate > 0) {
       const converted = amount * rate;
-      console.log(`💱 Converted ${amount} ${fromCurrency} to ${converted} USD (rate: ${rate})`);
       
-      // Extra debug logging for crypto
-      if (['ETH', 'BTC', 'BNB', 'SOL'].includes(fromCurrency.toUpperCase())) {
-        console.log(`🔍 Debug: ${fromCurrency} conversion details:`, {
-          originalAmount: amount,
-          rate: rate,
-          convertedUSD: converted,
-          ratesSource: Object.keys(exchangeRates).length + ' currencies loaded'
-        });
+      // Only log significant conversions in development to reduce console spam
+      if (process.env.NODE_ENV === 'development' && amount > 0.01 && ['ETH', 'BTC', 'TRX'].includes(fromCurrency.toUpperCase())) {
+        console.log(`💱 Converted ${amount} ${fromCurrency} to ${converted} USD (rate: ${rate})`);
       }
       
       return converted;

@@ -402,20 +402,62 @@ export function useTransactionsManagementDB(
         return true;
       }
       
-      // For blockchain transactions, deduplicate by hash + currency + accountId combination
+      // For blockchain transactions, deduplicate by hash + currency + accountId + category + amount combination
+      // This ensures fee transactions and main transactions are treated as separate entries
+      // AND preserves multi-send transactions with same hash but different amounts
+      const category = transaction.category;
+      const amount = transaction.netAmount;
       const duplicateIndex = array.findIndex((t, i) => 
         i !== index &&
         t.reference === hash && 
         t.currency === currency &&
-        t.accountId === accountId
+        t.accountId === accountId &&
+        t.category === category && // Add category to distinguish fee transactions from main transactions
+        t.netAmount === amount // Add amount to preserve multi-send transactions
       );
       
       if (duplicateIndex >= 0) {
+        // Debug logging for fee transactions
+        if (category === 'Fees & Charges' && process.env.NODE_ENV === 'development') {
+          console.log('🔍 Fee transaction deduplication:', {
+            currentId: transaction.id,
+            currentAmount: transaction.netAmount,
+            currentIsLive: transaction.id.toString().startsWith('live-'),
+            duplicateId: array[duplicateIndex].id,
+            duplicateAmount: array[duplicateIndex].netAmount,
+            duplicateIsLive: array[duplicateIndex].id.toString().startsWith('live-'),
+            hash: hash.substring(0, 10) + '...',
+            category,
+            decision: 'determining...'
+          });
+        }
+        
         // Found a duplicate - prefer database transaction over live transaction
         const currentIsDatabase = !transaction.id.toString().startsWith('live-');
         const duplicateIsDatabase = !array[duplicateIndex].id.toString().startsWith('live-');
         
-        // Keep database transaction if available, otherwise keep the first one
+        // Special handling for fee transactions - prefer the one with non-zero amount
+        if (category === 'Fees & Charges') {
+          const currentAmount = Math.abs(transaction.netAmount || 0);
+          const duplicateAmount = Math.abs(array[duplicateIndex].netAmount || 0);
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 Fee transaction amounts:', {
+              currentAmount,
+              duplicateAmount,
+              preferCurrent: currentAmount > duplicateAmount
+            });
+          }
+          
+          // Prefer the transaction with the larger amount (non-zero fee)
+          if (currentAmount > duplicateAmount) {
+            return true; // Keep current
+          } else if (duplicateAmount > currentAmount) {
+            return false; // Keep duplicate
+          }
+        }
+        
+        // Default deduplication logic for non-fee transactions or when amounts are equal
         if (currentIsDatabase && !duplicateIsDatabase) {
           return true; // Keep current (database)
         } else if (!currentIsDatabase && duplicateIsDatabase) {

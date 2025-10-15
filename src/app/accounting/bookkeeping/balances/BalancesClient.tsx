@@ -89,11 +89,6 @@ export default function BalancesClient() {
   const [isManualBalanceDialogOpen, setIsManualBalanceDialogOpen] = useState(false);
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [blockchainRefreshStatus, setBlockchainRefreshStatus] = useState<{
-    walletId?: string;
-    status: 'idle' | 'loading' | 'success' | 'error';
-    message?: string;
-  }>({ status: 'idle' });
 
   // Prevent hydration mismatches by only showing dynamic content after hydration
   useEffect(() => {
@@ -244,12 +239,6 @@ export default function BalancesClient() {
   };
 
   const handleRefreshBlockchain = async (walletId: string) => {
-    setBlockchainRefreshStatus({ 
-      walletId, 
-      status: 'loading', 
-      message: 'Fetching blockchain balance...' 
-    });
-
     try {
       // Find the wallet in balances to get its details
       const walletBalance = balances.find(b => b.account.id === walletId);
@@ -288,31 +277,11 @@ export default function BalancesClient() {
       }
 
       // Refresh the balances to reflect the new blockchain data
-      await loadBalances();
-      
-      setBlockchainRefreshStatus({ 
-        walletId, 
-        status: 'success', 
-        message: 'Blockchain balance updated successfully' 
-      });
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setBlockchainRefreshStatus({ status: 'idle' });
-      }, 3000);
+      loadBalances();
 
     } catch (error) {
       console.error('Error refreshing blockchain balance:', error);
-      setBlockchainRefreshStatus({ 
-        walletId, 
-        status: 'error', 
-        message: error instanceof Error ? error.message : 'Failed to refresh blockchain balance' 
-      });
-
-      // Clear error message after 5 seconds
-      setTimeout(() => {
-        setBlockchainRefreshStatus({ status: 'idle' });
-      }, 5000);
+      // Error will be shown in the BalanceList component
     }
   };
 
@@ -332,8 +301,8 @@ export default function BalancesClient() {
 
   const handleExport = (format: 'csv' | 'json' = 'csv') => {
     const data = exportBalances(format);
-    const blob = new Blob([data], { 
-      type: format === 'csv' ? 'text/csv' : 'application/json' 
+    const blob = new Blob([data], {
+      type: format === 'csv' ? 'text/csv' : 'application/json'
     });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -423,11 +392,12 @@ export default function BalancesClient() {
                   size="sm"
                   onClick={loadBalances}
                   disabled={isLoading}
+                  title="Refresh all balances (uses 5-min cached blockchain data)"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
-                
+
                 {hasBalances && (
                   <Button
                     variant="outline"
@@ -580,28 +550,6 @@ export default function BalancesClient() {
                       ))}
                     </ul>
                   </div>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Blockchain Refresh Status */}
-            {blockchainRefreshStatus.status !== 'idle' && (
-              <Alert className={`mb-6 ${
-                blockchainRefreshStatus.status === 'success' ? 'border-green-200 bg-green-50' :
-                blockchainRefreshStatus.status === 'error' ? 'border-red-200 bg-red-50' :
-                'border-blue-200 bg-blue-50'
-              }`}>
-                <AlertCircle className={`h-4 w-4 ${
-                  blockchainRefreshStatus.status === 'success' ? 'text-green-600' :
-                  blockchainRefreshStatus.status === 'error' ? 'text-red-600' :
-                  'text-blue-600'
-                }`} />
-                <AlertDescription className={
-                  blockchainRefreshStatus.status === 'success' ? 'text-green-800' :
-                  blockchainRefreshStatus.status === 'error' ? 'text-red-800' :
-                  'text-blue-800'
-                }>
-                  {blockchainRefreshStatus.message}
                 </AlertDescription>
               </Alert>
             )}

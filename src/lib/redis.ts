@@ -8,6 +8,14 @@ const globalForRedis = globalThis as unknown as {
 // Lazy-loaded Redis instance
 let redisInstance: Redis | null = null
 let connectionAttempted = false
+let redisEnabled = false
+
+// Check if Redis is enabled via environment variable
+function isRedisEnabled(): boolean {
+  // Only enable Redis if explicitly configured with a valid URL
+  const redisUrl = process.env.REDIS_URL
+  return !!(redisUrl && redisUrl.trim() !== '' && redisUrl !== 'false')
+}
 
 function createRedisInstance(): Redis {
   const instance = new Redis(process.env.REDIS_URL || {
@@ -41,27 +49,35 @@ function createRedisInstance(): Redis {
 
 // Get or create Redis instance lazily
 async function getRedisInstance(): Promise<Redis | null> {
+  // Fast path: Redis disabled, return null immediately
+  if (!isRedisEnabled()) {
+    return null
+  }
+
   if (redisInstance) {
     return redisInstance
   }
 
   if (!connectionAttempted) {
     connectionAttempted = true
-    
+
     if (!globalForRedis.redisPromise) {
       globalForRedis.redisPromise = (async () => {
         try {
           const instance = createRedisInstance()
           await instance.connect()
           redisInstance = instance
-          
+          redisEnabled = true
+
           if (process.env.NODE_ENV !== 'production') {
             globalForRedis.redis = instance
           }
-          
+
+          console.log('Redis connected successfully')
           return instance
         } catch (error) {
           console.warn('Redis connection failed, using in-memory cache fallback')
+          redisEnabled = false
           return null
         }
       })()
@@ -136,6 +152,14 @@ export const CacheKeys = {
     item: (id: string | number) => `cashflow:item:${id}`,
     summary: (filters: Record<string, any>) => `cashflow:summary:${JSON.stringify(filters)}`,
   },
+  blockchain: {
+    balance: (address: string, blockchain: string, currency: string) =>
+      `blockchain:balance:${blockchain}:${address}:${currency}`,
+    historicalBalance: (address: string, blockchain: string, currency: string, date: string) =>
+      `blockchain:historical:${blockchain}:${address}:${currency}:${date}`,
+    transactions: (address: string, blockchain: string, currency: string) =>
+      `blockchain:txs:${blockchain}:${address}:${currency}`,
+  },
 }
 
 // Cache TTL constants (in seconds)
@@ -192,6 +216,11 @@ export const CacheTTL = {
     list: 5 * 60,       // 5 minutes (cashflow is dynamic)
     item: 10 * 60,      // 10 minutes
     summary: 5 * 60,    // 5 minutes
+  },
+  blockchain: {
+    balance: 5 * 60,           // 5 minutes (blockchain balances update frequently)
+    historicalBalance: 60 * 60, // 60 minutes (historical balances don't change)
+    transactions: 10 * 60,     // 10 minutes (transaction history)
   },
 }
 

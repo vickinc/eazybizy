@@ -79,19 +79,19 @@ const navigation = [
       { name: "Invoices", href: "/sales/invoices", icon: FileText, count: 0 },
     ]
   },
-  { 
-    name: "Accounting", 
-    href: "/accounting", 
+  {
+    name: "Accounting",
+    href: "/accounting",
     icon: Calculator,
     subItems: [
-      { 
-        name: "Bookkeeping", 
-        href: "/accounting/bookkeeping", 
+      {
+        name: "Bookkeeping",
+        href: "/accounting/bookkeeping",
         icon: BookOpen,
         subItems: [
-          { 
-            name: "Categories", 
-            href: "/accounting/bookkeeping/categories", 
+          {
+            name: "Categories",
+            href: "/accounting/bookkeeping/categories",
             icon: FolderOpen,
             subItems: [
               { name: "Tax Treatments", href: "/accounting/bookkeeping/categories/tax-treatments", icon: Calculator }
@@ -105,28 +105,6 @@ const navigation = [
       },
       { name: "Banks/Wallets", href: "/accounting/banks-wallets", icon: Banknote },
       { name: "Currency Rates", href: "/accounting/currency-rates", icon: DollarSign },
-    ]
-  },
-  { 
-    name: "Financials", 
-    href: "/financials", 
-    icon: PieChart,
-    subItems: [
-      { 
-        name: "Reporting", 
-        href: "/financials/reporting", 
-        icon: FileText,
-        subItems: [
-          { name: "Profit & Loss", href: "/financials/reporting/profit-loss", icon: TrendingUp },
-          { name: "Balance Sheet", href: "/financials/reporting/balance-sheet", icon: Building },
-          { name: "Cash Flow Stmt", href: "/financials/reporting/cash-flow-stmt", icon: Banknote },
-          { name: "Equity Changes", href: "/financials/reporting/equity-changes", icon: Scale },
-        ]
-      },
-      { name: "Virtual Holding", href: "/financials/holding", icon: FolderOpen, count: 0 },
-      { name: "ARR Dashboard", href: "/financials/arr-dashboard", icon: BarChart3, count: 0 },
-      { name: "Valuation", href: "/financials/valuation", icon: Target, count: 0 },
-      { name: "Integration Testing", href: "/financials/integration-testing", icon: ShieldCheck, count: 0 },
     ]
   },
 ];
@@ -163,7 +141,6 @@ export function AppSidebar() {
       '/sales/clients',
       '/sales/invoices',
       '/accounting/bookkeeping/entries',
-      '/financials/reporting',
     ];
     
     // Prefetch routes after a short delay to not block initial render

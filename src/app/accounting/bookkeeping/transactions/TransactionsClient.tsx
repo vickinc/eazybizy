@@ -191,6 +191,45 @@ export default function TransactionsClient() {
     }
   }, []);
 
+  // Helper function to get wallet explorer URL
+  const getWalletExplorerUrl = useCallback((walletAddress: string, blockchain?: string) => {
+    if (!walletAddress) return null;
+    
+    // Determine blockchain type from address format or passed blockchain param
+    let blockchainType = blockchain?.toLowerCase();
+    
+    // Auto-detect if not provided
+    if (!blockchainType) {
+      if (walletAddress.startsWith('T') && walletAddress.length === 34) {
+        blockchainType = 'tron';
+      } else if (walletAddress.startsWith('0x') && walletAddress.length === 42) {
+        // Could be ETH or BSC, default to ETH
+        blockchainType = 'ethereum';
+      } else if (walletAddress.length >= 32 && walletAddress.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(walletAddress)) {
+        // Base58 encoded Solana address (32-44 characters)
+        blockchainType = 'solana';
+      }
+    }
+    
+    // Return appropriate explorer URL
+    switch (blockchainType) {
+      case 'tron':
+        return `https://tronscan.org/#/address/${walletAddress}`;
+      case 'ethereum':
+      case 'eth':
+        return `https://etherscan.io/address/${walletAddress}`;
+      case 'bsc':
+      case 'binance':
+      case 'binance-smart-chain':
+        return `https://bscscan.com/address/${walletAddress}`;
+      case 'solana':
+      case 'sol':
+        return `https://solscan.io/account/${walletAddress}`;
+      default:
+        return null;
+    }
+  }, []);
+
   // Helper function to detect blockchain transactions
   const getBlockchainInfo = useCallback((transaction: any) => {
     const isBlockchain = transaction.linkedEntryType === 'BLOCKCHAIN_IMPORT' || 
@@ -235,8 +274,17 @@ export default function TransactionsClient() {
     };
   }, []);
 
-  // Helper function to format currency amounts safely
+  // Helper function to format currency amounts safely - shows FULL precision without rounding
   const formatCurrencyAmount = useCallback((amount: number, currency: string) => {
+    // Debug: Log formatting for ETH amounts in development
+    if (process.env.NODE_ENV === 'development' && currency === 'ETH' && Math.abs(amount) > 0) {
+      console.log(`🎯 Formatting ${amount} ${currency}:`, {
+        originalAmount: amount,
+        amountString: amount.toString(),
+        isVerySmall: Math.abs(amount) < 0.0001
+      });
+    }
+    
     // List of standard ISO currency codes that Intl.NumberFormat supports
     const validCurrencyCodes = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NOK', 'MXN', 'NZD', 'SGD', 'HKD', 'KRW', 'TRY', 'RUB', 'INR', 'BRL', 'ZAR'];
     
@@ -244,14 +292,37 @@ export default function TransactionsClient() {
       // Use standard currency formatting for fiat currencies
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: currency.toUpperCase()
+        currency: currency.toUpperCase(),
+        maximumFractionDigits: 8 // Allow more precision even for fiat
       }).format(amount);
     } else {
-      // For cryptocurrencies and other non-standard currencies, format as decimal with symbol
-      return new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8 // Crypto can have many decimal places
-      }).format(amount) + ` ${currency.toUpperCase()}`;
+      // For cryptocurrencies: ALWAYS show full precision without rounding
+      if (amount === 0) {
+        return '0 ' + currency.toUpperCase();
+      }
+      
+      // Convert to string to preserve full precision
+      let amountStr = amount.toString();
+      
+      // Handle scientific notation from JavaScript
+      if (amountStr.includes('e')) {
+        // Convert scientific notation to decimal string
+        amountStr = amount.toFixed(20).replace(/\.?0+$/, '');
+      }
+      
+      // Remove any trailing zeros after decimal point
+      if (amountStr.includes('.')) {
+        amountStr = amountStr.replace(/\.?0+$/, '');
+      }
+      
+      const result = `${amountStr} ${currency.toUpperCase()}`;
+      
+      // Debug: Log result for ETH amounts
+      if (process.env.NODE_ENV === 'development' && currency === 'ETH' && Math.abs(amount) > 0) {
+        console.log(`➡️ Formatted result: "${result}"`);
+      }
+      
+      return result;
     }
   }, []);
 
@@ -675,47 +746,16 @@ export default function TransactionsClient() {
               </Alert>
             )}
 
-            {/* Statistics Cards */}
-            {statistics && !isLoadingStats && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-sm font-medium text-gray-500">Total Transactions</h3>
-                  <p className="text-2xl font-bold text-gray-900">{statistics.summary.totalTransactions}</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-sm font-medium text-gray-500">Total Incoming</h3>
-                  <p className="text-2xl font-bold text-green-600">
-                    {new Intl.NumberFormat('en-US', { 
-                      style: 'currency', 
-                      currency: 'USD' 
-                    }).format(statistics.summary.totalIncoming)}
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-sm font-medium text-gray-500">Total Outgoing</h3>
-                  <p className="text-2xl font-bold text-red-600">
-                    {new Intl.NumberFormat('en-US', { 
-                      style: 'currency', 
-                      currency: 'USD' 
-                    }).format(statistics.summary.totalOutgoing)}
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h3 className="text-sm font-medium text-gray-500">Net Amount</h3>
-                  <p className={`text-2xl font-bold ${
-                    statistics.summary.netAmount >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {new Intl.NumberFormat('en-US', { 
-                      style: 'currency', 
-                      currency: 'USD' 
-                    }).format(statistics.summary.netAmount)}
-                  </p>
-                </div>
-              </div>
-            )}
+
+            {/* Transaction Filter Wizard */}
+            <TransactionFilterWizard
+              onApplyFilters={handleWizardApplyFilters}
+              isLoading={isLoadingLiveCrypto}
+              className="mb-6"
+            />
 
             {/* Search Bar */}
-            <div className="mb-4">
+            <div className="mb-6">
               <div className="relative">
                 <input
                   type="text"
@@ -731,13 +771,6 @@ export default function TransactionsClient() {
                 </div>
               </div>
             </div>
-
-            {/* Transaction Filter Wizard */}
-            <TransactionFilterWizard
-              onApplyFilters={handleWizardApplyFilters}
-              isLoading={isLoadingLiveCrypto}
-              className="mb-8"
-            />
 
 
             {/* Transactions List - Grouped by Account */}
@@ -764,7 +797,33 @@ export default function TransactionsClient() {
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">
-                              {account.accountName}
+                              {(() => {
+                                // Find matching wallet to get address
+                                const matchingWallet = cryptoWallets?.find(w => w.walletName === account.accountName);
+                                if (matchingWallet?.walletAddress) {
+                                  const explorerUrl = getWalletExplorerUrl(matchingWallet.walletAddress, matchingWallet.blockchain);
+                                  // Display wallet name with clickable address
+                                  return (
+                                    <span>
+                                      {account.accountName}{' '}
+                                      {explorerUrl ? (
+                                        <a
+                                          href={explorerUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-800 hover:underline font-normal text-base"
+                                          title={`View wallet on blockchain explorer: ${matchingWallet.walletAddress}`}
+                                        >
+                                          ({matchingWallet.walletAddress})
+                                        </a>
+                                      ) : (
+                                        <span className="text-gray-600 font-normal text-base">({matchingWallet.walletAddress})</span>
+                                      )}
+                                    </span>
+                                  );
+                                }
+                                return account.accountName;
+                              })()}
                             </h3>
                             <p className="text-sm text-gray-600">
                               {account.transactions.length} transaction{account.transactions.length !== 1 ? 's' : ''} • {account.currency}
@@ -862,9 +921,64 @@ export default function TransactionsClient() {
                               
                               <div>
                                 <div className="flex items-center space-x-2 flex-wrap">
-                                  <p className="font-medium text-gray-900">
-                                    {isIncoming ? transaction.paidBy : transaction.paidTo}
-                                  </p>
+                                  <div className="font-medium text-gray-900">
+                                    {(() => {
+                                      const name = isIncoming ? transaction.paidBy : transaction.paidTo;
+                                      // Find matching wallet to get address for both incoming and outgoing
+                                      // Check if it's our wallet (for incoming, check paidTo; for outgoing, check paidBy)
+                                      const ourWalletName = isIncoming ? transaction.paidTo : transaction.paidBy;
+                                      const matchingWallet = cryptoWallets?.find(w => w.walletName === ourWalletName);
+                                      
+                                      // If the displayed name is our wallet, show with address
+                                      if (name === ourWalletName && matchingWallet?.walletAddress) {
+                                        const explorerUrl = getWalletExplorerUrl(matchingWallet.walletAddress, matchingWallet.blockchain);
+                                        return (
+                                          <span>
+                                            {name}{' '}
+                                            {explorerUrl ? (
+                                              <a
+                                                href={explorerUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                title={`View wallet on blockchain explorer: ${matchingWallet.walletAddress}`}
+                                              >
+                                                ({matchingWallet.walletAddress})
+                                              </a>
+                                            ) : (
+                                              <span className="text-gray-600">({matchingWallet.walletAddress})</span>
+                                            )}
+                                          </span>
+                                        );
+                                      }
+                                      
+                                      // Also check if the counterparty is one of our wallets
+                                      const counterpartyWallet = cryptoWallets?.find(w => w.walletName === name);
+                                      if (counterpartyWallet?.walletAddress) {
+                                        const explorerUrl = getWalletExplorerUrl(counterpartyWallet.walletAddress, counterpartyWallet.blockchain);
+                                        return (
+                                          <span>
+                                            {name}{' '}
+                                            {explorerUrl ? (
+                                              <a
+                                                href={explorerUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                                                title={`View wallet on blockchain explorer: ${counterpartyWallet.walletAddress}`}
+                                              >
+                                                ({counterpartyWallet.walletAddress})
+                                              </a>
+                                            ) : (
+                                              <span className="text-gray-600">({counterpartyWallet.walletAddress})</span>
+                                            )}
+                                          </span>
+                                        );
+                                      }
+                                      
+                                      return name;
+                                    })()}
+                                  </div>
                                   
                                   {/* Blockchain badges */}
                                   {blockchainInfo && (

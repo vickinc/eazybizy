@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { CacheService, CacheTTL } from '@/lib/redis';
 
 interface CursorData {
   createdAt: string;
@@ -24,6 +25,8 @@ function createCursor(createdAt: Date, id: string): string {
 
 // GET /api/business-cards/cursor - Get business cards with cursor pagination
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const cursor = searchParams.get('cursor');
@@ -87,7 +90,21 @@ export async function GET(request: NextRequest) {
       where.AND = where.AND ? [...where.AND, cursorCondition] : [cursorCondition];
     }
 
+    // Generate cache key
+    const cacheKey = `business-cards:cursor:${JSON.stringify({ cursor, limit, sortDirection, companyId, isArchived, template, search })}`;
+
+    // Try cache first
+    const cached = await CacheService.get(cacheKey);
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        _cached: true,
+        _responseTime: Date.now() - startTime
+      });
+    }
+
     // Get business cards with cursor pagination
+    const dbStartTime = Date.now();
     const businessCards = await prisma.businessCard.findMany({
       where,
       include: {
@@ -99,6 +116,7 @@ export async function GET(request: NextRequest) {
       ],
       take: limit + 1 // Get one extra to check if there are more results
     });
+    const dbTime = Date.now() - dbStartTime;
 
     // Check if there are more results
     const hasMore = businessCards.length > limit;
@@ -111,7 +129,7 @@ export async function GET(request: NextRequest) {
       nextCursor = createCursor(lastCard.createdAt, lastCard.id);
     }
 
-    return NextResponse.json({
+    const responseData = {
       businessCards: actualCards.map(card => ({
         ...card,
         qrValue: card.qrType === 'WEBSITE' ? card.company.website : card.company.email
@@ -122,6 +140,19 @@ export async function GET(request: NextRequest) {
         limit,
         count: actualCards.length
       }
+    };
+
+    // Cache for 10 minutes
+    await CacheService.set(cacheKey, responseData, CacheTTL.businessCards.list);
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[PERF] Business cards cursor: DB=${dbTime}ms, Total=${totalTime}ms`);
+
+    return NextResponse.json({
+      ...responseData,
+      _cached: false,
+      _responseTime: totalTime,
+      _dbTime: dbTime
     });
 
   } catch (error) {

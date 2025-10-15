@@ -590,6 +590,10 @@ model Transaction {
   @@index([accountId, status])
   @@index([linkedEntryId])
   @@index([isDeleted, deletedAt])
+  // Performance indexes for balance calculations
+  @@index([accountId, accountType, date])
+  @@index([companyId, accountId, accountType, date])
+  @@index([accountId, accountType, companyId])
   @@map("transactions")
 }
 

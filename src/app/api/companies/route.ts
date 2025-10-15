@@ -7,28 +7,34 @@ import { CacheInvalidationService } from '@/services/cache/cacheInvalidationServ
 import { AnniversaryEventService } from '@/services/business/anniversaryEventService'
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
-    // Trigger anniversary rollover check (non-blocking, runs in background)
-    // This ensures that new anniversary events are generated when old ones pass
-    AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
-      console.warn('Anniversary rollover check failed during company fetch:', error);
-    });
+    // Anniversary rollover disabled during page load for performance
+    // Rollover will be triggered by dedicated background job or manual trigger
+    // Previously caused delays on page loads
+    // AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
+    //   console.warn('Anniversary rollover check failed during company fetch:', error);
+    // });
 
     const { searchParams } = new URL(request.url)
-    
+
     // Pagination parameters
     const skip = parseInt(searchParams.get('skip') || '0')
     const takeParam = searchParams.get('take')
     const take = takeParam ? parseInt(takeParam) : 20
-    
+
     // Filter parameters
     const searchTerm = searchParams.get('search') || ''
     const statusFilter = searchParams.get('status') || 'all'
     const industryFilter = searchParams.get('industry') || ''
-    
+
     // Sort parameters
     const sortField = searchParams.get('sortField') || 'createdAt'
     const sortDirection = searchParams.get('sortDirection') || 'desc'
+
+    // Log warning: This endpoint is slow, recommend using /api/companies/fast instead
+    console.warn(`[PERF] Slow /api/companies endpoint called (use /api/companies/fast instead) - took ${Date.now() - startTime}ms so far`)
     
     // Build where clause
     const where: Prisma.CompanyWhereInput = {}
@@ -79,6 +85,7 @@ export async function GET(request: NextRequest) {
     // If take is very high (9999+), fetch all companies without pagination
     const shouldPaginate = take < 9999
     
+    const dbStartTime = Date.now();
     const [companies, totalCount] = await Promise.all([
       prisma.company.findMany({
         where,
@@ -87,6 +94,10 @@ export async function GET(request: NextRequest) {
       }),
       prisma.company.count({ where }),
     ])
+    const dbTime = Date.now() - dbStartTime;
+    const totalTime = Date.now() - startTime;
+
+    console.warn(`[PERF] /api/companies response: DB=${dbTime}ms, Total=${totalTime}ms`);
 
     return NextResponse.json({
       data: companies,
@@ -96,6 +107,11 @@ export async function GET(request: NextRequest) {
         take: shouldPaginate ? take : companies.length,
         hasMore: shouldPaginate ? skip + take < totalCount : false,
       },
+      _perf: {
+        dbTime,
+        totalTime,
+        warning: 'Consider using /api/companies/fast for better performance'
+      }
     })
   } catch (error) {
     console.error('Error fetching companies:', error)

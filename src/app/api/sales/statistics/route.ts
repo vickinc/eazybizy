@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import { CacheService, CacheTTL } from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId');
     const period = searchParams.get('period') || 'thisMonth';
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
+
+    // Generate cache key
+    const cacheKey = `sales:statistics:${companyId || 'all'}:${period}:${dateFrom || ''}:${dateTo || ''}`;
+
+    // Try cache first
+    const cached = await CacheService.get(cacheKey);
+    if (cached) {
+      const totalTime = Date.now() - startTime;
+      console.log(`[PERF] Sales statistics (cached): ${totalTime}ms`);
+      return NextResponse.json({
+        ...cached,
+        _cached: true,
+        _responseTime: totalTime
+      });
+    }
 
     // Build where clause for filtering
     const where: any = {};
@@ -32,6 +48,7 @@ export async function GET(request: NextRequest) {
       })
     };
 
+    const dbStartTime = Date.now();
     const [
       totalRevenue,
       activeClientsCount,
@@ -164,6 +181,8 @@ export async function GET(request: NextRequest) {
       take: 5
     });
 
+    const dbTime = Date.now() - dbStartTime;
+
     // Build response
     const statistics = {
       summary: {
@@ -186,7 +205,7 @@ export async function GET(request: NextRequest) {
         status: item.status,
         count: item._count.id,
         totalValue: item._sum.totalAmount || 0,
-        percentage: totalInvoicesCount > 0 ? 
+        percentage: totalInvoicesCount > 0 ?
           Math.round((item._count.id / totalInvoicesCount) * 10000) / 100 : 0
       })),
       monthlyRevenueTrend: monthlyRevenue,
@@ -197,7 +216,7 @@ export async function GET(request: NextRequest) {
         totalInvoiced: client.totalInvoiced,
         totalPaid: client.totalPaid,
         status: client.status,
-        paymentRate: client.totalInvoiced > 0 ? 
+        paymentRate: client.totalInvoiced > 0 ?
           Math.round((client.totalPaid / client.totalInvoiced) * 10000) / 100 : 0
       })),
       recentInvoices: recentInvoices.map(invoice => ({
@@ -228,7 +247,18 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(statistics);
+    // Cache for 5 minutes
+    await CacheService.set(cacheKey, statistics, CacheTTL.statistics);
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[PERF] Sales statistics: DB=${dbTime}ms, Total=${totalTime}ms`);
+
+    return NextResponse.json({
+      ...statistics,
+      _cached: false,
+      _responseTime: totalTime,
+      _dbTime: dbTime
+    });
 
   } catch (error) {
     console.error('Error fetching sales statistics:', error);

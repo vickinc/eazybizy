@@ -1,8 +1,8 @@
-import { 
-  AccountBalance, 
-  BalanceFilterState, 
-  BalanceSummary, 
-  GroupedBalances, 
+import {
+  AccountBalance,
+  BalanceFilterState,
+  BalanceSummary,
+  GroupedBalances,
   FilterPeriod,
   AccountTypeFilter,
   BalanceViewFilter,
@@ -22,6 +22,7 @@ import { AlchemyAPIService } from '@/services/integrations/alchemyAPIService';
 import { CryptoAPIsService } from '@/services/integrations/cryptoAPIsService';
 import { TronGridService } from '@/services/integrations/tronGridService';
 import { CurrencyService } from './currencyService';
+import { CacheService, CacheKeys, CacheTTL } from '@/lib/redis';
 
 export class BalanceBusinessService {
   // Helper method to determine if a token is native to a blockchain
@@ -745,23 +746,40 @@ export class BalanceBusinessService {
           } else if (cryptoApisSupportedChains.includes(blockchainLower) && CryptoAPIsService.isConfigured()) {
             // Use CryptoAPIs for Bitcoin only
             const isNativeToken = this.isNativeTokenForBlockchain(walletRequest.tokenSymbol, blockchainLower);
-            
+
             console.log('🎯 CryptoAPIs token type check:', {
               tokenSymbol: walletRequest.tokenSymbol,
               blockchain: blockchainLower,
               isNativeToken
             });
-            
-            if (isNativeToken) {
-              console.log('🚀 About to fetch NATIVE balance via CryptoAPIs for:', walletRequest.blockchain);
-              // Fetch native balance (BTC only)
-              blockchainBalance = await CryptoAPIsService.getNativeBalance(walletRequest.address, walletRequest.blockchain, walletRequest.network);
-              console.log('✅ CryptoAPIs native balance result:', blockchainBalance);
-            } else {
-              console.log('🚀 About to fetch TOKEN balance via CryptoAPIs for:', walletRequest.tokenSymbol);
-              // Fetch token balance (Bitcoin doesn't have tokens)
-              blockchainBalance = await CryptoAPIsService.getTokenBalance(walletRequest.address, walletRequest.tokenSymbol, walletRequest.blockchain, walletRequest.network);
-              console.log('✅ CryptoAPIs token balance result:', blockchainBalance);
+
+            try {
+              if (isNativeToken) {
+                console.log('🚀 About to fetch NATIVE balance via CryptoAPIs for:', walletRequest.blockchain);
+                // Fetch native balance (BTC only)
+                blockchainBalance = await CryptoAPIsService.getNativeBalance(walletRequest.address, walletRequest.blockchain, walletRequest.network);
+                console.log('✅ CryptoAPIs native balance result:', blockchainBalance);
+              } else {
+                console.log('🚀 About to fetch TOKEN balance via CryptoAPIs for:', walletRequest.tokenSymbol);
+                // Fetch token balance (Bitcoin doesn't have tokens)
+                blockchainBalance = await CryptoAPIsService.getTokenBalance(walletRequest.address, walletRequest.tokenSymbol, walletRequest.blockchain, walletRequest.network);
+                console.log('✅ CryptoAPIs token balance result:', blockchainBalance);
+              }
+            } catch (cryptoApisError: any) {
+              // Handle CryptoAPIs subscription plan limitations gracefully
+              if (cryptoApisError?.message?.includes('endpoint_not_allowed_for_plan') ||
+                  cryptoApisError?.message?.includes('403')) {
+                console.warn('⚠️ CryptoAPIs endpoint not available for current subscription plan:', {
+                  blockchain: blockchainLower,
+                  tokenSymbol: walletRequest.tokenSymbol,
+                  error: cryptoApisError?.message
+                });
+                // Skip this wallet - don't block the entire page load
+                blockchainBalance = null;
+              } else {
+                // Re-throw unexpected errors
+                throw cryptoApisError;
+              }
             }
           } else if (tronGridSupportedChains.includes(blockchainLower) && TronGridService.isConfigured()) {
             // Use TronGrid for Tron

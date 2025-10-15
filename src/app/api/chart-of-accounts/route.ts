@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { CacheInvalidationService } from '@/services/cache/cacheInvalidationService'
+import { CacheService, CacheTTL } from '@/lib/redis'
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Pagination parameters
     const skip = parseInt(searchParams.get('skip') || '0')
     const take = parseInt(searchParams.get('take') || '20')
-    
+
     // Filter parameters
     const searchTerm = searchParams.get('search') || ''
     const type = searchParams.get('type') || ''
@@ -18,10 +21,25 @@ export async function GET(request: NextRequest) {
     const isActiveFilter = searchParams.get('isActive')
     const companyFilter = searchParams.get('company') || 'all'
     const accountType = searchParams.get('accountType') || ''
-    
+
     // Sort parameters
     const sortField = searchParams.get('sortField') || 'code'
     const sortDirection = searchParams.get('sortDirection') || 'asc'
+
+    // Generate cache key
+    const cacheKey = `chart-of-accounts:${JSON.stringify({ skip, take, searchTerm, type, category, isActiveFilter, companyFilter, accountType, sortField, sortDirection })}`
+
+    // Try cache first
+    const cached = await CacheService.get(cacheKey)
+    if (cached) {
+      const totalTime = Date.now() - startTime
+      console.log(`[PERF] Chart of accounts (cached): ${totalTime}ms`)
+      return NextResponse.json({
+        ...cached,
+        _cached: true,
+        _responseTime: totalTime
+      })
+    }
     
     // Build where clause
     const where: Prisma.ChartOfAccountWhereInput = {}
@@ -145,8 +163,8 @@ export async function GET(request: NextRequest) {
       acc[item.isActive ? 'active' : 'inactive'] = item._count._all
       return acc
     }, {} as Record<string, number>)
-    
-    return NextResponse.json({
+
+    const responseData = {
       data: accounts,
       pagination: {
         total: totalCount,
@@ -161,6 +179,18 @@ export async function GET(request: NextRequest) {
         typeStats,
         activeStats,
       },
+    }
+
+    // Cache for 10 minutes
+    await CacheService.set(cacheKey, responseData, CacheTTL.chartOfAccounts?.list || 600)
+
+    const totalTime = Date.now() - startTime
+    console.log(`[PERF] Chart of accounts: Total=${totalTime}ms`)
+
+    return NextResponse.json({
+      ...responseData,
+      _cached: false,
+      _responseTime: totalTime
     })
   } catch (error) {
     console.error('Error fetching chart of accounts:', error)

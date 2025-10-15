@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Check if TronGrid is configured (server-side check)
     const apiKey = process.env.TRONGRID_API_KEY;
-    console.log('🔍 TronGrid API key check:', apiKey ? `Configured (${apiKey.substring(0, 8)}...)` : 'Not configured');
+    console.log('🔍 TronGrid API key check:', apiKey ? 'Configured' : 'Not configured');
     
     if (!apiKey || apiKey.length < 10) {
       console.error('❌ TronGrid API key not found in server environment variables');
@@ -63,11 +63,20 @@ export async function GET(request: NextRequest) {
       // Fetch native TRX transactions
       const nativeTrxTransactions = await TronGridService.getTransactionHistory(address, options);
       
+      // Filter out pending/failed transactions - only include successful ones
+      const successfulTrxTransactions = nativeTrxTransactions.filter(tx => {
+        const isSuccessful = tx.status === 'success';
+        if (!isSuccessful) {
+          console.log(`⚠️ Filtering out ${tx.status} TRX transaction: ${tx.hash.substring(0, 10)}...`);
+        }
+        return isSuccessful;
+      });
+      
       // Check if user wants to include fee transactions
       const includeFees = searchParams.get('includeFees') !== 'false'; // Default to true to show TRC-20 fees
       
       // Filter to only native TRX transactions (not TRC-20)
-      let filteredNativeTransactions = nativeTrxTransactions.filter(tx => {
+      let filteredNativeTransactions = successfulTrxTransactions.filter(tx => {
         const isNativeTrx = tx.tokenType === 'native' && tx.currency === 'TRX';
         
         if (!isNativeTrx) return false;

@@ -21,16 +21,24 @@ export const prisma =
     },
   })
 
-// Handle database connection errors gracefully
-prisma.$on('error', (e) => {
-  console.error('Prisma error:', {
-    message: e.message || 'Unknown Prisma error',
-    target: e.target,
-    timestamp: new Date().toISOString(),
-    // Convert the event object to see its properties
-    event: JSON.stringify(e, null, 2)
-  });
-})
+// Increase max listeners to prevent warning (Prisma uses multiple internal listeners)
+// This fixes: MaxListenersExceededWarning: Possible EventEmitter memory leak detected
+if (typeof prisma.setMaxListeners === 'function') {
+  prisma.setMaxListeners(20); // Increase from default 10 to 20
+}
+
+// Handle database connection errors gracefully - only register once
+if (!globalForPrisma.prisma) {
+  prisma.$on('error', (e) => {
+    console.error('Prisma error:', {
+      message: e.message || 'Unknown Prisma error',
+      target: e.target,
+      timestamp: new Date().toISOString(),
+      // Convert the event object to see its properties
+      event: JSON.stringify(e, null, 2)
+    });
+  })
+}
 
 // Improve connection reliability with retry logic
 const MAX_RETRIES = 3

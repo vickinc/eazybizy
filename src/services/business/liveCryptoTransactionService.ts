@@ -74,31 +74,81 @@ export class LiveCryptoTransactionService {
     }
 
     const allTransactions: TransactionItem[] = [];
-    const walletPromises = supportedWallets.map(wallet => 
-      this.fetchWalletTransactions(wallet, options)
-    );
-
-    try {
-      const walletResults = await Promise.allSettled(walletPromises);
+    
+    // Check if we have Alchemy API key - but Solana via Alchemy has issues, so use sequential processing
+    const hasAlchemy = false; // Temporarily disable Alchemy for Solana due to service issues
+    
+    if (hasAlchemy) {
+      // With Alchemy, we can process all wallets concurrently
+      const walletPromises = supportedWallets.map(wallet => 
+        this.fetchWalletTransactions(wallet, options)
+      );
       
-      walletResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          allTransactions.push(...result.value);
-        } else {
-          console.error(`❌ Failed to fetch transactions for wallet ${wallets[index].walletName}:`, result.reason);
+      try {
+        const walletResults = await Promise.allSettled(walletPromises);
+        
+        walletResults.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            allTransactions.push(...result.value);
+          } else {
+            console.error(`❌ Failed to fetch transactions for wallet ${supportedWallets[index].walletName}:`, result.reason);
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error fetching live crypto transactions:', error);
+        return [];
+      }
+    } else {
+      // Without Alchemy, process Solana wallets sequentially to avoid rate limits
+      const solanaWallets = supportedWallets.filter(w => w.blockchain?.toLowerCase() === 'solana');
+      const otherWallets = supportedWallets.filter(w => w.blockchain?.toLowerCase() !== 'solana');
+      
+      try {
+        // Process non-Solana wallets concurrently
+        const otherWalletPromises = otherWallets.map(wallet => 
+          this.fetchWalletTransactions(wallet, options)
+        );
+        const otherWalletResults = await Promise.allSettled(otherWalletPromises);
+        
+        // Process Solana wallets sequentially for public RPC
+        const solanaWalletResults: Array<{status: 'fulfilled' | 'rejected', value?: TransactionItem[], reason?: any}> = [];
+        for (const wallet of solanaWallets) {
+          try {
+            const result = await this.fetchWalletTransactions(wallet, options);
+            solanaWalletResults.push({ status: 'fulfilled', value: result });
+            
+            // Add delay between Solana wallet requests for public RPC
+            if (solanaWallets.indexOf(wallet) < solanaWallets.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 300));
+            }
+          } catch (error) {
+            solanaWalletResults.push({ status: 'rejected', reason: error });
+          }
         }
-      });
-
-      // Sort by date descending (most recent first)
-      allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      console.log(`✅ Fetched ${allTransactions.length} live crypto transactions total`);
-      return allTransactions;
-
-    } catch (error) {
-      console.error('❌ Error fetching live crypto transactions:', error);
-      return [];
+        
+        // Combine results
+        const walletResults = [...otherWalletResults, ...solanaWalletResults];
+        
+        walletResults.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            allTransactions.push(...result.value);
+          } else {
+            const walletIndex = index < otherWallets.length ? index : index - otherWallets.length;
+            const wallet = index < otherWallets.length ? otherWallets[walletIndex] : solanaWallets[walletIndex];
+            console.error(`❌ Failed to fetch transactions for wallet ${wallet?.walletName}:`, result.reason);
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error fetching live crypto transactions:', error);
+        return [];
+      }
     }
+
+    // Sort by date descending (most recent first)
+    allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    console.log(`✅ Fetched ${allTransactions.length} live crypto transactions total`);
+    return allTransactions;
   }
 
   /**
@@ -184,7 +234,19 @@ export class LiveCryptoTransactionService {
               currency: currency.toUpperCase(),
               startDate: options.dateRange.startDate.toISOString(),
               endDate: options.dateRange.endDate.toISOString(),
-              limit: (options.limit || 1000).toString()
+              limit: (options.limit || 1000).toString(),
+              includeFees: 'true' // Explicitly include ERC-20 transaction fees for ETH wallets
+            });
+
+            console.log(`🔍 Making Ethereum API request:`, {
+              walletName: wallet.walletName,
+              walletAddress: wallet.walletAddress,
+              currency: currency.toUpperCase(),
+              url: `/api/ethereum-transactions?${params.toString()}`,
+              dateRange: {
+                start: options.dateRange.startDate.toISOString(),
+                end: options.dateRange.endDate.toISOString()
+              }
             });
 
             const response = await fetch(`/api/ethereum-transactions?${params}`, {
@@ -258,15 +320,78 @@ export class LiveCryptoTransactionService {
           }
           break;
 
+        case 'solana':
+          try {
+            // Use dedicated Solana API endpoint
+            const params = new URLSearchParams({
+              address: wallet.walletAddress,
+              currency: currency.toUpperCase(),
+              startDate: options.dateRange.startDate.toISOString(),
+              endDate: options.dateRange.endDate.toISOString(),
+              limit: (options.limit || 100).toString() // Conservative limit for public RPC
+            });
+
+            const response = await fetch(`/api/solana-transactions?${params}`, {
+              method: 'GET',
+              credentials: 'include'
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              if (error.error === 'Solana RPC not configured') {
+                console.warn(`⚠️ Solana RPC not configured - skipping Solana wallet ${wallet.walletName}`);
+                return [];
+              }
+              throw new Error(error.error || 'Failed to fetch Solana transactions');
+            }
+
+            const data = await response.json();
+            blockchainTransactions = data.transactions || [];
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`🔍 Solana API response for ${wallet.walletName} (${currency}):`, {
+                status: data.success,
+                count: blockchainTransactions.length,
+                currencies: blockchainTransactions.map(tx => tx.currency),
+                sample: blockchainTransactions.slice(0, 2).map(tx => ({
+                  hash: tx.hash.substring(0, 10) + '...',
+                  currency: tx.currency,
+                  amount: tx.amount,
+                  type: tx.type
+                }))
+              });
+            }
+          } catch (solanaError) {
+            console.warn(`⚠️ Solana API error for wallet ${wallet.walletName}:`, solanaError.message);
+            return [];
+          }
+          break;
+
         default:
           console.warn(`⚠️ Blockchain ${blockchainLower} not supported for live transactions yet`);
           return [];
       }
 
+      // Pre-fetch exchange rates once for all transactions
+      let exchangeRates: { [key: string]: number } | undefined;
+      try {
+        const { CurrencyRatesIntegrationService } = await import('./currencyRatesIntegrationService');
+        exchangeRates = await CurrencyRatesIntegrationService.getExchangeRatesForConversion();
+      } catch (error) {
+        console.warn('⚠️ Failed to pre-fetch exchange rates, will use individual conversions:', error);
+      }
+
+      // Filter out failed and pending transactions before conversion
+      const successfulTransactions = blockchainTransactions.filter(blockchainTx => 
+        blockchainTx.status === 'success'
+      );
+      
+      console.log(`🔍 Filtered ${blockchainTransactions.length - successfulTransactions.length} non-successful transactions for ${wallet.walletName}`);
+      
       // Convert blockchain transactions to standard transaction format
       const standardTransactions = await Promise.all(
-        blockchainTransactions.map(blockchainTx => 
-          this.convertToStandardTransaction(blockchainTx, wallet)
+        successfulTransactions.map(blockchainTx => 
+          this.convertToStandardTransaction(blockchainTx, wallet, exchangeRates)
         )
       );
 
@@ -294,41 +419,55 @@ export class LiveCryptoTransactionService {
    */
   private static async convertToStandardTransaction(
     blockchainTx: BlockchainTransaction,
-    wallet: CryptoWallet
+    wallet: CryptoWallet,
+    exchangeRates?: { [key: string]: number }
   ): Promise<TransactionItem> {
     const isIncoming = blockchainTx.type === 'incoming';
     const isFeeTransaction = blockchainTx.type === 'fee';
-    const amount = Math.abs(blockchainTx.amount);
     
-    // Debug: Log transaction conversion details
-    console.log(`💰 Converting blockchain transaction to standard format:`, {
-      hash: `${blockchainTx.hash?.substring(0, 10)}...`,
-      currency: blockchainTx.currency,
-      wallet: wallet.walletName,
-      '=== DIRECTION LOGIC ===': '==================',
-      blockchainType: blockchainTx.type,
-      isIncoming,
-      isFeeTransaction,
-      rawAmount: blockchainTx.amount,
-      absAmount: amount,
-      '=== RESULT AMOUNTS ===': '==================',
-      netAmount: isFeeTransaction ? -amount : (isIncoming ? amount : -amount),
-      incomingAmount: isFeeTransaction ? 0 : (isIncoming ? amount : 0),
-      outgoingAmount: isFeeTransaction ? amount : (isIncoming ? 0 : amount),
-      finalSign: isFeeTransaction ? 'NEGATIVE (FEE)' : (isIncoming ? 'POSITIVE' : 'NEGATIVE')
-    });
+    // For native transactions with 0 value (contract interactions), 
+    // include gas fee in the total amount for outgoing transactions
+    let amount = Math.abs(blockchainTx.amount);
+    if (!isIncoming && !isFeeTransaction && blockchainTx.tokenType === 'native' && 
+        amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      amount = blockchainTx.gasFee; // Use gas fee as the amount for zero-value native transactions
+    }
+    
+    // Debug: Log precision issues for fee transactions
+    if (isFeeTransaction && process.env.NODE_ENV === 'development') {
+      console.log(`🔍 Fee transaction precision check:`, {
+        hash: blockchainTx.hash?.substring(0, 10) + '...',
+        originalAmount: blockchainTx.amount,
+        afterMathAbs: amount,
+        precisionLoss: blockchainTx.amount !== amount && blockchainTx.amount !== -amount,
+        amountString: blockchainTx.amount.toString(),
+        amountStringAbs: amount.toString()
+      });
+    }
     
     // Convert to USD for base currency amount
     let baseCurrencyAmount = 0;
     let exchangeRate = 1;
     
     try {
-      baseCurrencyAmount = await CurrencyService.convertToUSDAsync(
-        amount, 
-        blockchainTx.currency
-      );
-      exchangeRate = blockchainTx.currency === 'USD' ? 1 : 
-        (amount > 0 ? Math.abs(baseCurrencyAmount) / amount : 1);
+      if (exchangeRates) {
+        // Use pre-fetched exchange rates for batch conversion
+        const rate = exchangeRates[blockchainTx.currency.toUpperCase()];
+        if (typeof rate === 'number' && rate > 0) {
+          baseCurrencyAmount = amount * rate;
+          exchangeRate = rate;
+        } else {
+          baseCurrencyAmount = amount; // Fallback to original amount
+        }
+      } else {
+        // Fallback to individual conversion if rates not provided
+        baseCurrencyAmount = await CurrencyService.convertToUSDAsync(
+          amount, 
+          blockchainTx.currency
+        );
+        exchangeRate = blockchainTx.currency === 'USD' ? 1 : 
+          (amount > 0 ? Math.abs(baseCurrencyAmount) / amount : 1);
+      }
     } catch (error) {
       console.warn(`⚠️ Currency conversion failed for ${blockchainTx.currency}:`, error);
       baseCurrencyAmount = amount; // Fallback to original amount
@@ -359,7 +498,14 @@ export class LiveCryptoTransactionService {
       paidTo = isIncoming ? 
         wallet.walletName || this.formatAddress(wallet.walletAddress) : 
         this.formatAddress(blockchainTx.to);
-      description = `${blockchainTx.tokenType?.toUpperCase() || 'Blockchain'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`;
+      
+      // Special handling for zero-value native transactions (contract interactions)
+      if (!isIncoming && blockchainTx.tokenType === 'native' && 
+          blockchainTx.amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+        description = `${blockchainTx.blockchain.toUpperCase()} Contract interaction (gas fee) with ${this.formatAddress(blockchainTx.to)}`;
+      } else {
+        description = `${blockchainTx.tokenType?.toUpperCase() || 'Blockchain'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`;
+      }
       category = 'Cryptocurrency';
     }
     
@@ -371,6 +517,13 @@ export class LiveCryptoTransactionService {
       netAmount: isFeeTransaction ? -amount : (isIncoming ? amount : -amount),
       incomingAmount: isFeeTransaction ? 0 : (isIncoming ? amount : 0),
       outgoingAmount: isFeeTransaction ? amount : (isIncoming ? 0 : amount),
+      
+      // Debug: Add raw amounts for debugging in development
+      ...(process.env.NODE_ENV === 'development' && isFeeTransaction && {
+        _debugOriginalAmount: blockchainTx.amount,
+        _debugProcessedAmount: amount,
+        _debugNetAmount: -amount
+      }),
       currency: blockchainTx.currency,
       baseCurrency: 'USD',
       baseCurrencyAmount: isFeeTransaction ? -baseCurrencyAmount : (isIncoming ? baseCurrencyAmount : -baseCurrencyAmount),
@@ -564,6 +717,12 @@ export class LiveCryptoTransactionService {
         // For BSC, we always return true since we're using server-side API
         if (process.env.NODE_ENV === 'development') {
           console.log(`  BSC: Using server-side API endpoint`);
+        }
+        return true;
+      case 'solana':
+        // For Solana, we always return true since we're using server-side API with RPC
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`  Solana: Using server-side RPC endpoint`);
         }
         return true;
       default:

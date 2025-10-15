@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EtherscanAPIService } from '@/services/integrations/etherscanAPIService';
+import { BscTransactionService } from '@/services/business/bscTransactionService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,10 +17,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if BSCScan API is configured
-    if (!EtherscanAPIService.isConfigured('bsc')) {
+    // Check if BSC API is configured
+    if (!BscTransactionService.isConfigured()) {
       return NextResponse.json(
-        { error: 'BSCScan API not configured' },
+        { 
+          error: 'BSC API not configured',
+          details: 'BSC requires either BSCSCAN_API_KEY (preferred) or BSC_API_KEY. Get API keys from https://bscscan.com/apis',
+          success: false 
+        },
         { status: 503 }
       );
     }
@@ -38,24 +42,39 @@ export async function GET(request: NextRequest) {
       options.endDate = new Date(endDate);
     }
 
-    // Fetch BSC transactions
-    const transactions = await EtherscanAPIService.getTransactionHistory(
-      address,
-      'bsc',
-      options
-    );
+    console.log(`🚀 BSC API: Fetching transactions for ${address.substring(0, 10)}... with optimized performance`);
+    const startTime = Date.now();
+
+    // Use new optimized BSC transaction service
+    const allTransactions = await BscTransactionService.getTransactions(address, options);
+    
+    // Filter out failed and pending transactions - only include successful ones
+    const transactions = allTransactions.filter(tx => tx.status === 'success');
+    const filteredCount = allTransactions.length - transactions.length;
+    
+    if (filteredCount > 0) {
+      console.log(`🔍 Filtered out ${filteredCount} non-successful BSC transactions`);
+    }
+
+    const endTime = Date.now();
+    console.log(`✅ BSC API: Completed in ${endTime - startTime}ms (${transactions.length} successful transactions)`);
 
     return NextResponse.json({
       success: true,
       data: transactions,
       count: transactions.length,
-      blockchain: 'bsc'
+      blockchain: 'bsc',
+      performanceMs: endTime - startTime
     });
 
   } catch (error) {
-    console.error('BSC transaction API error:', error);
+    console.error('❌ BSC transaction API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch BSC transactions', details: error.message },
+      { 
+        error: 'Failed to fetch BSC transactions', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        success: false 
+      },
       { status: 500 }
     );
   }

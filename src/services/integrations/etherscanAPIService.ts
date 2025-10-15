@@ -65,8 +65,15 @@ export class EtherscanAPIService {
   // Base URLs for different networks
   private static readonly BASE_URLS = {
     ethereum: 'https://api.etherscan.io/api',
-    bsc: 'https://api.bscscan.com/api',
-    'binance-smart-chain': 'https://api.bscscan.com/api'
+    bsc: 'https://api.etherscan.io/v2/api', // Use Etherscan v2 for BSC cross-chain support
+    'binance-smart-chain': 'https://api.etherscan.io/v2/api'
+  };
+  
+  // Chain IDs for Etherscan v2 multi-chain support
+  private static readonly CHAIN_IDS = {
+    ethereum: 1,
+    bsc: 56,
+    'binance-smart-chain': 56
   };
 
   /**
@@ -77,14 +84,19 @@ export class EtherscanAPIService {
     
     // Debug logging
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔧 Checking Etherscan API config for ${blockchainLower}:`, {
-        ETH_API_KEY: this.ETH_API_KEY ? `${this.ETH_API_KEY.substring(0, 8)}...` : 'undefined',
-        BSC_API_KEY: this.BSC_API_KEY ? `${this.BSC_API_KEY.substring(0, 8)}...` : 'undefined',
-        envEtherscan: process.env.ETHERSCAN_API_KEY ? `${process.env.ETHERSCAN_API_KEY.substring(0, 8)}...` : 'undefined',
-        envNextPublicEtherscan: process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY ? `${process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY.substring(0, 8)}...` : 'undefined',
-        keyLength: this.ETH_API_KEY?.length || 0,
-        isConfigured: blockchainLower === 'ethereum' ? (!!this.ETH_API_KEY && this.ETH_API_KEY.length > 10) : (!!this.BSC_API_KEY && this.BSC_API_KEY.length > 10)
-      });
+      if (blockchainLower === 'ethereum') {
+        console.log(`🔧 Checking API config for ${blockchainLower}:`, {
+          hasAPIKey: !!this.ETH_API_KEY,
+          keyLength: this.ETH_API_KEY?.length || 0
+        });
+      } else if (blockchainLower === 'bsc' || blockchainLower === 'binance-smart-chain') {
+        console.log(`🔧 Checking API config for ${blockchainLower}:`, {
+          hasAPIKey: !!this.BSC_API_KEY,
+          keyLength: this.BSC_API_KEY?.length || 0,
+          usingEtherscanV2ForBSC: true,
+          hasSeparateBSCKey: !!process.env.BSCSCAN_API_KEY
+        });
+      }
     }
     
     switch (blockchainLower) {
@@ -92,7 +104,16 @@ export class EtherscanAPIService {
         return !!this.ETH_API_KEY && this.ETH_API_KEY.length > 10;
       case 'bsc':
       case 'binance-smart-chain':
-        return !!this.BSC_API_KEY && this.BSC_API_KEY.length > 10;
+        // Use dedicated BSCSCAN_API_KEY for BSC (Etherscan v2 infrastructure)
+        const hasBSCKey = !!this.BSC_API_KEY && this.BSC_API_KEY.length > 10;
+        if (process.env.NODE_ENV === 'development') {
+          if (hasBSCKey) {
+            console.log(`✅ Using dedicated BSCSCAN_API_KEY for BNB Chain (Etherscan v2 infrastructure)`);
+          } else {
+            console.warn(`⚠️ BSCSCAN_API_KEY not configured. Add BSCSCAN_API_KEY to your .env.local file`);
+          }
+        }
+        return hasBSCKey;
       default:
         return false;
     }
@@ -109,6 +130,7 @@ export class EtherscanAPIService {
         return this.ETH_API_KEY || '';
       case 'bsc':
       case 'binance-smart-chain':
+        // Use dedicated BSCSCAN_API_KEY for BSC (even though it uses Etherscan v2 infrastructure)
         return this.BSC_API_KEY || '';
       default:
         return '';
@@ -120,7 +142,25 @@ export class EtherscanAPIService {
    */
   private static getBaseUrl(blockchain: string): string {
     const blockchainLower = blockchain.toLowerCase();
-    return this.BASE_URLS[blockchainLower] || this.BASE_URLS.ethereum;
+    const validBlockchains = ['ethereum', 'bsc', 'binance-smart-chain'] as const;
+    
+    if (validBlockchains.includes(blockchainLower as any)) {
+      return this.BASE_URLS[blockchainLower as keyof typeof this.BASE_URLS];
+    }
+    return this.BASE_URLS.ethereum;
+  }
+  
+  /**
+   * Get the chain ID for a blockchain (Etherscan v2)
+   */
+  private static getChainId(blockchain: string): number {
+    const blockchainLower = blockchain.toLowerCase();
+    const validBlockchains = ['ethereum', 'bsc', 'binance-smart-chain'] as const;
+    
+    if (validBlockchains.includes(blockchainLower as any)) {
+      return this.CHAIN_IDS[blockchainLower as keyof typeof this.CHAIN_IDS];
+    }
+    return this.CHAIN_IDS.ethereum;
   }
 
   /**
@@ -146,10 +186,18 @@ export class EtherscanAPIService {
     }
 
     const baseUrl = this.getBaseUrl(blockchain);
-    const searchParams = new URLSearchParams({
+    const requestParams: Record<string, string> = {
       ...params,
       apikey: apiKey
-    } as Record<string, string>);
+    } as Record<string, string>;
+    
+    // Add chain ID for Etherscan v2 cross-chain requests
+    const blockchainLower = blockchain.toLowerCase();
+    if (blockchainLower === 'bsc' || blockchainLower === 'binance-smart-chain') {
+      requestParams.chainid = this.getChainId(blockchain).toString();
+    }
+    
+    const searchParams = new URLSearchParams(requestParams);
 
     const url = `${baseUrl}?${searchParams.toString()}`;
     
@@ -236,7 +284,18 @@ export class EtherscanAPIService {
         
         // Handle other API errors (not rate limits)
         if (data.message === 'NOTOK') {
-          console.warn(`⚠️ ${blockchain.toUpperCase()} API returned NOTOK: ${data.message}`);
+          // Check if it's an API key issue
+          const isApiKeyError = typeof data.result === 'string' && 
+            (data.result.includes('Invalid API Key') || data.result.includes('#err2'));
+          
+          if (isApiKeyError && blockchain.toLowerCase() === 'bsc') {
+            console.error(`❌ ${blockchain.toUpperCase()} API key invalid: ${data.result}`);
+            console.error(`💡 Get a valid BSCScan API key from: https://bscscan.com/apis`);
+            console.error(`💡 Add BSCSCAN_API_KEY=your-key-here to your .env.local file`);
+          } else {
+            console.warn(`⚠️ ${blockchain.toUpperCase()} API returned NOTOK: ${data.message}`);
+          }
+          
           return { ...data, result: [] as T[] } as EtherscanResponse<T>;
         }
         
@@ -267,7 +326,19 @@ export class EtherscanAPIService {
    */
   private static convertTokenValue(value: string, decimals: string): number {
     const decimalCount = parseInt(decimals) || 18;
-    return parseFloat(value) / Math.pow(10, decimalCount);
+    const result = parseFloat(value) / Math.pow(10, decimalCount);
+    
+    // Debug logging for USDT conversion issues
+    if (process.env.NODE_ENV === 'development' && decimalCount === 6) {
+      console.log(`💰 Token decimal conversion (likely USDT/USDC):`, {
+        rawValue: value,
+        decimals: decimalCount,
+        convertedAmount: result,
+        calculation: `${value} / 10^${decimalCount} = ${result}`
+      });
+    }
+    
+    return result;
   }
 
   /**
@@ -282,7 +353,16 @@ export class EtherscanAPIService {
     const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase();
     const amount = this.weiToEther(tx.value);
     const gasUsed = parseInt(tx.gasUsed);
-    const gasPrice = this.weiToEther(tx.gasPrice);
+    
+    // Apply BSC gas price correction for native transactions
+    let rawGasPrice = tx.gasPrice;
+    if (blockchain.toLowerCase().includes('bsc') && rawGasPrice === '0x0') {
+      // Use estimated BSC gas price when API returns 0x0
+      rawGasPrice = this.estimateBSCGasPrice(parseInt(tx.blockNumber));
+      console.log(`⚡ Using BSC estimated gas price for native tx ${tx.hash.substring(0, 12)}...: ${parseInt(rawGasPrice, 16) / 1e9} Gwei`);
+    }
+    
+    const gasPrice = this.weiToEther(rawGasPrice);
     const gasFee = gasUsed * gasPrice;
 
     return {
@@ -315,6 +395,19 @@ export class EtherscanAPIService {
     const timestamp = parseInt(tx.timeStamp) * 1000;
     const isIncoming = tx.to.toLowerCase() === walletAddress.toLowerCase();
     const amount = this.convertTokenValue(tx.value, tx.tokenDecimal);
+    
+    // Debug USDT/USDC transactions
+    if (process.env.NODE_ENV === 'development' && (tx.tokenSymbol === 'USDT' || tx.tokenSymbol === 'USDC')) {
+      console.log(`🔍 ${tx.tokenSymbol} transfer details:`, {
+        hash: tx.hash.substring(0, 10) + '...',
+        rawValue: tx.value,
+        tokenDecimal: tx.tokenDecimal,
+        convertedAmount: amount,
+        direction: isIncoming ? 'incoming' : 'outgoing',
+        from: tx.from.substring(0, 10) + '...',
+        to: tx.to.substring(0, 10) + '...'
+      });
+    }
     
     // Enhanced gas fee handling for token transfers
     // Token transfer gas fees are critical for accurate balance calculations
@@ -482,7 +575,7 @@ export class EtherscanAPIService {
     const tokenContracts: Record<string, Record<string, { address: string; decimals: number }>> = {
       ethereum: {
         'USDT': { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
-        'USDC': { address: '0xA0b86a33E6441b1c8e4b4c8d9Da4a93b60d5e9C3', decimals: 6 }
+        'USDC': { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6 }
       },
       bsc: {
         'USDT': { address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18 },
@@ -1128,13 +1221,47 @@ export class EtherscanAPIService {
       );
 
       const receipt = response.result;
-      if (!receipt) {
+      if (!receipt || typeof receipt !== 'object') {
         return null;
+      }
+      
+      // Debug BSC receipt data
+      if (process.env.NODE_ENV === 'development' && blockchain.toLowerCase().includes('bsc')) {
+        console.log(`🔍 BSC receipt debug for ${txHash.substring(0, 12)}...`, {
+          effectiveGasPrice: receipt.effectiveGasPrice,
+          gasPrice: receipt.gasPrice,
+          gasUsed: receipt.gasUsed,
+          status: receipt.status
+        });
+      }
+
+      // For BSC, effectiveGasPrice might be 0x0, so we need to use gasPrice
+      let gasPrice = receipt.effectiveGasPrice || receipt.gasPrice || '0';
+      
+      // If still 0x0, try to get transaction details for actual gas price
+      if (gasPrice === '0x0' && blockchain.toLowerCase().includes('bsc')) {
+        console.log(`⚠️ BSC transaction ${txHash.substring(0, 12)}... has 0x0 gas price, trying transaction details...`);
+        try {
+          const txDetails = await this.getTransactionByHash(txHash, blockchain);
+          if (txDetails && txDetails.gasPrice !== '0') {
+            gasPrice = txDetails.gasPrice;
+            console.log(`✅ Retrieved gas price from transaction details: ${gasPrice}`);
+          } else {
+            // Fallback: Use historical BSC gas price based on block number
+            gasPrice = this.estimateBSCGasPrice(parseInt((receipt as any).blockNumber, 16));
+            console.log(`⚡ Using BSC estimated gas price: ${parseInt(gasPrice, 16) / 1e9} Gwei for ${txHash.substring(0, 12)}...`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Failed to get transaction details for gas price: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // Fallback: Use historical BSC gas price based on block number
+          gasPrice = this.estimateBSCGasPrice(parseInt((receipt as any).blockNumber, 16));
+          console.log(`⚡ Using BSC estimated gas price: ${parseInt(gasPrice, 16) / 1e9} Gwei for ${txHash.substring(0, 12)}...`);
+        }
       }
 
       return {
         gasUsed: parseInt(receipt.gasUsed, 16),
-        effectiveGasPrice: receipt.effectiveGasPrice || receipt.gasPrice || '0',
+        effectiveGasPrice: gasPrice,
         status: receipt.status || '0x1'
       };
     } catch (error) {
@@ -1282,8 +1409,8 @@ export class EtherscanAPIService {
     console.log(`🚀 Fetching ALL transactions for ${address} on ${blockchain.toUpperCase()} with pagination`);
 
     // Implement comprehensive pagination to fetch ALL transactions
-    // Etherscan API limits to 10,000 transactions per request, so we need multiple requests
-    const maxPerRequest = 10000; // Etherscan API maximum
+    // Etherscan API limits to 10,000 transactions per request, but use smaller batches for BSC to avoid rate limits
+    const maxPerRequest = blockchain.toLowerCase().includes('bsc') ? 1000 : 10000; // Smaller batches for BSC
     const allNormalTransactions: BlockchainTransaction[] = [];
     const allTokenTransactions: BlockchainTransaction[] = [];
     
@@ -1320,7 +1447,8 @@ export class EtherscanAPIService {
         
         // Rate limiting: Wait between requests
         if (normalHasMore) {
-          await new Promise(r => setTimeout(r, 200)); // 200ms delay between requests
+          const delay = 200; // Unified 200ms delay for all chains on Etherscan v2
+          await new Promise(r => setTimeout(r, delay));
         }
       } catch (error) {
         console.error(`❌ Error fetching normal transactions page ${normalPage}:`, error);
@@ -1329,7 +1457,8 @@ export class EtherscanAPIService {
     }
     
     // Rate limiting between different API calls
-    await new Promise(r => setTimeout(r, 600));
+    const apiTypeDelay = 400; // Unified 400ms delay between API types for all chains
+    await new Promise(r => setTimeout(r, apiTypeDelay));
     
     // Fetch token transactions with pagination
     let tokenPage = 1;
@@ -1364,7 +1493,8 @@ export class EtherscanAPIService {
         
         // Rate limiting: Wait between requests
         if (tokenHasMore) {
-          await new Promise(r => setTimeout(r, 200)); // 200ms delay between requests
+          const delay = 200; // Unified 200ms delay for all chains on Etherscan v2
+          await new Promise(r => setTimeout(r, delay));
         }
       } catch (error) {
         console.error(`❌ Error fetching token transactions page ${tokenPage}:`, error);
@@ -1445,7 +1575,8 @@ export class EtherscanAPIService {
         
         // Rate limiting: Wait between requests
         if (internalHasMore) {
-          await new Promise(r => setTimeout(r, 200)); // 200ms delay between requests
+          const delay = 200; // Unified 200ms delay for all chains on Etherscan v2
+          await new Promise(r => setTimeout(r, delay));
         }
       } catch (error) {
         console.error(`❌ Error fetching internal transactions page ${internalPage}:`, error);
@@ -1734,6 +1865,27 @@ export class EtherscanAPIService {
     } catch (error) {
       console.error(`❌ Failed to fetch transactions for ${address}:`, error);
       return [];
+    }
+  }
+
+  /**
+   * Estimate BSC gas price based on block number (historical data)
+   * BSC gas prices have varied over time, this provides reasonable estimates
+   */
+  private static estimateBSCGasPrice(blockNumber: number): string {
+    // BSC block numbers and approximate gas prices (in Gwei)
+    // These are based on historical BSC network conditions
+    
+    if (blockNumber < 10000000) { // Early BSC (2020-2021)
+      return '0x4a817c800'; // 20 Gwei
+    } else if (blockNumber < 20000000) { // Mid 2021
+      return '0x2540be400'; // 10 Gwei  
+    } else if (blockNumber < 30000000) { // Late 2021 - 2022
+      return '0x12a05f200'; // 5 Gwei
+    } else if (blockNumber < 35000000) { // 2022 - 2023
+      return '0x12a05f200'; // 5 Gwei
+    } else { // 2023 onwards (current era)
+      return '0xba43b7400'; // 3 Gwei - BSC is very cheap now
     }
   }
 

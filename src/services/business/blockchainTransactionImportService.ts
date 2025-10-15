@@ -8,6 +8,7 @@ import {
 import { TronGridService } from '@/services/integrations/tronGridService';
 import { AlchemyAPIService } from '@/services/integrations/alchemyAPIService';
 import { CryptoAPIsService } from '@/services/integrations/cryptoAPIsService';
+import { SolanaRPCService } from '@/services/integrations/solanaRPCService';
 import { CurrencyService } from './currencyService';
 
 /**
@@ -165,6 +166,51 @@ export class BlockchainTransactionImportService {
   }
 
   /**
+   * Fix existing fee transactions that were incorrectly stored with outgoing amounts
+   */
+  static async fixExistingFeeTransactions(): Promise<void> {
+    console.log('🔧 Fixing existing fee transactions...');
+    
+    try {
+      // Find transactions that are likely fee transactions based on their description or category
+      const feeTransactions = await prisma.transaction.findMany({
+        where: {
+          OR: [
+            { description: { contains: 'Gas fee' } },
+            { description: { contains: 'Transaction fee' } },
+            { category: 'Fee' },
+            { subcategory: 'Transaction Fee' },
+            // Also check for transactions with "Network Fee" in paidTo field
+            { paidTo: 'Network Fee' }
+          ],
+          accountType: 'wallet',
+          // Only fix transactions that have incorrect outgoing amounts
+          outgoingAmount: { gt: 0 }
+        }
+      });
+
+      console.log(`Found ${feeTransactions.length} fee transactions to fix`);
+
+      for (const tx of feeTransactions) {
+        await prisma.transaction.update({
+          where: { id: tx.id },
+          data: {
+            incomingAmount: 0,
+            outgoingAmount: 0,
+            category: 'Fee',
+            subcategory: 'Transaction Fee'
+          }
+        });
+      }
+
+      console.log(`✅ Fixed ${feeTransactions.length} fee transactions`);
+    } catch (error) {
+      console.error('❌ Error fixing fee transactions:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch transaction history from blockchain APIs
    */
   private static async fetchTransactionHistory(
@@ -213,6 +259,15 @@ export class BlockchainTransactionImportService {
           // TODO: Implement BSC transaction history via Alchemy or other service
           console.warn(`Transaction history not yet implemented for ${blockchain}`);
           return [];
+          
+        case 'solana':
+          // Fetch Solana transactions via RPC
+          return await SolanaRPCService.getTransactionHistory(address, {
+            limit: options.limit,
+            startDate: options.startDate,
+            endDate: options.endDate,
+            currency: currency.toUpperCase()
+          });
           
         default:
           throw new Error(`Unsupported blockchain: ${blockchain}`);
@@ -318,7 +373,15 @@ export class BlockchainTransactionImportService {
     wallet: any
   ) {
     const isIncoming = blockchainTx.type === 'incoming';
-    const amount = blockchainTx.amount;
+    const isFee = blockchainTx.type === 'fee';
+    
+    // For native transactions with 0 value (contract interactions), 
+    // include gas fee in the total amount for outgoing transactions
+    let amount = blockchainTx.amount;
+    if (!isIncoming && !isFee && blockchainTx.tokenType === 'native' && 
+        amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      amount = blockchainTx.gasFee; // Use gas fee as the amount for zero-value native transactions
+    }
     
     // Convert to USD for base currency amount
     const baseCurrencyAmount = await CurrencyService.convertToUSDAsync(
@@ -330,24 +393,49 @@ export class BlockchainTransactionImportService {
     const exchangeRate = blockchainTx.currency === 'USD' ? 1 : 
       (Math.abs(amount) > 0 ? Math.abs(baseCurrencyAmount) / Math.abs(amount) : 1);
 
+    // Calculate incoming/outgoing amounts correctly
+    // Fee transactions should not count as incoming or outgoing transfers
+    let incomingAmount = 0;
+    let outgoingAmount = 0;
+    let netAmount = 0;
+
+    if (isFee) {
+      // Fee transactions: no incoming/outgoing amounts, negative net amount
+      incomingAmount = 0;
+      outgoingAmount = 0;
+      netAmount = -amount; // Fees are always a cost
+    } else if (isIncoming) {
+      // Incoming transfers: positive amounts
+      incomingAmount = amount;
+      outgoingAmount = 0;
+      netAmount = amount;
+    } else {
+      // Outgoing transfers: negative amounts
+      incomingAmount = 0;
+      outgoingAmount = amount;
+      netAmount = -amount;
+    }
+
     return {
       companyId: wallet.companyId,
       date: new Date(blockchainTx.timestamp),
       paidBy: isIncoming ? blockchainTx.from : wallet.walletName || 'Wallet',
       paidTo: isIncoming ? wallet.walletName || 'Wallet' : blockchainTx.to,
-      netAmount: isIncoming ? amount : -amount,
-      incomingAmount: isIncoming ? amount : 0,
-      outgoingAmount: isIncoming ? 0 : amount,
+      netAmount,
+      incomingAmount,
+      outgoingAmount,
       currency: blockchainTx.currency,
       baseCurrency: 'USD',
-      baseCurrencyAmount: isIncoming ? baseCurrencyAmount : -baseCurrencyAmount,
+      baseCurrencyAmount: isFee ? -baseCurrencyAmount : (isIncoming ? baseCurrencyAmount : -baseCurrencyAmount),
       exchangeRate,
       accountId: walletId,
       accountType: 'wallet',
       reference: blockchainTx.hash,
-      category: 'Transfer',
-      subcategory: isIncoming ? 'Incoming' : 'Outgoing',
-      description: `${blockchainTx.tokenType?.toUpperCase() || 'Blockchain'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? blockchainTx.from : blockchainTx.to}`,
+      category: isFee ? 'Fee' : 'Transfer',
+      subcategory: isFee ? 'Transaction Fee' : (isIncoming ? 'Incoming' : 'Outgoing'),
+      description: isFee 
+        ? `Transaction fee for ${blockchainTx.description || 'blockchain transaction'}`
+        : this.generateDescription(blockchainTx, isIncoming),
       notes: JSON.stringify({
         blockNumber: blockchainTx.blockNumber,
         gasUsed: blockchainTx.gasUsed,
@@ -360,6 +448,26 @@ export class BlockchainTransactionImportService {
       status: blockchainTx.status === 'success' ? 'CLEARED' : 'FAILED',
       linkedEntryType: 'BLOCKCHAIN_IMPORT'
     };
+  }
+
+  /**
+   * Generate transaction description based on type and amount
+   */
+  private static generateDescription(
+    blockchainTx: BlockchainTransaction, 
+    isIncoming: boolean
+  ): string {
+    const tokenType = blockchainTx.tokenType?.toUpperCase() || 'Blockchain';
+    
+    // Special handling for zero-value native transactions (contract interactions)
+    if (!isIncoming && blockchainTx.tokenType === 'native' && 
+        blockchainTx.amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      return `${blockchainTx.blockchain.toUpperCase()} Contract interaction (gas fee) with ${blockchainTx.to}`;
+    }
+    
+    return `${tokenType} ${isIncoming ? 'received from' : 'sent to'} ${
+      isIncoming ? blockchainTx.from : blockchainTx.to
+    }`;
   }
 
   /**

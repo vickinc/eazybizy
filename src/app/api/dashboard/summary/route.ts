@@ -68,11 +68,7 @@ export async function GET(request: NextRequest) {
     
     // Check cache first (user-specific cache)
     const cacheKey = `dashboard:summary:v2:${user.id}` // User-specific cache key
-    
-    // Clear cache for testing
-    await CacheService.del(cacheKey)
-    await CacheService.del('dashboard:summary:v1') // Clear old cache too
-    
+
     const cachedData = await CacheService.get<DashboardSummary>(cacheKey)
     
     if (cachedData) {

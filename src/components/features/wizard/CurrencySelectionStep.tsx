@@ -1,13 +1,11 @@
 "use client";
 
 import React from 'react';
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CryptocurrencyIcon } from '@/components/ui/cryptocurrency-icon';
 import { BLOCKCHAIN_CURRENCIES, type BlockchainKey } from '../TransactionFilterWizard';
-import Check from "lucide-react/dist/esm/icons/check";
-import Coins from "lucide-react/dist/esm/icons/coins";
+import { Check, Coins } from "lucide-react";
 
 export interface CurrencySelectionStepProps {
   blockchain: BlockchainKey;
@@ -40,23 +38,23 @@ export const CurrencySelectionStep: React.FC<CurrencySelectionStepProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center">
-        <h4 className="text-xl font-semibold text-gray-900 mb-2">Select Currencies</h4>
-        <p className="text-gray-600">
+    <div className="space-y-3">
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900">Select Currencies</h4>
+        <p className="text-sm text-gray-600 mt-1">
           Choose which {blockchainConfig.name} currencies you want to see transactions for
         </p>
       </div>
 
       {/* Quick Actions */}
-      <div className="flex items-center justify-center space-x-3">
+      <div className="flex items-center space-x-2">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={selectAllCurrencies}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-1.5 text-xs"
         >
-          <Coins className="h-4 w-4" />
+          <Coins className="h-3.5 w-3.5" />
           <span>Select All</span>
         </Button>
         <Button 
@@ -64,87 +62,92 @@ export const CurrencySelectionStep: React.FC<CurrencySelectionStepProps> = ({
           size="sm" 
           onClick={clearAllCurrencies}
           disabled={selectedCurrencies.length === 0}
+          className="text-xs"
         >
           Clear All
         </Button>
       </div>
 
       {/* Currency Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {availableCurrencies.map((currency) => {
           const isSelected = selectedCurrencies.includes(currency);
           
           return (
-            <Card
+            <button
               key={currency}
-              className={`relative p-4 cursor-pointer transition-all border-2 hover:shadow-md ${
+              className={`relative group p-3 rounded-lg border transition-all text-left ${
                 isSelected 
-                  ? 'border-green-500 bg-green-50 shadow-md' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-lime-500 bg-lime-100 ring-2 ring-lime-500 ring-opacity-50' 
+                  : 'bg-lime-50 border-lime-200 hover:border-lime-300 hover:bg-lime-100'
               }`}
               onClick={() => toggleCurrency(currency)}
             >
-              {/* Selection indicator */}
-              {isSelected && (
-                <div className="absolute top-2 right-2">
-                  <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
-                    <Check className="h-4 w-4 text-white" />
+              {/* Selection checkbox */}
+              <div className="absolute top-2 right-2">
+                {isSelected ? (
+                  <div className="w-4 h-4 bg-lime-600 rounded flex items-center justify-center">
+                    <Check className="h-3 w-3 text-white" />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="w-4 h-4 border-2 border-gray-300 rounded group-hover:border-gray-400" />
+                )}
+              </div>
               
-              <div className="flex flex-col items-center space-y-3">
-                {/* Currency Icon */}
-                <div className="w-12 h-12 flex items-center justify-center">
+              <div className="flex flex-col space-y-2">
+                {/* Currency Icon and Name */}
+                <div className="flex items-start space-x-2">
                   <CryptocurrencyIcon 
                     currency={currency} 
-                    size={48}
-                    className="rounded-full"
+                    className="w-8 h-8 rounded-md flex-shrink-0"
                   />
-                </div>
-                
-                {/* Currency Name */}
-                <div className="text-center">
-                  <h5 className={`font-semibold ${
-                    isSelected ? 'text-green-900' : 'text-gray-900'
-                  }`}>
-                    {currency}
-                  </h5>
-                  <p className={`text-sm ${
-                    isSelected ? 'text-green-700' : 'text-gray-500'
-                  }`}>
-                    {getCurrencyName(currency)}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <h5 className={`font-medium text-sm ${
+                      isSelected ? 'text-lime-900' : 'text-gray-900'
+                    }`}>
+                      {currency}
+                    </h5>
+                    <p className={`text-xs truncate ${
+                      isSelected ? 'text-lime-700' : 'text-gray-500'
+                    }`}>
+                      {getCurrencyName(currency)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </Card>
+            </button>
           );
         })}
       </div>
 
       {/* Selection Summary */}
-      <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Coins className="h-5 w-5 text-gray-600" />
-            <span className="text-gray-700 font-medium">
-              Selected currencies: {selectedCurrencies.length} of {availableCurrencies.length}
+            <Coins className="h-4 w-4 text-lime-600" />
+            <span className="text-sm font-medium text-lime-900">
+              Selected: {selectedCurrencies.length} of {availableCurrencies.length}
             </span>
           </div>
           
           {selectedCurrencies.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {selectedCurrencies.map((currency) => (
-                <Badge key={currency} variant="secondary" className="text-xs">
+              {selectedCurrencies.slice(0, 3).map((currency) => (
+                <Badge key={currency} className="text-xs bg-white text-lime-700 border-lime-200">
                   {currency}
                 </Badge>
               ))}
+              {selectedCurrencies.length > 3 && (
+                <Badge className="text-xs bg-white text-lime-700 border-lime-200">
+                  +{selectedCurrencies.length - 3}
+                </Badge>
+              )}
             </div>
           )}
         </div>
         
         {selectedCurrencies.length === 0 && (
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-lime-700 text-xs mt-2">
             Please select at least one currency to continue
           </p>
         )}

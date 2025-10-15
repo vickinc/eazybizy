@@ -1,6 +1,6 @@
 /**
  * Dedicated service for handling Binance Smart Chain (BSC) blockchain transactions
- * Provides clean separation from other blockchains
+ * Uses Etherscan v2 infrastructure (BSCScan has been migrated to Etherscan v2)
  */
 
 import { EtherscanAPIService } from '@/services/integrations/etherscanAPIService';
@@ -18,6 +18,7 @@ export interface BscTransactionOptions {
 export class BscTransactionService {
   /**
    * Fetch BSC transactions for a wallet address
+   * Uses Etherscan v2 infrastructure with BSCSCAN_API_KEY
    */
   static async getTransactions(
     address: string, 
@@ -27,11 +28,15 @@ export class BscTransactionService {
       throw new Error('Wallet address is required');
     }
 
+    const { currency, startDate, endDate, limit = 1000 } = options;
+
+    // BSCScan is now part of Etherscan v2 infrastructure
     if (!EtherscanAPIService.isConfigured('bsc')) {
-      throw new Error('BSCScan API not configured');
+      throw new Error('BSC API not configured. Please set BSCSCAN_API_KEY or BSC_API_KEY in environment variables.');
     }
 
-    const { currency, startDate, endDate, limit = 1000 } = options;
+    console.log('🚀 Using Etherscan v2 for BSC transactions');
+    const startTime = Date.now();
 
     try {
       const transactions = await EtherscanAPIService.getTransactionHistory(
@@ -44,6 +49,9 @@ export class BscTransactionService {
           limit
         }
       );
+
+      const endTime = Date.now();
+      console.log(`✅ BSC transactions fetched via Etherscan v2 in ${endTime - startTime}ms`);
 
       return transactions;
     } catch (error) {
@@ -65,7 +73,13 @@ export class BscTransactionService {
     }
   ): Promise<TransactionItem> {
     const isIncoming = blockchainTx.type === 'incoming';
-    const amount = Math.abs(blockchainTx.amount);
+    
+    // For native BNB transactions with 0 value (contract interactions), 
+    // include gas fee in the total amount for outgoing transactions
+    let amount = Math.abs(blockchainTx.amount);
+    if (!isIncoming && blockchainTx.tokenType === 'native' && amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      amount = blockchainTx.gasFee; // Use gas fee as the amount for zero-value native transactions
+    }
     
     // Convert to USD for base currency amount
     let baseCurrencyAmount = 0;
@@ -106,7 +120,7 @@ export class BscTransactionService {
       accountType: 'wallet' as const,
       reference: blockchainTx.hash,
       category: 'Cryptocurrency',
-      description: `BSC ${blockchainTx.tokenType?.toUpperCase() || 'BNB'} ${isIncoming ? 'received from' : 'sent to'} ${isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)}`,
+      description: this.generateDescription(blockchainTx, isIncoming),
       status: blockchainTx.status === 'success' ? 'CLEARED' as const : 'PENDING' as const,
       reconciliationStatus: 'UNRECONCILED' as const,
       approvalStatus: 'APPROVED' as const,
@@ -126,6 +140,26 @@ export class BscTransactionService {
         blockchain: 'bsc'
       }
     };
+  }
+
+  /**
+   * Generate transaction description based on type and amount
+   */
+  private static generateDescription(
+    blockchainTx: BlockchainTransaction, 
+    isIncoming: boolean
+  ): string {
+    const tokenType = blockchainTx.tokenType?.toUpperCase() || 'BNB';
+    
+    // Special handling for zero-value native transactions (contract interactions)
+    if (!isIncoming && blockchainTx.tokenType === 'native' && 
+        blockchainTx.amount === 0 && blockchainTx.gasFee && blockchainTx.gasFee > 0) {
+      return `BSC Contract interaction (gas fee) with ${this.formatAddress(blockchainTx.to)}`;
+    }
+    
+    return `BSC ${tokenType} ${isIncoming ? 'received from' : 'sent to'} ${
+      isIncoming ? this.formatAddress(blockchainTx.from) : this.formatAddress(blockchainTx.to)
+    }`;
   }
 
   /**

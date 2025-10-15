@@ -41,11 +41,12 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
   try {
-    // Trigger anniversary rollover check (non-blocking, runs in background)
-    // This ensures that new anniversary events are generated when old ones pass
-    AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
-      console.warn('Anniversary rollover check failed during fast calendar fetch:', error);
-    });
+    // Anniversary rollover disabled during page load for performance
+    // Rollover will be triggered by dedicated background job or manual trigger
+    // Previously caused 6+ second delays on calendar page loads
+    // AnniversaryEventService.checkAndGenerateNextAnniversaries().catch(error => {
+    //   console.warn('Anniversary rollover check failed during fast calendar fetch:', error);
+    // });
 
     const searchParams = request.nextUrl.searchParams
     

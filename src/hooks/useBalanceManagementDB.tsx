@@ -105,7 +105,7 @@ export function useBalanceManagementDB(
   
   // Filter State
   const [filters, setFilters] = useState<BalanceFilterState>(defaultFilters);
-  
+
   // Query parameters for API calls
   const queryParams = useMemo((): BalanceQueryParams => {
     const params: BalanceQueryParams = {
@@ -119,7 +119,8 @@ export function useBalanceManagementDB(
       startDate: filters.customDateRange.startDate || undefined,
       endDate: filters.customDateRange.endDate || undefined,
       asOfDate: filters.asOfDate || undefined,
-      includeBlockchainBalances: true // Enable blockchain balance fetching
+      // PERFORMANCE: Always true - backend uses Redis cache (5 min TTL) for blockchain data
+      includeBlockchainBalances: true
     };
     return params;
   }, [selectedCompany, filters]);
@@ -134,14 +135,14 @@ export function useBalanceManagementDB(
     refetch
   } = useQuery({
     queryKey: ['balances', queryParams],
-    queryFn: () => {
+    queryFn: async () => {
       console.log('🔍 Client: React Query making API call with params:', {
         includeBlockchainBalances: queryParams.includeBlockchainBalances,
         company: queryParams.company,
         accountType: queryParams.accountType,
         showZeroBalances: queryParams.showZeroBalances
       });
-      return balanceApiService.getBalances(queryParams);
+      return await balanceApiService.getBalances(queryParams);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes - longer stale time to respect SSR data
     gcTime: 10 * 60 * 1000, // 10 minutes

@@ -1,16 +1,10 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Calendar from "lucide-react/dist/esm/icons/calendar";
-import Clock from "lucide-react/dist/esm/icons/clock";
-import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
-import CalendarRange from "lucide-react/dist/esm/icons/calendar-range";
-import Infinity from "lucide-react/dist/esm/icons/infinity";
-import Check from "lucide-react/dist/esm/icons/check";
+import { Calendar, Clock, CalendarDays, CalendarRange, Infinity, Check, Circle } from "lucide-react";
 
 export interface PeriodSelectionStepProps {
   selectedPeriod: string;
@@ -92,125 +86,133 @@ export const PeriodSelectionStep: React.FC<PeriodSelectionStepProps> = ({
   const isCustomPeriodValid = selectedPeriod === 'custom' && customDateRange?.startDate && customDateRange?.endDate;
 
   return (
-    <div className="space-y-4">
-      <div className="text-center">
-        <h4 className="text-xl font-semibold text-gray-900 mb-2">Select Time Period</h4>
-        <p className="text-gray-600">Choose the date range for your transaction filter</p>
+    <div className="space-y-3">
+      <div>
+        <h4 className="text-lg font-semibold text-gray-900">Select Time Period</h4>
+        <p className="text-sm text-gray-600 mt-1">Choose the date range for your transaction filter</p>
       </div>
 
       {/* Period Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {PERIOD_OPTIONS.map((option) => {
           const isSelected = selectedPeriod === option.id;
           
           return (
-            <Card
+            <button
               key={option.id}
-              className={`relative p-4 cursor-pointer transition-all border-2 hover:shadow-md ${
+              className={`relative group p-3 rounded-lg border transition-all text-left ${
                 isSelected 
-                  ? 'border-purple-500 bg-purple-50 shadow-md' 
-                  : 'border-gray-200 hover:border-gray-300'
-              } ${option.isCustom ? 'sm:col-span-2 lg:col-span-1' : ''}`}
+                  ? 'border-lime-500 bg-lime-100 ring-2 ring-lime-500 ring-opacity-50' 
+                  : 'bg-lime-50 border-lime-200 hover:border-lime-300 hover:bg-lime-100'
+              } ${option.isCustom ? 'col-span-2 sm:col-span-1' : ''}`}
               onClick={() => !option.isCustom && selectPeriod(option.id)}
             >
-              {/* Selection indicator */}
-              {isSelected && !option.isCustom && (
+              {/* Radio indicator */}
+              {!option.isCustom && (
                 <div className="absolute top-2 right-2">
-                  <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-                    <Check className="h-4 w-4 text-white" />
-                  </div>
+                  {isSelected ? (
+                    <div className="w-4 h-4 bg-lime-600 rounded-full flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    </div>
+                  ) : (
+                    <Circle className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+                  )}
                 </div>
               )}
               
-              <div className="flex flex-col items-center space-y-3">
-                {/* Period Icon */}
-                <div className={`p-3 rounded-lg ${
-                  isSelected 
-                    ? 'bg-purple-100 text-purple-600' 
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {option.icon}
-                </div>
-                
-                {/* Period Info */}
-                <div className="text-center">
-                  <h5 className={`font-semibold ${
-                    isSelected ? 'text-purple-900' : 'text-gray-900'
+              <div className="flex flex-col space-y-2">
+                {/* Period Icon and Info */}
+                <div className="flex items-start space-x-2">
+                  <div className={`p-1.5 rounded ${
+                    isSelected 
+                      ? 'bg-lime-200 text-lime-700' 
+                      : 'bg-lime-100 text-lime-600'
                   }`}>
-                    {option.name}
-                  </h5>
-                  <p className={`text-sm ${
-                    isSelected ? 'text-purple-700' : 'text-gray-500'
-                  }`}>
-                    {option.description}
-                  </p>
+                    {React.cloneElement(option.icon as React.ReactElement, { className: 'h-4 w-4' })}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h5 className={`font-medium text-sm ${
+                      isSelected ? 'text-lime-900' : 'text-gray-900'
+                    }`}>
+                      {option.name}
+                    </h5>
+                    <p className={`text-xs ${
+                      isSelected ? 'text-lime-700' : 'text-gray-500'
+                    }`}>
+                      {option.description}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Custom Date Range Inputs */}
                 {option.isCustom && (
-                  <div className="w-full space-y-3 mt-4">
-                    <div className="grid grid-cols-2 gap-3">
+                  <div className="w-full space-y-2 mt-2">
+                    <div className="grid grid-cols-1 gap-2">
                       <div>
-                        <Label htmlFor="startDate" className="text-xs text-gray-600">Start Date</Label>
+                        <Label htmlFor="startDate" className="text-xs text-gray-600">Start</Label>
                         <Input
                           id="startDate"
                           type="date"
                           value={tempStartDate}
                           onChange={(e) => setTempStartDate(e.target.value)}
-                          className="mt-1"
+                          className="h-8 text-xs"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="endDate" className="text-xs text-gray-600">End Date</Label>
+                        <Label htmlFor="endDate" className="text-xs text-gray-600">End</Label>
                         <Input
                           id="endDate"
                           type="date"
                           value={tempEndDate}
                           onChange={(e) => setTempEndDate(e.target.value)}
-                          className="mt-1"
+                          className="h-8 text-xs"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
                     
-                    <Button
-                      size="sm"
+                    <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateCustomDateRange();
+                        if (tempStartDate && tempEndDate) {
+                          updateCustomDateRange();
+                        }
                       }}
-                      disabled={!tempStartDate || !tempEndDate}
-                      className="w-full"
+                      className={`w-full h-7 text-xs rounded-md px-2 py-1 text-center cursor-pointer transition-colors ${
+                        !tempStartDate || !tempEndDate
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-lime-600 text-white hover:bg-lime-700'
+                      }`}
                     >
-                      Apply Custom Range
-                    </Button>
+                      Apply
+                    </div>
                   </div>
                 )}
               </div>
-            </Card>
+            </button>
           );
         })}
       </div>
 
       {/* Selected Period Summary */}
-      <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="p-3 bg-lime-50 border border-lime-200 rounded-lg">
         <div className="flex items-center space-x-2">
-          <Calendar className="h-5 w-5 text-gray-600" />
-          <span className="text-gray-700 font-medium">Selected period:</span>
-          <span className="text-gray-900 font-semibold">
+          <Calendar className="h-4 w-4 text-lime-600" />
+          <span className="text-sm font-medium text-lime-900">Selected period:</span>
+          <span className="text-sm font-semibold text-lime-900">
             {PERIOD_OPTIONS.find(opt => opt.id === selectedPeriod)?.name}
           </span>
         </div>
         
         {selectedPeriod === 'custom' && customDateRange && (
-          <div className="mt-2 text-sm text-gray-600">
+          <div className="mt-1 text-xs text-lime-700">
             From {customDateRange.startDate} to {customDateRange.endDate}
           </div>
         )}
 
         {selectedPeriod === 'custom' && !isCustomPeriodValid && (
-          <div className="mt-2 text-sm text-amber-600">
+          <div className="mt-1 text-xs text-amber-600">
             Please select both start and end dates for custom range
           </div>
         )}
