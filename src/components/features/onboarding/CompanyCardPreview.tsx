@@ -29,7 +29,7 @@ export const CompanyCardPreview: React.FC<CompanyCardPreviewProps> = ({
             <div className={`w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden ${
               isImageLogo(displayLogo)
                 ? '' 
-                : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                : 'bg-blue-600'
             }`}>
               {isImageLogo(displayLogo) ? (
                 <img 

@@ -40,7 +40,7 @@ export const BookkeepingStats: React.FC<BookkeepingStatsProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg">
+            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-green-50 shadow-lg">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-xs sm:text-sm font-semibold flex items-center justify-between">
                   <div className="flex items-center text-green-700">
@@ -65,7 +65,7 @@ export const BookkeepingStats: React.FC<BookkeepingStatsProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-purple-50 to-violet-50 shadow-lg">
+            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-purple-50 shadow-lg">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-xs sm:text-sm font-semibold flex items-center justify-between">
                   <div className="flex items-center text-purple-700">
@@ -90,7 +90,7 @@ export const BookkeepingStats: React.FC<BookkeepingStatsProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg">
+            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-red-50 shadow-lg">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-xs sm:text-sm font-semibold flex items-center justify-between">
                   <div className="flex items-center text-red-700">
@@ -115,7 +115,7 @@ export const BookkeepingStats: React.FC<BookkeepingStatsProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg">
+            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-orange-50 shadow-lg">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-xs sm:text-sm font-semibold flex items-center justify-between">
                   <div className="flex items-center text-orange-700">
@@ -140,7 +140,7 @@ export const BookkeepingStats: React.FC<BookkeepingStatsProps> = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
+            <Card className="cursor-help hover:shadow-xl transition-all duration-300 border-0 bg-blue-50 shadow-lg">
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="text-xs sm:text-sm font-semibold flex items-center justify-between">
                   <div className="flex items-center text-blue-700">

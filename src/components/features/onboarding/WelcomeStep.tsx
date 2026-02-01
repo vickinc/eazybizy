@@ -81,7 +81,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
       </div>
 
       {/* Company Summary */}
-      <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+      <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
             {logoPreview ? (

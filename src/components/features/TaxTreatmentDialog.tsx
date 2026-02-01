@@ -535,7 +535,7 @@ export const TaxTreatmentDialog: React.FC<TaxTreatmentDialogProps> = ({
             <Button
               type="submit"
               disabled={isSubmitting || validationErrors.length > 0 || progress < 100}
-              className="w-full sm:w-auto order-1 sm:order-2 min-w-[140px] bg-gradient-to-r from-lime-600 to-green-600 hover:from-lime-700 hover:to-green-700"
+              className="w-full sm:w-auto order-1 sm:order-2 min-w-[140px] bg-lime-600 hover:bg-lime-700"
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">

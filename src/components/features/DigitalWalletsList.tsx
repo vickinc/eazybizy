@@ -131,7 +131,7 @@ export const DigitalWalletsList: React.FC<DigitalWalletsListProps> = ({
                           <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                             wallet.company.logo && (wallet.company.logo.startsWith('data:') || wallet.company.logo.includes('http') || wallet.company.logo.startsWith('/'))
                               ? '' 
-                              : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                              : 'bg-blue-600'
                           }`}>
                             {wallet.company.logo && (wallet.company.logo.startsWith('data:') || wallet.company.logo.includes('http') || wallet.company.logo.startsWith('/')) ? (
                               <img 

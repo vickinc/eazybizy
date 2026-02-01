@@ -565,7 +565,7 @@ export class BusinessCardsBusinessService {
     switch (template) {
       case "modern":
         return {
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "#667eea",
           color: "#ffffff",
           textColor: "#ffffff"
         };
@@ -592,7 +592,7 @@ export class BusinessCardsBusinessService {
         };
       case "bizy":
         return {
-          background: "linear-gradient(316deg, #ffcc66 0%, #ff9933 74%)",
+          background: "#ffcc66",
           backgroundColor: "#ffcc66",
           color: "#000000",
           textColor: "#000000"

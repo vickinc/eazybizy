@@ -75,7 +75,7 @@ export const VendorListItem: React.FC<VendorListItemProps> = ({
                 <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                   relatedCompany.logo && (relatedCompany.logo.startsWith('data:') || relatedCompany.logo.includes('http') || relatedCompany.logo.startsWith('/'))
                     ? '' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-blue-600'
                 }`}>
                   {relatedCompany.logo && (relatedCompany.logo.startsWith('data:') || relatedCompany.logo.includes('http') || relatedCompany.logo.startsWith('/')) ? (
                     <img 

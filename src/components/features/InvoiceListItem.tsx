@@ -138,7 +138,7 @@ export const InvoiceListItem: React.FC<InvoiceListItemProps> = ({
                 <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                   invoice.companyInfo.logo && (invoice.companyInfo.logo.startsWith('data:') || invoice.companyInfo.logo.includes('http') || invoice.companyInfo.logo.startsWith('/'))
                     ? '' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-blue-600'
                 }`}>
                   {invoice.companyInfo.logo && (invoice.companyInfo.logo.startsWith('data:') || invoice.companyInfo.logo.includes('http') || invoice.companyInfo.logo.startsWith('/')) ? (
                     <img 

@@ -41,7 +41,7 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
   const getTemplateStyles = (template: "modern" | "classic" | "minimal" | "eazy" | "bizy") => {
     const styles = {
       modern: {
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#667eea',
         textColor: 'white'
       },
       classic: {
@@ -63,7 +63,7 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
         textColor: '#365314'
       },
       bizy: {
-        background: 'linear-gradient(316deg, #ffcc66 0%, #ff9933 74%)',
+        background: '#ffcc66',
         backgroundColor: '#ffcc66',
         textColor: 'black'
       }
@@ -84,7 +84,7 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
       
       <form onSubmit={(e) => { e.preventDefault(); handleCreateCard(); }} className="space-y-4">
         {/* Company Display */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200">
+        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
           <Label className="text-sm font-medium text-blue-900 mb-2 block">Company</Label>
           <div className="flex items-center gap-3">
             {selectedCompany?.logo && isImageLogo(selectedCompany.logo) ? (
@@ -182,13 +182,13 @@ export const CreateCardDialog: React.FC<CreateCardDialogProps> = ({
                 </SelectItem>
                 <SelectItem value="bizy" className="py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded"></div>
                     <span>Bizy</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="modern" className="py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
+                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
                     <span>Modern</span>
                   </div>
                 </SelectItem>

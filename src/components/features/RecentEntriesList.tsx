@@ -54,7 +54,7 @@ export const RecentEntriesList: React.FC<RecentEntriesListProps> = ({
 }) => {
   return (
     <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+      <CardHeader className="bg-gray-50 rounded-t-lg">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText className="h-5 w-5 text-gray-700" />

@@ -564,7 +564,7 @@ export function TronBlockchainImportDialog({
           <Button 
             onClick={handleImport} 
             disabled={!canImport}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+            className="bg-purple-600 hover:bg-purple-700"
           >
             {importStatus.isImporting ? (
               <div className="flex items-center space-x-2">

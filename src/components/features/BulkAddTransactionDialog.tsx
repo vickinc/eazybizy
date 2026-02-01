@@ -94,7 +94,7 @@ export const BulkAddTransactionDialog: React.FC<BulkAddTransactionDialogProps> =
         
         <div className="flex-1 overflow-y-hidden flex flex-col">
           {/* Header for account selection */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <CreditCard className="h-5 w-5 text-blue-600" />

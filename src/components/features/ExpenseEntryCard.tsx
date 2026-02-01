@@ -92,7 +92,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                   <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                     company.logo && (company.logo.startsWith('data:') || company.logo.includes('http'))
                       ? '' 
-                      : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                      : 'bg-blue-600'
                   }`}>
                     {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http')) ? (
                       <img 
@@ -215,7 +215,7 @@ export const ExpenseEntryCard: React.FC<ExpenseEntryCardProps> = ({
                 <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                   company.logo && (company.logo.startsWith('data:') || company.logo.includes('http'))
                     ? '' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-blue-600'
                 }`}>
                   {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http')) ? (
                     <img 

@@ -104,7 +104,7 @@ export const BankAccountsList: React.FC<BankAccountsListProps> = ({
                           <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                             bank.company.logo && (bank.company.logo.startsWith('data:') || bank.company.logo.includes('http') || bank.company.logo.startsWith('/'))
                               ? '' 
-                              : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                              : 'bg-blue-600'
                           }`}>
                             {bank.company.logo && (bank.company.logo.startsWith('data:') || bank.company.logo.includes('http') || bank.company.logo.startsWith('/')) ? (
                               <img 

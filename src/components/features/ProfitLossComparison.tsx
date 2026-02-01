@@ -184,7 +184,7 @@ export const ProfitLossComparison: React.FC<ProfitLossComparisonProps> = ({
         </div>
 
         {/* Overall Performance Summary */}
-        <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+        <div className="mt-8 p-4 bg-blue-50 rounded-lg border">
           <h4 className="font-medium text-gray-900 mb-3">Performance Summary</h4>
           <div className="space-y-2 text-sm">
             {comparison.revenue.change > 0 && comparison.netIncome.change > 0 && (

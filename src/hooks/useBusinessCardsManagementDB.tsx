@@ -462,7 +462,7 @@ export function useBusinessCardsManagementDB(
     // Template styles - same as original implementation
     const styles = {
       modern: {
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#667eea',
         textColor: 'white'
       },
       classic: {
@@ -484,7 +484,7 @@ export function useBusinessCardsManagementDB(
         textColor: '#365314'
       },
       bizy: {
-        background: 'linear-gradient(316deg, #ffcc66 0%, #ff9933 74%)',
+        background: '#ffcc66',
         backgroundColor: '#ffcc66',
         textColor: 'black'
       }

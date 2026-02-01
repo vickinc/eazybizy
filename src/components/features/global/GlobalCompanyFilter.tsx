@@ -67,7 +67,7 @@ export function GlobalCompanyFilter() {
                 <div className={`w-4 h-4 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                   isImageLogo(selectedCompanyData.logo)
                     ? '' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-blue-600'
                 }`}>
                   {isImageLogo(selectedCompanyData.logo) ? (
                     <img 
@@ -137,7 +137,7 @@ export function GlobalCompanyFilter() {
                     <div className={`w-4 h-4 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0 ${
                       isImageLogo(company.logo)
                         ? '' 
-                        : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                        : 'bg-blue-600'
                     }`}>
                       {isImageLogo(company.logo) ? (
                         <img 

@@ -877,7 +877,7 @@ export const CategoryDialog: React.FC<CategoryDialogProps> = ({
             <Button 
               type="submit"
               disabled={progress < 100}
-              className="w-full sm:w-auto order-1 sm:order-2 min-w-[140px] bg-gradient-to-r from-lime-600 to-green-600 hover:from-lime-700 hover:to-green-700"
+              className="w-full sm:w-auto order-1 sm:order-2 min-w-[140px] bg-lime-600 hover:bg-lime-700"
             >
               {progress < 100 ? (
                 <span className="flex items-center space-x-2">

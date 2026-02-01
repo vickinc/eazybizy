@@ -169,7 +169,7 @@ export function InvoiceTemplate({
           {companyInfo.logo ? (
             <img src={companyInfo.logo} alt="Company Logo" className="h-20 w-auto" />
           ) : (
-            <div className="h-20 w-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="h-20 w-32 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">LOGO</span>
             </div>
           )}

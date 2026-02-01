@@ -132,7 +132,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
           {isCompanyFiltered && formData.eventScope === 'company' && (
             <div className="bg-lime-50 border border-lime-200 rounded-lg px-3 py-2">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
                   {selectedCompanyObj?.logo && (selectedCompanyObj.logo.startsWith('data:') || selectedCompanyObj.logo.includes('http') || selectedCompanyObj.logo.startsWith('/')) ? (
                     <img 
                       src={selectedCompanyObj.logo} 
@@ -166,7 +166,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
                     <SelectItem key={company.id} value={company.tradingName}>
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center space-x-2">
-                          <div className="relative w-4 h-4 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                          <div className="relative w-4 h-4 rounded bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
                             {company.logo && (company.logo.startsWith('data:') || company.logo.includes('http') || company.logo.startsWith('/')) ? (
                               <img 
                                 src={company.logo} 

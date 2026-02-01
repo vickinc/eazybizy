@@ -101,7 +101,7 @@ export const ProductListItem: React.FC<ProductListItemProps> = ({
               <div className={`w-3 h-3 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                 product.companyLogo && (product.companyLogo.startsWith('data:') || product.companyLogo.includes('http') || product.companyLogo.startsWith('/'))
                   ? '' 
-                  : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                  : 'bg-blue-600'
               }`}>
                 {product.companyLogo && (product.companyLogo.startsWith('data:') || product.companyLogo.includes('http') || product.companyLogo.startsWith('/')) ? (
                   <img 

@@ -46,7 +46,7 @@ export const BookkeepingReport: React.FC<BookkeepingReportProps> = ({
 
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <CardTitle className="text-xl font-semibold text-gray-900">
             Profit & Loss Statement
           </CardTitle>
         </CardHeader>

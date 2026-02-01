@@ -102,7 +102,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
             <div className={`w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden ${
               isImageLogo(company.logo)
                 ? '' 
-                : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                : 'bg-blue-600'
             }`}>
               {isImageLogo(company.logo) ? (
                 <img 

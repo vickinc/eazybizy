@@ -79,7 +79,7 @@ export const RecentEntriesListItem: React.FC<RecentEntriesListItemProps> = ({
                 <div className={`w-2.5 h-2.5 rounded flex items-center justify-center text-xs font-bold text-white overflow-hidden ${
                   entry.company.logo.startsWith('data:') || entry.company.logo.includes('http') 
                     ? '' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                    : 'bg-blue-600'
                 }`}>
                   {entry.company.logo.startsWith('data:') || entry.company.logo.includes('http') ? (
                     <img 
